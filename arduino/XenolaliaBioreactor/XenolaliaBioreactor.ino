@@ -6,9 +6,11 @@
 // Real-time clock.
 DS3231_Simple rtc;
 
+// Hours of day where lights come on/off.
 #define LIGHT_HOUR_ON  10
 #define LIGHT_HOUR_OFF 19
 
+// On/off PWM values (adjust according to needs).
 #define LIGHT_VALUE_ON  125
 #define LIGHT_VALUE_OFF   0
 
