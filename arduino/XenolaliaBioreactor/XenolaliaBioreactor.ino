@@ -1,145 +1,144 @@
 /* XENOLALIA project - TeZ + Sofian 2017 */
 
- #include <Timer.h>
+#include <Chrono.h>
+#include <DS3231_Simple.h>
 
- 
-int ardled = 13;       // the PWM pin the LED is attached to
-int led = 3;           // the PWM pin the LED is attached to
-int brightness = 00;   // how bright the LED is
-int fadeAmount = 5;    // how many points to fade the LED by
+// Real-time clock.
+DS3231_Simple rtc;
+
+#define LIGHT_HOUR_ON  10
+#define LIGHT_HOUR_OFF 19
+
+#define LIGHT_VALUE_ON  125
+#define LIGHT_VALUE_OFF   0
+
+#define STIRRER_VALUE_ON  250
+#define STIRRER_VALUE_OFF   0
+
+#define PUMP_VALUE_ON   75
+#define PUMP_VALUE_OFF   0
 
 // transistor control pins
-int lite = 3; 
-int fan = 11;
-int pump = 10;
-int xtra = 9;
+#define LIGHT_AOUT    3
+#define STIRRER_AOUT 11
+#define PUMP_AOUT    10
+#define XTRA_AOUT     9
 
-// Timers declarations
-Timer liteTimer;
-Timer pumpTimer;
-Timer fanTimer;
+// Timer declarations.
+Chrono pumpTimer;
+Chrono stirrerTimer;
 
 // timer vars
-int8_t id_Pump_off, id_Pump_on;
-unsigned long pump_on_time;
-unsigned long pump_off_time;
-
-int8_t id_Lite_off, id_Lite_on;
-unsigned long lite_on_time;
-unsigned long lite_off_time;
-
-int8_t id_Fan_off, id_Fan_on;
-unsigned long fan_on_time;
-unsigned long fan_off_time;
-
+#define PUMP_ON_TIME    20000UL // 20 seconds (every minute)
+#define STIRRER_ON_TIME 60000UL // 60 seconds (every hour)
 
 // the setup routine runs once when you press reset:
 void setup() {
 
-// Serial.begin(9600); 
-//   while (!Serial) {
-//    ; // wait for serial port to connect. Needed for native USB
-//  }
+   Serial.begin(9600);
+     while (!Serial) {
+      ; // wait for serial port to connect. Needed for native USB
+    }
+
+  // Set pins.
+  pinMode(LIGHT_AOUT,   OUTPUT);
+  pinMode(STIRRER_AOUT, OUTPUT);
+  pinMode(PUMP_AOUT,    OUTPUT);
+
+  // Start real-time clock.
+  rtc.begin();
   
-  // declare pins to be an output:
-  pinMode(ardled, OUTPUT);
-  pinMode(led, OUTPUT);
-  pinMode(lite, OUTPUT);
-  pinMode(fan, OUTPUT);
-  pinMode(pump, OUTPUT);
-  pinMode(xtra, OUTPUT);
-
-  pump_on_time = 10UL * 1000UL;// time for pump ON = 5 seconds
-  pump_off_time = 20UL * 1000UL;// time for pump = 25 seconds
-
-  lite_on_time = 15UL * 60UL * 60UL * 1000UL;// time for light ON  = 15 hours
-  lite_off_time = 9UL * 60UL * 60UL * 1000UL;// time for light OFF = 9 hours
- 
-  fan_on_time = 60UL * 1000UL;// time for fan ON  = 1 minute
-  fan_off_time = 59UL * 60UL * 1000UL;// time for fan OFF = 59 minutes
-
-
- analogWrite(lite, 125);
- analogWrite(pump, 75);
- analogWrite(fan, 250);
-
- delay (4000);
- analogWrite(fan, 0);
-
-
-
-  // START LITE TIMER
-   id_Lite_on  = liteTimer.after(lite_on_time, liteOn);
-
- // START FAN TIMER
-  id_Fan_on  = fanTimer.after(fan_on_time, fanOn);
+  // We will set 2 alarms, the first alarm will fire at the 30th second of every minute
+  //  and the second alarm will fire every minute (at the 0th second)
   
-  // START PUMP TIMER
-  id_Pump_on  = pumpTimer.after(pump_on_time, pumpaOn);
+  // First we will disable any existing alarms.
+  rtc.disableAlarms();
   
+  // Alarm 2 runs every minute.
+  rtc.setAlarm(DS3231_Simple::ALARM_EVERY_MINUTE);
+
+  setLight(true);
+  startPump();
+  startStirrer();
   
-  
+  delay (4000);
+  updateLight(rtc.read());
 }
 
 ///////////////////////////////////////////
 void loop() {
 
- pumpTimer.update();
- liteTimer.update();
- fanTimer.update();
+  // Check for stop conditions of pump and stirrer.
+  if (pumpTimer.isRunning() && pumpTimer.hasPassed(PUMP_ON_TIME))          stopPump();
+  if (stirrerTimer.isRunning() && stirrerTimer.hasPassed(STIRRER_ON_TIME)) stopStirrer();
 
+  // To check the alarms we just ask the clock
+  uint8_t alarmsFired = rtc.checkAlarms();
+
+  // Alarm 2 fired (minute alarm).
+  if (alarmsFired & 2) {
+
+    // Start pump.
+    startPump();
+
+    DateTime timestamp = rtc.read();
+
+    // Every hour (ie. first minute of the hour)
+    if (timestamp.Minute == 0) {
+      // Start magnetic stirrer.
+      startStirrer();
+    }
+
+    // Update light values according to current time.
+    updateLight(timestamp);
+  }
 
   delay(20);
 }
 
-
-//////////////////////////////////////////
-void pumpaOn () {   
-   analogWrite(pump, 0);
-   id_Pump_off  = pumpTimer.after(pump_off_time, pumpaOff);  
-   pumpTimer.stop(id_Pump_on);
+// Adjust lighting depending on time of day.
+void updateLight(const DateTime& timestamp) {
+  uint8_t hour = timestamp.Hour;
+  setLight(LIGHT_HOUR_ON <= hour && hour < LIGHT_HOUR_OFF);
 }
 
-//////////////////////////////////////////
-void pumpaOff () {
-   analogWrite(pump, 75);
-   id_Pump_on  = pumpTimer.after(pump_on_time, pumpaOn); 
-   pumpTimer.stop(id_Pump_off);
+// Control functions //////////////////////////////////////////////
+void setLight(bool isOn) {
+  rtc.printTimeTo_HMS(Serial);
+  Serial.print(" :: Set light to "); Serial.println(isOn ? "ON" : "OFF");
+  analogWrite(LIGHT_AOUT, isOn ? LIGHT_VALUE_ON : LIGHT_VALUE_OFF);
 }
 
-
-//////////////////////////////////////////
-void liteOn () {  
-   analogWrite(lite, 0);
-   id_Lite_off  = liteTimer.after(lite_off_time, liteOff);  
-   liteTimer.stop(id_Lite_on);
+void setStirrer(bool isOn) {
+  rtc.printTimeTo_HMS(Serial);
+  Serial.print(" :: Set stirrer to "); Serial.println(isOn ? "ON" : "OFF");
+  analogWrite(STIRRER_AOUT, isOn ? STIRRER_VALUE_ON : STIRRER_VALUE_OFF);
 }
 
-//////////////////////////////////////////
-void liteOff () {
-   analogWrite(lite, 125);
-   id_Lite_on  = liteTimer.after(lite_on_time, liteOn); 
-   liteTimer.stop(id_Lite_off);
+void setPump(bool isOn) {
+  rtc.printTimeTo_HMS(Serial);
+  Serial.print(" :: Set pump to "); Serial.println(isOn ? "ON" : "OFF");
+  analogWrite(PUMP_AOUT, isOn ? PUMP_VALUE_ON : PUMP_VALUE_OFF);
 }
 
-
-
-//////////////////////////////////////////
-void fanOn () {
-   // fanTimer.stop(id_Fan_on);
-   analogWrite(fan, 0);
-   id_Fan_off  = fanTimer.every(fan_off_time, fanOff); 
-   fanTimer.stop(id_Fan_on);
-  //Serial.println("Fan OFF");
+void startStirrer() {
+  setStirrer(true);
+  stirrerTimer.start();
 }
 
-//////////////////////////////////////////
-void fanOff () {
-   // fanTimer.stop(id_Fan_off);
-   analogWrite(fan, 250);
-   id_Fan_on  = fanTimer.every(fan_on_time, fanOn); 
-   fanTimer.stop(id_Fan_off);
-  //Serial.println("Fan ON");
+void stopStirrer() {
+  setStirrer(false);
+  stirrerTimer.stop();
+}
+
+void startPump() {
+  setPump(true);
+  pumpTimer.start();
+}
+
+void stopPump() {
+  setPump(false);
+  pumpTimer.stop();
 }
 
 
