@@ -43,9 +43,9 @@ void setup() {
     }
 
   // Set pins.
-  pinMode(LIGHT_AOUT,   OUTPUT);
-  pinMode(STIRRER_AOUT, OUTPUT);
-  pinMode(PUMP_AOUT,    OUTPUT);
+  pinMode(LIGHT_AOUT,   OUTPUT); digitalWrite(LIGHT_AOUT,   LOW);
+  pinMode(STIRRER_AOUT, OUTPUT); digitalWrite(STIRRER_AOUT, LOW);
+  pinMode(PUMP_AOUT,    OUTPUT); digitalWrite(PUMP_AOUT,    LOW);
 
   // Start real-time clock.
   rtc.begin();
