@@ -31,7 +31,7 @@ Chrono pumpTimer;
 Chrono stirrerTimer;
 
 // timer vars
-#define PUMP_ON_TIME    20000UL // 20 seconds (every minute)
+#define PUMP_ON_TIME     5000UL //  5 seconds (every 2 minutes)
 #define STIRRER_ON_TIME 60000UL // 60 seconds (every hour)
 
 // the setup routine runs once when you press reset:
@@ -80,10 +80,14 @@ void loop() {
   // Alarm 2 fired (minute alarm).
   if (alarmsFired & 2) {
 
-    // Start pump.
-    startPump();
 
     DateTime timestamp = rtc.read();
+
+    // Every 2 minutes, start the pump.
+    if (timestamp.Minute % 2 == 0) {
+      // Start pump.
+      startPump();
+    }
 
     // Every hour (ie. first minute of the hour)
     if (timestamp.Minute == 0) {
