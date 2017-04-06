@@ -6,7 +6,7 @@ import time
 import numpy
 
 class XenoCamera(picamera.PiCamera):
-	def __init__(self, input_quad, image_side=28):
+	def __init__(self, input_quad=(0, 0, 0, 1, 1, 1, 1, 0), image_side=28):
 		picamera.PiCamera.__init__(self)
 		self.stream = io.BytesIO()
 		self.input_quad = input_quad
@@ -19,17 +19,20 @@ class XenoCamera(picamera.PiCamera):
 	def stop(self):
 		self.stop_preview()
 
-	def sample(self):
+	def raw_sample(self):
 		self.stream.seek(0)
 		self.capture(self.stream, format="png")
 		self.stream.seek(0)
-		image = Image.open(self.stream)
+		return Image.open(self.stream).convert("L")
+
+	def sample(self):
+		image = self.raw_sample()
 		print "Image created"
 		w = image.size[0]
 		h = image.size[1]
 		#print "Image size: {w}x{h}".format(w=w, h=h)
 		input_quad_abs = ( self.input_quad[0]*w, self.input_quad[1]*h, self.input_quad[2]*w, self.input_quad[3]*h, self.input_quad[4]*w, self.input_quad[5]*h, self.input_quad[6]*w, self.input_quad[7]*h )
-		output = image.transform(image.size, Image.QUAD, input_quad_abs).convert('L').resize((self.image_side, self.image_side))
+		output = image.transform(image.size, Image.QUAD, input_quad_abs).resize((self.image_side, self.image_side))
 		return output
 
 if __name__ == "__main__":

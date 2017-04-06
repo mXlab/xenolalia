@@ -14,6 +14,7 @@
 import gohai.glvideo.*;
 GLCapture video;
 
+final String CONFIG_FILE_SAVE = "camera_perspective.conf";
 final int SCALING_FACTOR = 2;
 final int CAM_WIDTH = 320;
 final int CAM_HEIGHT = 200;
@@ -61,16 +62,20 @@ void draw() {
   }
   image(video, 0, 0, width, height);
   
-  // Draw control points.
+  // Draw controls.
   for (int i=0; i<N_POINTS; i++) {
-    fill(0, 0, 0, 0);
-    stroke( i == currentPoint ? color(200, 0, 0) : color(200, 200, 200) );
     float x = points[i].x;
     float y = points[i].y;
     int next = (i+1) % N_POINTS;
     float nx = points[next].x;
     float ny = points[next].y;
+    // Draw point.
+    fill(0, 0, 0, 0);
+    stroke( i == currentPoint ? color(200, 0, 0) : color(200, 200, 200) );
     ellipse(x, y, 10, 10);
+    fill(255);
+    text(i+1, x, y);
+    // Draw line.
     stroke( color(200, 200, 200) );
     line(x, y, nx, ny);
   }
@@ -80,19 +85,20 @@ void keyPressed() {
   if (key == CODED) {
     switch (keyCode) {
       case UP:     movePoint(currentPoint, 0, -1); break;
-      case BOTTOM: movePoint(currentPoint, 0, +1); break;
+      case DOWN:   movePoint(currentPoint, 0, +1); break;
       case LEFT:   movePoint(currentPoint, -1, 0); break;
       case RIGHT:  movePoint(currentPoint, +1, 0); break;
     }
   }
   else {
     switch (key) {
-      case TAB: selectPoint( (currentPoint+1) % N_POINTS); break;
-      case ' ': printPoints(); break;
-      case 1:   selectPoint(0); break;
-      case 2:   selectPoint(1); break;
-      case 3:   selectPoint(2); break;
-      case 4:   selectPoint(3); break;
+      case RETURN:
+      case ENTER: savePoints(); break;
+      case TAB:   selectPoint( (currentPoint+1) % N_POINTS); break;
+      case '1':   selectPoint(0); break;
+      case '2':   selectPoint(1); break;
+      case '3':   selectPoint(2); break;
+      case '4':   selectPoint(3); break;
     }
   }
 }
@@ -110,14 +116,20 @@ void selectPoint(int i) {
 }
 
 void movePoint(int i, float dx, float dy) {
+  println("move point by " + dx + "," + dy);
   points[i].add(dx, dy);
 }
 
-void printPoints() {
+void savePoints() {
+  String[] strConfig = new String[N_POINTS*2];
+  int k=0;
   for (int i=0; i<N_POINTS; i++) {
     PVector p = points[i];
     p.x /= width;
     p.y /= height;
+    strConfig[k++] = nf(p.x);
+    strConfig[k++] = nf(p.y);
     print(p.x + ", " + p.y + ", ");
   }
+  saveStrings(CONFIG_FILE_SAVE, strConfig);
 }
