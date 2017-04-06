@@ -14,6 +14,7 @@
 import gohai.glvideo.*;
 GLCapture video;
 
+final String CONFIG_FILE_SAVE = "camera_perspective.conf";
 final int SCALING_FACTOR = 2;
 final int CAM_WIDTH = 320;
 final int CAM_HEIGHT = 200;
@@ -117,11 +118,16 @@ void movePoint(int i, float dx, float dy) {
   points[i].add(dx, dy);
 }
 
-void printPoints() {
+void savePoints() {
+  String[] strConfig = new String[N_POINTS*2];
+  int k=0;
   for (int i=0; i<N_POINTS; i++) {
     PVector p = points[i];
     p.x /= width;
     p.y /= height;
+    strConfig[k++] = nf(p.x);
+    strConfig[k++] = nf(p.y);
     print(p.x + ", " + p.y + ", ");
   }
+  saveStrings(CONFIG_FILE_SAVE, strConfig);
 }
