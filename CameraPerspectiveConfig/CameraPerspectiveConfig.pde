@@ -116,6 +116,7 @@ void selectPoint(int i) {
 }
 
 void movePoint(int i, float dx, float dy) {
+  println("move point by " + dx + "," + dy);
   points[i].add(dx, dy);
 }
 
