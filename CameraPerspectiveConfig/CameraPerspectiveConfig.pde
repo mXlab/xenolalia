@@ -61,16 +61,20 @@ void draw() {
   }
   image(video, 0, 0, width, height);
   
-  // Draw control points.
+  // Draw controls.
   for (int i=0; i<N_POINTS; i++) {
-    fill(0, 0, 0, 0);
-    stroke( i == currentPoint ? color(200, 0, 0) : color(200, 200, 200) );
     float x = points[i].x;
     float y = points[i].y;
     int next = (i+1) % N_POINTS;
     float nx = points[next].x;
     float ny = points[next].y;
+    // Draw point.
+    fill(0, 0, 0, 0);
+    stroke( i == currentPoint ? color(200, 0, 0) : color(200, 200, 200) );
     ellipse(x, y, 10, 10);
+    fill(255);
+    text(i+1, x, y);
+    // Draw line.
     stroke( color(200, 200, 200) );
     line(x, y, nx, ny);
   }
