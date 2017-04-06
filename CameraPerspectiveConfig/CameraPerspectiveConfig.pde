@@ -85,19 +85,20 @@ void keyPressed() {
   if (key == CODED) {
     switch (keyCode) {
       case UP:     movePoint(currentPoint, 0, -1); break;
-      case BOTTOM: movePoint(currentPoint, 0, +1); break;
+      case DOWN:   movePoint(currentPoint, 0, +1); break;
       case LEFT:   movePoint(currentPoint, -1, 0); break;
       case RIGHT:  movePoint(currentPoint, +1, 0); break;
     }
   }
   else {
     switch (key) {
-      case TAB: selectPoint( (currentPoint+1) % N_POINTS); break;
-      case ' ': printPoints(); break;
-      case 1:   selectPoint(0); break;
-      case 2:   selectPoint(1); break;
-      case 3:   selectPoint(2); break;
-      case 4:   selectPoint(3); break;
+      case RETURN:
+      case ENTER: savePoints(); break;
+      case TAB:   selectPoint( (currentPoint+1) % N_POINTS); break;
+      case '1':   selectPoint(0); break;
+      case '2':   selectPoint(1); break;
+      case '3':   selectPoint(2); break;
+      case '4':   selectPoint(3); break;
     }
   }
 }
