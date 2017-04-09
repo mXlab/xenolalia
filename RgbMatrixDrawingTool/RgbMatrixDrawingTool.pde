@@ -9,16 +9,20 @@
 final int SIDE = 32;
 
 final int SIZE = SIDE*SIDE;
-final String MATRIX_IMAGE_FILE = "matrix.png";
+final String MATRIX_SEND_FILE   = "matrix.png";
+final String MATRIX_FILE_PREFIX = "matrix";
+final String MATRIX_FILE_EXT    = "png";
 final color DEFAULT_COLOR = #000000;
 
-// Globals.
+final int N_MATRICES = 10;
+
 float CELL_SIDE;
 
-color[] matrix = new color[SIZE];
-PGraphics matrixGraphics;
-
+// Globals.
+RgbMatrix[] matrices = new RgbMatrix[N_MATRICES];
 color currentColor;
+int currentMatrixId;
+RgbMatrix currentMatrix;
 
 void setup() {
   // Init.
@@ -28,12 +32,13 @@ void setup() {
   strokeWeight(0.5);
   CELL_SIDE = float(width) / SIDE;
   currentColor = #ffffff;
-  matrixGraphics = createGraphics(SIDE, SIDE);
+  currentMatrixId = 0;
   
-  // Ready.
-  clear();
-  readMatrix();
-
+  // Create matrices.
+  for (int i=0; i<N_MATRICES; i++)
+    matrices[i] = new RgbMatrix(MATRIX_FILE_PREFIX + i + "." + MATRIX_FILE_EXT);
+  setCurrentMatrix(0);
+  
   // Repaint.
   paint();
 }
@@ -42,25 +47,13 @@ void draw() {
   paint();
 }
 
-void updateMatrix() {
-  matrixGraphics.beginDraw();
-  matrixGraphics.loadPixels();
-  for (int x=0; x<SIDE; x++) {
-    for (int y=0; y<SIDE; y++) {
-      matrixGraphics.pixels[x+y*SIDE] = getPixel(x, y);
-    }
-  }
-  matrixGraphics.updatePixels();
-  matrixGraphics.endDraw();
-}
-
 void paint() {
   background(0);
   
   // Draw matrix.
   for (int x=0; x<SIDE; x++) {
     for (int y=0; y<SIDE; y++) {
-      fill(getPixel(x, y));
+      fill(currentMatrix.getPixel(x, y));
       rect(gridToScreen(x), gridToScreen(y), CELL_SIDE, CELL_SIDE);
     }
   }
@@ -70,34 +63,22 @@ void paint() {
     line(gridToScreen(k), 0, gridToScreen(k), height);
     line(0, gridToScreen(k), width, gridToScreen(k));
   }
+  
+  // Draw screen number.
+  textAlign(RIGHT);
+  final float TEXT_SIZE = CELL_SIDE*5;
+  textSize(TEXT_SIZE);
+  fill(255, 255, 255, 64);
+  text(currentMatrixId, width-CELL_SIDE, TEXT_SIZE);
 }
 
-void setPixel(int x, int y, int c) {
-  matrix[x+y*SIDE] = c;
+void setCurrentMatrix(int i) {
+  currentMatrixId = constrain(i, 0, N_MATRICES-1);
+  currentMatrix = matrices[currentMatrixId];
 }
 
-color getPixel(int x, int y) {
-  return matrix[x+y*SIDE];
-}
-
-void clear() {
-  for (int i=0; i<SIZE; i++)
-    matrix[i] = DEFAULT_COLOR;
-}
-
-void sendMatrix() {
-  updateMatrix();
-  matrixGraphics.save("matrix.png");
-}
-
-void readMatrix() {
-  PImage img = loadImage(MATRIX_IMAGE_FILE);
-  matrixGraphics.beginDraw();
-  matrixGraphics.image(img, 0, 0);
-  matrixGraphics.loadPixels();
-  for (int i=0; i<SIZE; i++)
-    matrix[i] = matrixGraphics.pixels[i];
-  matrixGraphics.endDraw();
+void saveAll() {
+  for (RgbMatrix m : matrices) m.save(false);
 }
 
 float screenToGrid(float pos) {
@@ -111,20 +92,22 @@ float gridToScreen(float pos) {
 void mouseDragged() {
   int x = int(screenToGrid(mouseX));
   int y = int(screenToGrid(mouseY));
-  setPixel(x, y, currentColor);
+  currentMatrix.setPixel(x, y, currentColor);
 }
 
 void mouseClicked() {
   int x = int(screenToGrid(mouseX));
   int y = int(screenToGrid(mouseY));
   // Click on same color => erase.
-  setPixel(x, y, getPixel(x, y) == currentColor ? DEFAULT_COLOR : currentColor);
+  currentMatrix.setPixel(x, y, currentMatrix.getPixel(x, y) == currentColor ? DEFAULT_COLOR : currentColor);
 }
 
 void keyPressed() {
   switch (key) {
     // Actions.
-    case ENTER: sendMatrix(); break;
+    case ENTER: currentMatrix.send(); break;
+    case 's':   currentMatrix.save(false); break;
+    case 'S':   saveAll(); break;
     case ' ':   clear();
     
     // Color change.
@@ -137,6 +120,20 @@ void keyPressed() {
     case 'c':   currentColor = #00ffff; break;
     case 'm':   currentColor = #ff00ff; break;
     
-    default:;
+    default:
+      if ('0' <= key && key <= '9') {
+        setCurrentMatrix(key-'0');
+      }
+  }
+}
+
+// Confirmation pop-up on exit.
+import javax.swing.JOptionPane;
+void exit() {
+  int reply = JOptionPane.showConfirmDialog(null, "Save before exit?", "Exit", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE);
+  if (reply != JOptionPane.CANCEL_OPTION) {
+    if (reply == JOptionPane.YES_OPTION)
+      saveAll();
+    super.exit();
   }
 }
