@@ -20,11 +20,14 @@ DS3231_Simple rtc;
 #define PUMP_VALUE_ON   75
 #define PUMP_VALUE_OFF   0
 
+#define HEATER_VALUE_ON  255
+#define HEATER_VALUE_OFF   0
+
 // transistor control pins
 #define LIGHT_AOUT    3
-#define STIRRER_AOUT 11
-#define PUMP_AOUT    10
-#define XTRA_AOUT     9
+#define STIRRER_AOUT 10
+#define PUMP_AOUT     9
+#define HEATER_AOUT  11
 
 // Timer declarations.
 Chrono pumpTimer;
@@ -46,6 +49,7 @@ void setup() {
   pinMode(LIGHT_AOUT,   OUTPUT); digitalWrite(LIGHT_AOUT,   LOW);
   pinMode(STIRRER_AOUT, OUTPUT); digitalWrite(STIRRER_AOUT, LOW);
   pinMode(PUMP_AOUT,    OUTPUT); digitalWrite(PUMP_AOUT,    LOW);
+  pinMode(HEATER_AOUT,  OUTPUT); digitalWrite(HEATER_AOUT,  LOW);
 
   // Start real-time clock.
   rtc.begin();
@@ -125,6 +129,12 @@ void setPump(bool isOn) {
   rtc.printTimeTo_HMS(Serial);
   Serial.print(" :: Set pump to "); Serial.println(isOn ? "ON" : "OFF");
   analogWrite(PUMP_AOUT, isOn ? PUMP_VALUE_ON : PUMP_VALUE_OFF);
+}
+
+void setHeater(bool isOn) {
+  rtc.printTimeTo_HMS(Serial);
+  Serial.print(" :: Set heater to "); Serial.println(isOn ? "ON" : "OFF");
+  analogWrite(HEATER_AOUT, isOn ? HEATER_VALUE_ON : HEATER_VALUE_OFF);
 }
 
 void startStirrer() {
