@@ -161,7 +161,7 @@ void loop() {
     updateHeater(temperature());
   }
 
-  delay(20);
+  delay(200);
 }
 
 // Adjust lighting depending on time of day.
