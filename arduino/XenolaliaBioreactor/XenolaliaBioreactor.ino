@@ -2,6 +2,8 @@
 
 #include <Chrono.h>
 #include <DS3231_Simple.h>
+#include <OneWire.h>
+#include <DallasTemperature.h>
 
 // Real-time clock.
 DS3231_Simple rtc;
@@ -29,6 +31,17 @@ DS3231_Simple rtc;
 #define PUMP_AOUT     9
 #define HEATER_AOUT  11
 
+#define TEMPERATURE_ONE_WIRE_BUS 5
+// Euglena optimum growth rate 25-30 C (source: http://www.metamicrobe.com/euglena/)
+// So we keep it around 27.5+-1 C
+#define TEMPERATURE_MIN   26.5f
+#define TEMPERATURE_MAX   28.5f
+
+// Setup a oneWire instance to communicate with any OneWire devices (not just Maxim/Dallas temperature ICs)
+OneWire temperatureOneWire(TEMPERATURE_ONE_WIRE_BUS);
+
+// Pass our oneWire reference to Dallas Temperature. 
+DallasTemperature temperatureSensor(&temperatureOneWire);
 // Timer declarations.
 Chrono pumpTimer;
 Chrono stirrerTimer;
@@ -72,6 +85,7 @@ void setup() {
   
   delay (4000);
   updateLight(rtc.read());
+  updateHeater(temperature());
 }
 
 void runTest() {
@@ -102,14 +116,14 @@ void runTest() {
   setHeater(true);
   while (!Serial.available());
   Serial.read();
-  setHeater(false);
+  setLight(false);
 
   // Test inputs.
   Serial.println("Test time");
   rtc.printTimeTo_HMS(Serial);  
 
-//  Serial.println("Test temperature");
-  // print temperature
+  Serial.println("Test temperature");
+  Serial.println(temperature());
 }
 
 ///////////////////////////////////////////
@@ -142,6 +156,9 @@ void loop() {
 
     // Update light values according to current time.
     updateLight(timestamp);
+
+    // Update heater.
+    updateHeater(temperature());
   }
 
   delay(20);
@@ -151,6 +168,14 @@ void loop() {
 void updateLight(const DateTime& timestamp) {
   uint8_t hour = timestamp.Hour;
   setLight(LIGHT_HOUR_ON <= hour && hour < LIGHT_HOUR_OFF);
+}
+
+void updateHeater(float temp) {
+  Serial.print("Temperature is: "); Serial.println(temp);
+  if (temp < TEMPERATURE_MIN)
+    setHeater(true);
+  else if (temp > TEMPERATURE_MAX)
+    setHeater(false);
 }
 
 // Control functions //////////////////////////////////////////////
@@ -198,4 +223,7 @@ void stopPump() {
   pumpTimer.stop();
 }
 
-
+float temperature() {
+  temperatureSensor.requestTemperatures(); // Send the command to get temperatures
+  return temperatureSensor.getTempCByIndex(0);
+}
