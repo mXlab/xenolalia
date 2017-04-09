@@ -12,6 +12,15 @@ DS3231_Simple rtc;
 #define LIGHT_HOUR_ON  10
 #define LIGHT_HOUR_OFF 19
 
+// Euglena optimum growth rate 25-30 C (source: http://www.metamicrobe.com/euglena/)
+// So we keep it around 27.5+-1 C
+#define TEMPERATURE_MIN   26.5f
+#define TEMPERATURE_MAX   28.5f
+
+// Timer constants.
+#define PUMP_ON_TIME     5000UL //  5 seconds (every 2 minutes)
+#define STIRRER_ON_TIME 60000UL // 60 seconds (every hour)
+
 // On/off PWM values (adjust according to needs).
 #define LIGHT_VALUE_ON  125
 #define LIGHT_VALUE_OFF   0
@@ -25,32 +34,25 @@ DS3231_Simple rtc;
 #define HEATER_VALUE_ON  255
 #define HEATER_VALUE_OFF   0
 
-// transistor control pins
+// Transistor control pins.
 #define LIGHT_AOUT    3
 #define STIRRER_AOUT 10
 #define PUMP_AOUT     9
 #define HEATER_AOUT  11
 
+// Temperature control.
 #define TEMPERATURE_ONE_WIRE_BUS 5
-// Euglena optimum growth rate 25-30 C (source: http://www.metamicrobe.com/euglena/)
-// So we keep it around 27.5+-1 C
-#define TEMPERATURE_MIN   26.5f
-#define TEMPERATURE_MAX   28.5f
 
 // Setup a oneWire instance to communicate with any OneWire devices (not just Maxim/Dallas temperature ICs)
 OneWire temperatureOneWire(TEMPERATURE_ONE_WIRE_BUS);
 
 // Pass our oneWire reference to Dallas Temperature. 
 DallasTemperature temperatureSensor(&temperatureOneWire);
+
 // Timer declarations.
 Chrono pumpTimer;
 Chrono stirrerTimer;
 
-// timer vars
-#define PUMP_ON_TIME     5000UL //  5 seconds (every 2 minutes)
-#define STIRRER_ON_TIME 60000UL // 60 seconds (every hour)
-
-// the setup routine runs once when you press reset:
 void setup() {
 
    Serial.begin(9600);
@@ -86,44 +88,6 @@ void setup() {
   delay (4000);
   updateLight(rtc.read());
   updateHeater(temperature());
-}
-
-void runTest() {
-  Serial.println("Check that everything is at 0V");
-  while (!Serial.available());
-  Serial.read();
-
-  // Test outputs.
-  Serial.println("Test pump");
-  setPump(true);
-  while (!Serial.available());
-  Serial.read();
-  setPump(false);
-  
-  Serial.println("Test stirrer");
-  setStirrer(true);
-  while (!Serial.available());
-  Serial.read();
-  setStirrer(false);
-
-  Serial.println("Test light");
-  setLight(true);
-  while (!Serial.available());
-  Serial.read();
-  setLight(false);
-
-  Serial.println("Test heater");
-  setHeater(true);
-  while (!Serial.available());
-  Serial.read();
-  setLight(false);
-
-  // Test inputs.
-  Serial.println("Test time");
-  rtc.printTimeTo_HMS(Serial);  
-
-  Serial.println("Test temperature");
-  Serial.println(temperature());
 }
 
 ///////////////////////////////////////////
@@ -227,3 +191,61 @@ float temperature() {
   temperatureSensor.requestTemperatures(); // Send the command to get temperatures
   return temperatureSensor.getTempCByIndex(0);
 }
+
+void waitForInputSerial() {
+  while (!Serial.available()) delay(10);
+  flushInputSerial();
+}
+
+void flushInputSerial() {
+  while (Serial.available())
+    Serial.read();
+}
+
+void runTest() {
+  // Check if user wants to run tests.
+  Chrono testWait;
+  Serial.println("Send any key to start tests (timeout: 10s).");
+  while (!Serial.available())
+    if (testWait.hasPassed(10000UL))
+      return;
+  flushInputSerial();
+
+  // Start tests.
+  Serial.println("======= XENOLALIA TEST BEGIN =======");
+  Serial.println("After every test send a key to stop and go to next test");
+  
+  // Test inputs.
+  Serial.println("Test time");
+  rtc.printTimeTo_HMS(Serial);  
+
+  Serial.println("Test temperature");
+  Serial.println(temperature());
+
+  // Test outputs.
+  Serial.println("Check that everything is at 0V");
+  waitForInputSerial();
+
+  Serial.println("Test pump");
+  setPump(true);
+  waitForInputSerial();
+  setPump(false);
+  
+  Serial.println("Test stirrer");
+  setStirrer(true);
+  waitForInputSerial();
+  setStirrer(false);
+
+  Serial.println("Test light");
+  setLight(true);
+  waitForInputSerial();
+  setLight(false);
+
+  Serial.println("Test heater");
+  setHeater(true);
+  waitForInputSerial();
+  setLight(false);
+
+  Serial.println("======== XENOLALIA TEST END ========");
+}
+
