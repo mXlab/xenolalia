@@ -59,6 +59,9 @@ void setup() {
   
   // First we will disable any existing alarms.
   rtc.disableAlarms();
+
+  // Run initialization test.
+  runTest();
   
   // Alarm 2 runs every minute.
   rtc.setAlarm(DS3231_Simple::ALARM_EVERY_MINUTE);
@@ -69,6 +72,44 @@ void setup() {
   
   delay (4000);
   updateLight(rtc.read());
+}
+
+void runTest() {
+  Serial.println("Check that everything is at 0V");
+  while (!Serial.available());
+  Serial.read();
+
+  // Test outputs.
+  Serial.println("Test pump");
+  setPump(true);
+  while (!Serial.available());
+  Serial.read();
+  setPump(false);
+  
+  Serial.println("Test stirrer");
+  setStirrer(true);
+  while (!Serial.available());
+  Serial.read();
+  setStirrer(false);
+
+  Serial.println("Test light");
+  setLight(true);
+  while (!Serial.available());
+  Serial.read();
+  setLight(false);
+
+  Serial.println("Test heater");
+  setHeater(true);
+  while (!Serial.available());
+  Serial.read();
+  setHeater(false);
+
+  // Test inputs.
+  Serial.println("Test time");
+  rtc.printTimeTo_HMS(Serial);  
+
+//  Serial.println("Test temperature");
+  // print temperature
 }
 
 ///////////////////////////////////////////
