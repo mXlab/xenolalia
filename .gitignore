@@ -90,3 +90,13 @@ ENV/
 
 # Media
 *.mp4
+*.png
+*.jpg
+
+# Models
+*.hdf5
+*.hd5
+*.h5
+
+# Other
+*.gz
