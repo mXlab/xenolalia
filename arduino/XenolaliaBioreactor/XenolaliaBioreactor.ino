@@ -2,6 +2,8 @@
 
 #include <Chrono.h>
 #include <DS3231_Simple.h>
+#include <OneWire.h>
+#include <DallasTemperature.h>
 
 // Real-time clock.
 DS3231_Simple rtc;
@@ -9,6 +11,15 @@ DS3231_Simple rtc;
 // Hours of day where lights come on/off.
 #define LIGHT_HOUR_ON  10
 #define LIGHT_HOUR_OFF 19
+
+// Euglena optimum growth rate 25-30 C (source: http://www.metamicrobe.com/euglena/)
+// So we keep it around 27.5+-1 C
+#define TEMPERATURE_MIN   26.5f
+#define TEMPERATURE_MAX   28.5f
+
+// Timer constants.
+#define PUMP_ON_TIME     5000UL //  5 seconds (every 2 minutes)
+#define STIRRER_ON_TIME 60000UL // 60 seconds (every hour)
 
 // On/off PWM values (adjust according to needs).
 #define LIGHT_VALUE_ON  125
@@ -20,21 +31,28 @@ DS3231_Simple rtc;
 #define PUMP_VALUE_ON   75
 #define PUMP_VALUE_OFF   0
 
-// transistor control pins
+#define HEATER_VALUE_ON  255
+#define HEATER_VALUE_OFF   0
+
+// Transistor control pins.
 #define LIGHT_AOUT    3
-#define STIRRER_AOUT 11
-#define PUMP_AOUT    10
-#define XTRA_AOUT     9
+#define STIRRER_AOUT 10
+#define PUMP_AOUT     9
+#define HEATER_AOUT  11
+
+// Temperature control.
+#define TEMPERATURE_ONE_WIRE_BUS 5
+
+// Setup a oneWire instance to communicate with any OneWire devices (not just Maxim/Dallas temperature ICs)
+OneWire temperatureOneWire(TEMPERATURE_ONE_WIRE_BUS);
+
+// Pass our oneWire reference to Dallas Temperature. 
+DallasTemperature temperatureSensor(&temperatureOneWire);
 
 // Timer declarations.
 Chrono pumpTimer;
 Chrono stirrerTimer;
 
-// timer vars
-#define PUMP_ON_TIME     5000UL //  5 seconds (every 2 minutes)
-#define STIRRER_ON_TIME 60000UL // 60 seconds (every hour)
-
-// the setup routine runs once when you press reset:
 void setup() {
 
    Serial.begin(9600);
@@ -46,6 +64,7 @@ void setup() {
   pinMode(LIGHT_AOUT,   OUTPUT); digitalWrite(LIGHT_AOUT,   LOW);
   pinMode(STIRRER_AOUT, OUTPUT); digitalWrite(STIRRER_AOUT, LOW);
   pinMode(PUMP_AOUT,    OUTPUT); digitalWrite(PUMP_AOUT,    LOW);
+  pinMode(HEATER_AOUT,  OUTPUT); digitalWrite(HEATER_AOUT,  LOW);
 
   // Start real-time clock.
   rtc.begin();
@@ -55,6 +74,9 @@ void setup() {
   
   // First we will disable any existing alarms.
   rtc.disableAlarms();
+
+  // Run initialization test.
+  runTest();
   
   // Alarm 2 runs every minute.
   rtc.setAlarm(DS3231_Simple::ALARM_EVERY_MINUTE);
@@ -65,6 +87,7 @@ void setup() {
   
   delay (4000);
   updateLight(rtc.read());
+  updateHeater(temperature());
 }
 
 ///////////////////////////////////////////
@@ -97,15 +120,26 @@ void loop() {
 
     // Update light values according to current time.
     updateLight(timestamp);
+
+    // Update heater.
+    updateHeater(temperature());
   }
 
-  delay(20);
+  delay(200);
 }
 
 // Adjust lighting depending on time of day.
 void updateLight(const DateTime& timestamp) {
   uint8_t hour = timestamp.Hour;
   setLight(LIGHT_HOUR_ON <= hour && hour < LIGHT_HOUR_OFF);
+}
+
+void updateHeater(float temp) {
+  Serial.print("Temperature is: "); Serial.println(temp);
+  if (temp < TEMPERATURE_MIN)
+    setHeater(true);
+  else if (temp > TEMPERATURE_MAX)
+    setHeater(false);
 }
 
 // Control functions //////////////////////////////////////////////
@@ -125,6 +159,12 @@ void setPump(bool isOn) {
   rtc.printTimeTo_HMS(Serial);
   Serial.print(" :: Set pump to "); Serial.println(isOn ? "ON" : "OFF");
   analogWrite(PUMP_AOUT, isOn ? PUMP_VALUE_ON : PUMP_VALUE_OFF);
+}
+
+void setHeater(bool isOn) {
+  rtc.printTimeTo_HMS(Serial);
+  Serial.print(" :: Set heater to "); Serial.println(isOn ? "ON" : "OFF");
+  analogWrite(HEATER_AOUT, isOn ? HEATER_VALUE_ON : HEATER_VALUE_OFF);
 }
 
 void startStirrer() {
@@ -147,4 +187,65 @@ void stopPump() {
   pumpTimer.stop();
 }
 
+float temperature() {
+  temperatureSensor.requestTemperatures(); // Send the command to get temperatures
+  return temperatureSensor.getTempCByIndex(0);
+}
+
+void waitForInputSerial() {
+  while (!Serial.available()) delay(10);
+  flushInputSerial();
+}
+
+void flushInputSerial() {
+  while (Serial.available())
+    Serial.read();
+}
+
+void runTest() {
+  // Check if user wants to run tests.
+  Chrono testWait;
+  Serial.println("Send any key to start tests (timeout: 10s).");
+  while (!Serial.available())
+    if (testWait.hasPassed(10000UL))
+      return;
+  flushInputSerial();
+
+  // Start tests.
+  Serial.println("======= XENOLALIA TEST BEGIN =======");
+  Serial.println("After every test send a key to stop and go to next test");
+  
+  // Test inputs.
+  Serial.println("Test time");
+  rtc.printTimeTo_HMS(Serial);  
+
+  Serial.println("Test temperature");
+  Serial.println(temperature());
+
+  // Test outputs.
+  Serial.println("Check that everything is at 0V");
+  waitForInputSerial();
+
+  Serial.println("Test pump");
+  setPump(true);
+  waitForInputSerial();
+  setPump(false);
+  
+  Serial.println("Test stirrer");
+  setStirrer(true);
+  waitForInputSerial();
+  setStirrer(false);
+
+  Serial.println("Test light");
+  setLight(true);
+  waitForInputSerial();
+  setLight(false);
+
+  Serial.println("Test heater");
+  setHeater(true);
+  waitForInputSerial();
+  setLight(false);
+
+  Serial.println("======== XENOLALIA TEST END ========");
+}
 
