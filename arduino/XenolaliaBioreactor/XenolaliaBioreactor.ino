@@ -103,7 +103,7 @@ void setup() {
   startPump();
   startStirrer();
   
-  delay (4000);
+  delay (1000);
   updateLight(rtc.read());
   updateHeater(temperature());
 }
