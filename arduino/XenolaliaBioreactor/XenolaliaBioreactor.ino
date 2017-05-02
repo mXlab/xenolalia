@@ -69,15 +69,17 @@ Chrono stirrerTimer;
 
 void setup() {
 
-   Serial.begin(9600);
-     while (!Serial) {
-      ; // wait for serial port to connect. Needed for native USB
-    }
+  Serial.begin(9600);
+  while (!Serial) {
+    ; // wait for serial port to connect. Needed for native USB
+  }
 
   // Set pins.
-  pinMode(STIRRER_AOUT, OUTPUT); digitalWrite(STIRRER_AOUT, LOW);
-  pinMode(PUMP_AOUT,    OUTPUT); digitalWrite(PUMP_AOUT,    LOW);
-  pinMode(HEATER_AOUT,  OUTPUT); digitalWrite(HEATER_AOUT,  LOW);
+  pinMode(STIRRER_AOUT,       OUTPUT); digitalWrite(STIRRER_AOUT, LOW);
+  pinMode(PUMP_AOUT,          OUTPUT); digitalWrite(PUMP_AOUT,    LOW);
+  pinMode(HEATER_AOUT,        OUTPUT); digitalWrite(HEATER_AOUT,  LOW);
+  pinMode(INDICATOR_LED_OUT,  OUTPUT); digitalWrite(INDICATOR_LED_OUT,  LOW);
+
   // Init neopixel.
   pixels.begin();
 
@@ -96,6 +98,7 @@ void setup() {
   // Alarm 2 runs every minute.
   rtc.setAlarm(DS3231_Simple::ALARM_EVERY_MINUTE);
 
+  // Start stuff (for testing purposes).
   setLight(true);
   startPump();
   startStirrer();
@@ -118,7 +121,7 @@ void loop() {
   // Alarm 2 fired (minute alarm).
   if (alarmsFired & 2) {
 
-
+    // Read time.
     DateTime timestamp = rtc.read();
 
     // Every 2 minutes, start the pump.
