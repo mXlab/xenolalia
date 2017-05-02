@@ -244,8 +244,45 @@ void runTest() {
   Serial.println("After every test send a key to stop and go to next test");
   
   // Test inputs.
+  Serial.println("Test date");
+  rtc.printDateTo_YMD(Serial);
+  Serial.println();
   Serial.println("Test time");
-  rtc.printTimeTo_HMS(Serial);  
+  rtc.printTimeTo_HMS(Serial);
+  Serial.println();
+
+  Serial.println("Change date/time? (Y/N)");
+  while (!Serial.available()) delay(10);
+  if (Serial.peek() == 'Y' || Serial.peek() == 'y') {
+    flushInputSerial();
+    Serial.println("Input new date time in format \"YY-MM-DDTHH:mm:ss\" eg. \"17-01-31T18:35:01\"");
+    while (!Serial.available()) delay(10);
+    DateTime timestamp;
+    timestamp.Year   = Serial.readStringUntil('-').toInt();
+    timestamp.Month  = Serial.readStringUntil('-').toInt();
+    timestamp.Day    = Serial.readStringUntil('T').toInt();
+    timestamp.Hour   = Serial.readStringUntil(':').toInt();
+    timestamp.Minute = Serial.readStringUntil(':').toInt();
+    timestamp.Second = Serial.readString().toInt();
+    Serial.println("New date: ");
+    Serial.print(timestamp.Year);   Serial.print("-");
+    Serial.print(timestamp.Month);  Serial.print("-");
+    Serial.print(timestamp.Day);    Serial.print("T");
+    Serial.print(timestamp.Hour);   Serial.print(":");
+    Serial.print(timestamp.Minute); Serial.print(":");
+    Serial.print(timestamp.Second); Serial.println();
+    Serial.println("Save new date/time? (Y/N)");
+    while (!Serial.available()) delay(10);
+    if (Serial.peek() == 'Y' || Serial.peek() == 'y') {
+      rtc.write(timestamp);
+      Serial.println("New date/time saved.");
+      rtc.printDateTo_YMD(Serial);
+      rtc.printTimeTo_HMS(Serial);
+    }
+    else
+      Serial.println("Date/time change aborted.");
+  }
+  flushInputSerial();
 
   Serial.println("Test temperature");
   Serial.println(temperature());
