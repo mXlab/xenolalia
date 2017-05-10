@@ -13,8 +13,9 @@
 DS3231_Simple rtc;
 
 // Hours of day where lights come on/off.
-#define LIGHT_HOUR_ON  10
-#define LIGHT_HOUR_OFF 19
+// Based on recommendations from Carolina: 16 hours light, 8 hours dark
+#define LIGHT_HOUR_ON  7
+#define LIGHT_HOUR_OFF 23
 
 // Euglena optimum growth rate 25-30 C (source: http://www.metamicrobe.com/euglena/)
 // So we keep it around 27.5+-1 C
