@@ -27,7 +27,7 @@ DS3231_Simple rtc;
 #define STIRRER_ON_TIME 60000UL // 60 seconds (every hour)
 
 // On/off PWM values (adjust according to needs).
-#define LIGHT_VALUE_ON  125
+#define LIGHT_VALUE_ON  255
 #define LIGHT_VALUE_OFF   0
 
 #define STIRRER_VALUE_ON  250
