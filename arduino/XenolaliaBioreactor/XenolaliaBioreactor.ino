@@ -22,6 +22,10 @@ DS3231_Simple rtc;
 #define TEMPERATURE_MIN   26.5f
 #define TEMPERATURE_MAX   28.5f
 
+// If we reach that point, it either means that the euglenas are dead or that the temperature sensor is disconnected, 
+// returning DEVICE_DISCONNECTED = -127 (in both cases we must stop heating).
+#define TEMPERATURE_MIN_ERROR -10.0f
+
 // Timer constants.
 #define PUMP_ON_TIME     5000UL //  5 seconds (every 2 minutes)
 #define STIRRER_ON_TIME 60000UL // 60 seconds (every hour)
@@ -155,7 +159,11 @@ void updateLight(const DateTime& timestamp) {
 
 void updateHeater(float temp) {
   Serial.print("Temperature is: "); Serial.println(temp);
-  if (temp < TEMPERATURE_MIN)
+  if (temp < TEMPERATURE_MIN_ERROR) {
+    setHeater(false);
+    Serial.println("Something is wrong. Please check connection of temperature sensor.");
+  }
+  else if (temp < TEMPERATURE_MIN)
     setHeater(true);
   else if (temp > TEMPERATURE_MAX)
     setHeater(false);
