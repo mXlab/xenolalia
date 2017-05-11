@@ -22,6 +22,9 @@ DS3231_Simple rtc;
 #define TEMPERATURE_MIN   26.5f
 #define TEMPERATURE_MAX   28.5f
 
+#define TEMPERATURE_TARGET_MIN 25.0f
+#define TEMPERATURE_TARGET_MAX 30.0f
+
 // If we reach that point, it either means that the euglenas are dead or that the temperature sensor is disconnected, 
 // returning DEVICE_DISCONNECTED = -127 (in both cases we must stop heating).
 #define TEMPERATURE_MIN_ERROR -10.0f
@@ -71,6 +74,8 @@ DallasTemperature temperatureSensor(&temperatureOneWire);
 // Timer declarations.
 Chrono pumpTimer;
 Chrono stirrerTimer;
+
+bool heaterIsOn = false;
 
 void setup() {
 
@@ -159,7 +164,8 @@ void updateLight(const DateTime& timestamp) {
 
 void updateHeater(float temp) {
   Serial.print("Temperature is: "); Serial.println(temp);
-  if (temp < TEMPERATURE_MIN_ERROR) {
+  bool heaterPrevIsOn = heaterIsOn;
+  if (temp < TEMPERATURE_MIN_ERROR) {
     setHeater(false);
     Serial.println("Something is wrong. Please check connection of temperature sensor.");
   }
@@ -167,6 +173,15 @@ void updateHeater(float temp) {
     setHeater(true);
   else if (temp > TEMPERATURE_MAX)
     setHeater(false);
+
+  // If heater was toggled OR if temperature becomes outside of target range: save to log.
+  if ((heaterPrevIsOn != heaterIsOn) || 
+      (temp < TEMPERATURE_TARGET_MIN || temp > TEMPERATURE_TARGET_MAX)) {
+    int value = (int) (temp*10);
+    if (heaterIsOn)
+      value += 1000; 
+    rtc.writeLog( value );
+  }
 }
 
 // Control functions //////////////////////////////////////////////
@@ -202,6 +217,7 @@ void setHeater(bool isOn) {
   rtc.printTimeTo_HMS(Serial);
   Serial.print(" :: Set heater to "); Serial.println(isOn ? "ON" : "OFF");
   analogWrite(HEATER_AOUT, isOn ? HEATER_VALUE_ON : HEATER_VALUE_OFF);
+  heaterIsOn = isOn; // save value
 }
 
 void startStirrer() {
@@ -293,6 +309,17 @@ void runTest() {
   }
   flushInputSerial();
 
+  // Check/reset log.
+  Serial.println("Dump log");
+  dumpLog();
+  Serial.println("Clear log? (Y/N)");
+  while (!Serial.available()) delay(10);
+  if (Serial.peek() == 'Y' || Serial.peek() == 'y') {
+    flushInputSerial();
+    rtc.formatEEPROM();
+    Serial.println("Log cleared");
+  }
+
   Serial.println("Test temperature");
   Serial.println(temperature());
 
@@ -321,5 +348,33 @@ void runTest() {
   setLight(false);
 
   Serial.println("======== XENOLALIA TEST END ========");
+}
+
+void dumpLog()
+{
+  unsigned int loggedData;
+  DateTime     loggedTime;
+  
+  // Note that reading a log entry also deletes the log entry
+  // so you only get one-shot at reading it, if you want to do
+  // something with it, do it before you discard it!
+  unsigned int x = 0;
+  while(rtc.readLog(loggedTime,loggedData))
+  {
+    if(x == 0)
+    {
+      Serial.println();
+      Serial.println(F("Date,Temp (C)"));
+    }
+    
+    x++;
+    rtc.printTo(Serial,loggedTime);
+    Serial.print(',');
+    Serial.println(loggedData/10.0f);
+  }
+  Serial.println();
+  Serial.print(F("# Of Log Entries Found: "));
+  Serial.println(x);
+  Serial.println();
 }
 
