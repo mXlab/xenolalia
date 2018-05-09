@@ -23,7 +23,7 @@ image_dim = image_side*image_side
 
 fps = args.fps
 n_seconds = args.duration
-n_frames = fps * n_seconds
+n_frames = int(fps * n_seconds)
 interval = 1000.0 / fps
 
 frame = np.random.random((1, image_dim))
