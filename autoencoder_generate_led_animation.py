@@ -1,3 +1,12 @@
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("model_file", type=str, help="The file containing the trained model")
+
+parser.add_argument("-f", "--fps", type=float, default=10, help="Frames per second")
+parser.add_argument("-d", "--duration", type=float, default=10, help="Duration (in seconds)")
+
+args = parser.parse_args()
 import numpy as np
 from keras.models import Model, load_model
 
@@ -8,8 +17,9 @@ from rgbmatrix import Adafruit_RGBmatrix
 import Image
 import ImageDraw
 
-fps = 10
+fps = args.fps
 interval = 1./fps
+n_frames = int(args.duration * fps)
 
 PWM_BIT_DEPTH = 6
 
@@ -32,24 +42,21 @@ def channel(v, max):
 def autoencoder_generate(n_steps):
     # Generate first image as random.
     frame = np.random.random((1,image_dim))
-    
+
     # Iterate.
     for t in range(n_steps):
-      
+
         f = frame.reshape(image_side, image_side)
         for x in range(image_side):
             for y in range(image_side):
                 intensity = f[x, y]
                 matrix.SetPixel(x+2, y+2, channel(intensity, MAX_RED), channel(intensity, MAX_GREEN), channel(intensity, MAX_BLUE))
-           
-      
+
         # Generate next frame.
         frame = model.predict(frame)
 
 	time.sleep(interval)
 
-filename = "autoencoder.hdf5"
-#filename = "autoencoder.h5"
-model = load_model(filename)
+model = load_model(args.model_file)
 
-autoencoder_generate(1000)
+autoencoder_generate(n_frames)
