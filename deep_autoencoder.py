@@ -6,11 +6,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument("encoder", type=str, help="A comma-separated list of numbers representing the number of neurons in each hidden layer of the encoder")
 parser.add_argument("model_file", type=str, help="The file where to save the model (in HDF5 format)")
 
-parser.add_argument("-s", "--sparse", type=bool, default=False, help="Sparse autoencoder")
+parser.add_argument("-s", "--sparse", default=False, action='store_true', help="Sparse autoencoder")
 parser.add_argument("-d", "--decoder", type=str, default=None, help="A comma-separated list of numbers representing the number of neurons in each hidden layer of the decoder")
 parser.add_argument("-e", "--n-epochs", type=int, default=100, help="Number of epochs")
 parser.add_argument("-b", "--batch-size", type=int, default=256, help="The batch size")
-parser.add_argument("-F", "--show-figure", type=bool, default=True, help="Show example reconstruction after training")
+parser.add_argument("-F", "--show-figure", default=True, action='store_true', help="Show example reconstruction after training")
 parser.add_argument("-D", "--model-directory", type=str, default=".", help="The directory where models will be saved")
 
 args = parser.parse_args()
