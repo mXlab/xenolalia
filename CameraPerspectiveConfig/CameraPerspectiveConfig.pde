@@ -9,7 +9,7 @@
  *  /etc/modules. After a restart you should be able to see the
  *  camera device as /dev/video0.
  */
- 
+
 
 import gohai.glvideo.*;
 GLCapture video;
@@ -18,6 +18,8 @@ final String CONFIG_FILE_SAVE = "camera_perspective.conf";
 final int SCALING_FACTOR = 2;
 final int CAM_WIDTH = 320;
 final int CAM_HEIGHT = 200;
+
+final int DEVICE_ID = 0;
 
 int currentPoint = 0;
 final int N_POINTS = 4;
@@ -30,22 +32,23 @@ void setup() {
   String[] devices = GLCapture.list();
   println("Devices:");
   printArray(devices);
+  String[] configs = GLCapture.configs(devices[DEVICE_ID]);
   if (0 < devices.length) {
-    String[] configs = GLCapture.configs(devices[0]);
     println("Configs:");
     printArray(configs);
   }
 
   // this will use the first recognized camera by default
-  video = new GLCapture(this);
+  video = new GLCapture(this, devices[DEVICE_ID]);
 
   // you could be more specific also, e.g.
-  //video = new GLCapture(this, devices[0]);
+  //
+  //video = new GLCapture(this, devices[DEVICE_ID], configs[1]);
   //video = new GLCapture(this, devices[0], 640, 480, 25);
   //video = new GLCapture(this, devices[0], configs[0]);
 
   video.play();
-  
+
   // Initialize positions.
   points[0] = new PVector(0, 0);
   points[1] = new PVector(0, height);
@@ -55,13 +58,13 @@ void setup() {
 
 void draw() {
   background(0);
-  
+
   // Draw video.
   if (video.available()) {
     video.read();
   }
   image(video, 0, 0, width, height);
-  
+
   // Draw controls.
   for (int i=0; i<N_POINTS; i++) {
     float x = points[i].x;
