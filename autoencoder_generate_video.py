@@ -3,6 +3,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("model_file", type=str, help="The file containing the trained model")
 
+parser.add_argument("-c", "--convolutional", default=False, action='store_true', help="Use convolutional autoencoder")
 parser.add_argument("-f", "--fps", type=float, default=30, help="Frames per second")
 parser.add_argument("-d", "--duration", type=float, default=10, help="Duration (in seconds)")
 parser.add_argument("-n", "--n-clips", type=int, default=10, help="Number of video clips to generate")
@@ -26,12 +27,18 @@ n_seconds = args.duration
 n_frames = int(fps * n_seconds)
 interval = 1000.0 / fps
 
-frame = np.random.random((1, image_dim))
+convolutional = args.convolutional
+if convolutional:
+    input_shape = (1, image_side, image_side, 1)
+else:
+    input_shape = (1, image_dim)
+
+frame = np.random.random(input_shape)
 
 def autoencoder_generate(video_filename):
     global frame, model
     # Generate first image as random
-    frame = np.random.random((1, image_dim))
+    frame = np.random.random(input_shape)
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -60,6 +67,7 @@ def autoencoder_generate(video_filename):
 
 # load the model
 model = load_model(args.model_file)
+print(model.summary())
 
 # create models directory if needed
 if not os.path.exists(args.output_directory):
