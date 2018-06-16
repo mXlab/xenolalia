@@ -6,7 +6,13 @@ parser = argparse.ArgumentParser()
 parser.add_argument("encoder", type=str, help="A comma-separated list of numbers representing the number of neurons in each hidden layer of the encoder")
 parser.add_argument("model_file", type=str, help="The file where to save the model (in HDF5 format)")
 
-parser.add_argument("-s", "--sparse", default=False, action='store_true', help="Sparse autoencoder")
+parser.add_argument("-c", "--convolutional", default=False, action='store_true', help="Use convolutional autoencoder")
+parser.add_argument("-s", "--sparse", default=False, action='store_true', help="User sparse autoencoder")
+parser.add_argument("--dropout", type=float, default=0.25, help="Dropout value (if using sparse mode with convolutional net)")
+parser.add_argument("--last-padding-valid", default=False, help="Set last layer's padding to 'valid' instead of 'same'")
+parser.add_argument("-k", "--kernel-size", type=int, default=3, help="Convolutional kernel size")
+parser.add_argument("-ds", "--down-sampling-size", type=int, default=2, help="Downsampling size (for encoder)")
+parser.add_argument("-us", "--up-sampling-size", type=int, default=2, help="Unsampling size (for decoder)")
 parser.add_argument("-d", "--decoder", type=str, default=None, help="A comma-separated list of numbers representing the number of neurons in each hidden layer of the decoder")
 parser.add_argument("-e", "--n-epochs", type=int, default=100, help="Number of epochs")
 parser.add_argument("-b", "--batch-size", type=int, default=256, help="The batch size")
@@ -15,7 +21,7 @@ parser.add_argument("-D", "--model-directory", type=str, default=".", help="The 
 
 args = parser.parse_args()
 
-from keras.layers import Input, Dense
+from keras.layers import Input, Dense, Conv2D, MaxPooling2D, UpSampling2D, Dropout
 from keras.models import Model, load_model
 from keras.regularizers import l1
 
@@ -25,31 +31,63 @@ image_dim = image_side*image_side
 
 encoding_dim = 32  # 32 floats -> compression of factor 24.5, assuming the input is 784 floats
 
+convolutional = args.convolutional
+
 # this is our input placeholder
-input = Input(shape=(image_dim,))
+if convolutional:
+    input = Input(shape=(image_side,image_side,1))
+else:
+    input = Input(shape=(image_dim,))
 
 # build encoder
 encoder_layers = args.encoder.split(',')
 
 is_sparse = args.sparse
+kernel_size = args.kernel_size
+kernel = (kernel_size, kernel_size)
+down_sampling = (args.down_sampling_size, args.down_sampling_size)
+up_sampling = (args.up_sampling_size, args.up_sampling_size)
 
 encoder = input
-for i in range(len(encoder_layers)-1):
-    n_hidden = encoder_layers[i]
-    encoder = Dense(int(n_hidden), activation='relu')(encoder)
-if is_sparse:
-    encoder = Dense(int(encoder_layers[-1]), activation='relu', activity_regularizer=l1(1e-5))(encoder)
+
+if convolutional:
+    for n_hidden in encoder_layers:
+        encoder = Conv2D(int(n_hidden), kernel, activation='relu', padding='same')(encoder)
+        encoder = MaxPooling2D(down_sampling, padding='same')(encoder)
+        if is_sparse:
+            encoder = Dropout(args.dropout)(encoder)
 else:
-    encoder = Dense(int(encoder_layers[-1]), activation='relu')(encoder)
+    for i in range(len(encoder_layers)-1):
+        n_hidden = encoder_layers[i]
+        encoder = Dense(int(n_hidden), activation='relu')(encoder)
+    if is_sparse:
+        encoder = Dense(int(encoder_layers[-1]), activation='relu', activity_regularizer=l1(1e-5))(encoder)
+    else:
+        encoder = Dense(int(encoder_layers[-1]), activation='relu')(encoder)
 
 # build decoder
+decoder = encoder
 if (args.decoder != None):
     decoder_layers = args.decoder.split(',')
-    decoder = encoder
-    for n_hidden in decoder_layers:
-        decoder = Dense(int(n_hidden), activation='relu')(decoder)
+    if convolutional:
+        for i in range(len(decoder_layers)-1):
+            n_hidden = decoder_layers[i]
+            decoder = Conv2D(int(n_hidden), kernel, activation='relu', padding='same')(decoder)
+            decoder = UpSampling2D(up_sampling)(decoder)
+        decoder = Conv2D(int(encoder_layers[-1]), kernel, activation='relu', padding='same')(decoder)
+        decoder = UpSampling2D(up_sampling)(decoder)
+    else:
+        for n_hidden in decoder_layers:
+            decoder = Dense(int(n_hidden), activation='relu')(decoder)
 
-decoder = Dense(image_dim, activation='sigmoid')(decoder)
+if convolutional:
+    if args.last_padding_valid:
+        padding = 'valid'
+    else:
+        padding = 'same'
+    decoder = Conv2D(1, kernel, activation='sigmoid', padding=padding)(decoder)
+else:
+    decoder = Dense(image_dim, activation='sigmoid')(decoder)
 
 output = decoder
 
@@ -61,6 +99,9 @@ print(autoencoder.summary())
 # compile autoencoder
 autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
 
+# Make image of model
+from keras.utils import plot_model
+plot_model(autoencoder, to_file='model.png')
 
 # create training and test sets
 from keras.datasets import mnist
@@ -69,8 +110,13 @@ import numpy as np
 
 x_train = x_train.astype('float32') / 255.
 x_test = x_test.astype('float32') / 255.
-x_train = x_train.reshape((len(x_train), np.prod(x_train.shape[1:])))
-x_test = x_test.reshape((len(x_test), np.prod(x_test.shape[1:])))
+
+if convolutional:
+    x_train = x_train.reshape((len(x_train), image_side, image_side, 1))
+    x_test = x_test.reshape((len(x_test), image_side, image_side, 1))
+else:
+    x_train = x_train.reshape((len(x_train), np.prod(x_train.shape[1:])))
+    x_test = x_test.reshape((len(x_test), np.prod(x_test.shape[1:])))
 
 import os.path
 from keras.callbacks import ModelCheckpoint
