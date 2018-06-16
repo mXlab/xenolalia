@@ -3,7 +3,9 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("model_file", type=str, help="The file containing the trained model")
 
+parser.add_argument("-I", "--still-images", default=False, action='store_true', help="Generate still images instead of videos")
 parser.add_argument("-c", "--convolutional", default=False, action='store_true', help="Use convolutional autoencoder")
+parser.add_argument("-i", "--n-iterations", type=int, default=300, help="Number of iterations (for generating still images)")
 parser.add_argument("-f", "--fps", type=float, default=30, help="Frames per second")
 parser.add_argument("-d", "--duration", type=float, default=10, help="Duration (in seconds)")
 parser.add_argument("-n", "--n-clips", type=int, default=10, help="Number of video clips to generate")
@@ -24,10 +26,15 @@ image_dim = image_side*image_side
 
 fps = args.fps
 n_seconds = args.duration
-n_frames = int(fps * n_seconds)
 interval = 1000.0 / fps
 
 convolutional = args.convolutional
+still_images = args.still_images
+if still_images:
+    n_frames = args.n_iterations
+else:
+    n_frames = int(fps * n_seconds)
+
 if convolutional:
     input_shape = (1, image_side, image_side, 1)
 else:
@@ -35,8 +42,14 @@ else:
 
 frame = np.random.random(input_shape)
 
-def autoencoder_generate(video_filename):
-    global frame, model
+def autoencoder_generate(filename):
+    global frame, model, still_images
+
+    if still_images:
+        filename = filename + ".jpg"
+    else:
+        filename = filename + ".mp4"
+
     # Generate first image as random
     frame = np.random.random(input_shape)
 
@@ -60,10 +73,18 @@ def autoencoder_generate(video_filename):
         return im
 
     #legend(loc=0)
-    ani = animation.FuncAnimation(fig, update_img, n_frames, interval=interval)
-    writer = animation.writers['ffmpeg'](fps=fps)
+    if still_images:
+        for i in range(n_frames):
+            im = update_img(i)
+        # Save image
+        fig.savefig(filename)
+#        print(im.make_image(None))
+#        .imsave(filename)
+    else:
+        ani = animation.FuncAnimation(fig, update_img, n_frames, interval=interval)
+        writer = animation.writers['ffmpeg'](fps=fps)
 
-    ani.save(video_filename, writer=writer, dpi=100)#,savefig_kwargs={ 'bbox_inches': 'tight', 'pad_inches': 0 })
+        ani.save(filename, writer=writer, dpi=100)#,savefig_kwargs={ 'bbox_inches': 'tight', 'pad_inches': 0 })
 
 # load the model
 model = load_model(args.model_file)
@@ -74,5 +95,5 @@ if not os.path.exists(args.output_directory):
 	os.makedirs(args.output_directory)
 
 for i in range(0, args.n_clips):
-  print("Generating movie # {0:02d}".format(i))
-  autoencoder_generate(args.output_directory + "/output_{0:02d}.mp4".format(i))
+  print("Generating # {0:02d}".format(i))
+  autoencoder_generate(args.output_directory + "/output_{0:02d}".format(i))
