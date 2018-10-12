@@ -43,6 +43,7 @@ DS3231_Simple rtc;
 #define PUMP_VALUE_ON   75
 #define PUMP_VALUE_OFF   0
 
+#define HEATER_ENABLE      0
 #define HEATER_VALUE_ON  255
 #define HEATER_VALUE_OFF   0
 
@@ -87,7 +88,9 @@ void setup() {
   // Set pins.
   pinMode(STIRRER_AOUT,       OUTPUT); digitalWrite(STIRRER_AOUT, LOW);
   pinMode(PUMP_AOUT,          OUTPUT); digitalWrite(PUMP_AOUT,    LOW);
+#if ENABLE_HEATER
   pinMode(HEATER_AOUT,        OUTPUT); digitalWrite(HEATER_AOUT,  LOW);
+#endif
   pinMode(INDICATOR_LED_OUT,  OUTPUT); digitalWrite(INDICATOR_LED_OUT,  LOW);
 
   // Init neopixel.
@@ -115,7 +118,9 @@ void setup() {
   
   delay (1000);
   updateLight(rtc.read());
+#if ENABLE_HEATER
   updateHeater(temperature());
+#endif
 }
 
 ///////////////////////////////////////////
@@ -149,8 +154,10 @@ void loop() {
     // Update light values according to current time.
     updateLight(timestamp);
 
+#if ENABLE_HEATER
     // Update heater.
     updateHeater(temperature());
+#endif
   }
 
   delay(200);
@@ -162,6 +169,7 @@ void updateLight(const DateTime& timestamp) {
   setLight(LIGHT_HOUR_ON <= hour && hour < LIGHT_HOUR_OFF);
 }
 
+#if ENABLE_HEATER
 void updateHeater(float temp) {
   Serial.print("Temperature is: "); Serial.println(temp);
   bool heaterPrevIsOn = heaterIsOn;
@@ -183,6 +191,7 @@ void updateHeater(float temp) {
     rtc.writeLog( value );
   }
 }
+#endif
 
 // Control functions //////////////////////////////////////////////
 void setLight(bool isOn) {
@@ -342,10 +351,12 @@ void runTest() {
   waitForInputSerial();
   setLight(false);
 
+#if ENABLE_HEATER
   Serial.println("Test heater");
   setHeater(true);
   waitForInputSerial();
   setLight(false);
+#endif
 
   Serial.println("======== XENOLALIA TEST END ========");
 }
