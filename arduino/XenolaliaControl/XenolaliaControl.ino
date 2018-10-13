@@ -16,44 +16,39 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-int servoPin = 0; // WEMOS pin D3
-Servo Servo1; 
-int Sangle = 90; // initial servo angle
-///
+#include <Servo.h>
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 #include <OSCMessage.h>
 #include <Metro.h>
 #include <NeoPixelBus.h>
-//#include <String.h>
-///
-const char* ssid = "OPTONET";  // your WiFi network SSID
-const char* pass = "9F69D465B2EE"; // your WiFi network password
-int device_id = -1;
-int WIP[]={0,0,0,0};
+
+// Config file needs to be edited to match network settings.
+#include "Config.h"
+
+// Servomotor.
+#define SERVO_PIN 0
+Servo servo;
+int sangle = 90; // initial servo angle
+
+// Network.
 WiFiUDP Udp;                                // A UDP instance to let us send and receive packets over UDP
-const IPAddress dest(192, 168, 10, 255);
-const unsigned int rxport = 12345;          // remote port to receive OSC
-const unsigned int txport = 54321;        // local port to listen for OSC packets (actually not used for sending)
-
-
 IPAddress thisip;
-int WID = 23; // ID# OF YOUR WEMOS 
 
+// Pixel strip control.
+#define N_PIXELS 20 // how many neopixels in your strip?
+#define PIXEL_PIN 4 // ignored for Esp8266 - Wemos, it uses GPIO 2 = PIN D4 (UART MODE)
 
-const uint16_t PixelCount = 20; // how many neopixels in your strip?
-const uint8_t PixelPin = 2; // ignored for Esp8266 - Wemos, it uses GPIO 2 = PIN D4 (UART MODE)
-
-#define colorSaturation 128
+#define COLOR_SATURATION 128
 
 // UART MODE, HIGH SPEED
-NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart800KbpsMethod> strip(PixelCount, PixelPin);
+NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart800KbpsMethod> strip(N_PIXELS, PIXEL_PIN);
 
 
-RgbColor red(colorSaturation, 0, 0);
-RgbColor green(0, colorSaturation, 0);
-RgbColor blue(0, 0, colorSaturation);
-RgbColor white(colorSaturation);
+RgbColor red(COLOR_SATURATION, 0, 0);
+RgbColor green(0, COLOR_SATURATION, 0);
+RgbColor blue(0, 0, COLOR_SATURATION);
+RgbColor white(COLOR_SATURATION);
 RgbColor black(0);
 
 HslColor hslRed(red);
@@ -67,104 +62,84 @@ bool INLED = false;
 
 void setup()
 {
+  // Init serial.
+  Serial.begin(115200);
+  while (!Serial); // wait for serial attach
 
-    pinMode(LED_BUILTIN, OUTPUT);     // Initialize the LED_BUILTIN pin as an output
+  // Init outputs.
+  pinMode(LED_BUILTIN, OUTPUT);     // Initialize the LED_BUILTIN pin as an output
+  servo.attach(SERVO_PIN); // attach servo to WEMOS pin D3
 
-    Servo1.attach(servoPin); // attach servo to WEMOS pin D3
-       
-    Serial.begin(115200);
-    while (!Serial); // wait for serial attach
+  // Init network.
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
 
-    // init network
-    Serial.println();
-    Serial.print("Connecting to ");
-    Serial.println(ssid);
-    
-    WiFi.begin(ssid, pass);
-    
-    while (WiFi.status() != WL_CONNECTED) {
-      delay(500);
-      Serial.print(".");
-    }
-    
-    Serial.println("");
-    Serial.println("WiFi connected");  
-    Serial.println("IP address: ");
-    thisip = WiFi.localIP();
-    Serial.println( thisip );
-    
-    Udp.begin(rxport);
-    
-    Serial.println("Starting UDP");
-    Serial.print("Local port: ");
-    Serial.println(Udp.localPort());
-    
-    device_id = WID; // thisip[3];
-    //
-    
+  WiFi.begin(ssid, pass);
 
-    // this resets all the neopixels to an off state
-    strip.Begin();
-    strip.Show();
-    
-    
-    for (int i=0; i< PixelCount; ++i){
-        strip.SetPixelColor(i, red);
-    }   
-    strip.Show(); 
+  while (WiFi.status() != WL_CONNECTED) {
     delay(500);
-    
-    for (int i=0; i< PixelCount; ++i){
-        strip.SetPixelColor(i, green);
-    }   
-    strip.Show(); 
-    delay(500);   
+    Serial.print(".");
+  }
 
-    for (int i=0; i< PixelCount; ++i){
-        strip.SetPixelColor(i, blue);
-    }   
-    strip.Show(); 
-    delay(500);
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  thisip = WiFi.localIP();
+  Serial.println( thisip );
 
-     for (int i=0; i< PixelCount; ++i){
-        strip.SetPixelColor(i, hslBlack);
-    }   
-    strip.Show(); 
-    delay(100);
+  Udp.begin(rxport);
+
+  Serial.println("Starting UDP");
+  Serial.print("Local port: ");
+  Serial.println(Udp.localPort());
 
 
+  // Init LED strip.
+  strip.Begin();
+  strip.Show();
 
-    Servo1.write(0); 
-    delay(1000);
-    Servo1.write(90); 
-    delay(1000);
-    Servo1.write(180); 
-    delay(1000);
-    Servo1.write(0); 
-    delay(1000);
+  for (int i=0; i< N_PIXELS; ++i){
+    strip.SetPixelColor(i, red);
+  }
+  strip.Show();
+  delay(500);
 
+  for (int i=0; i< N_PIXELS; ++i){
+    strip.SetPixelColor(i, green);
+  }
+  strip.Show();
+  delay(500);
 
-   digitalWrite(LED_BUILTIN, LOW);   // Turn the LED on (Note that HIGH is the voltage level
-   delay(1000);
-   digitalWrite(LED_BUILTIN, HIGH);   // Turn the LED off (Note that LOW is the voltage level
+  for (int i=0; i< N_PIXELS; ++i){
+    strip.SetPixelColor(i, blue);
+  }
+  strip.Show();
+  delay(500);
 
-    
+  for (int i=0; i< N_PIXELS; ++i){
+    strip.SetPixelColor(i, hslBlack);
+  }
+  strip.Show();
+  delay(100);
+
+  // Blink indicator led.
+  digitalWrite(LED_BUILTIN, LOW);   // Turn the LED on (Note that HIGH is the voltage level
+  delay(1000);
+  digitalWrite(LED_BUILTIN, HIGH);   // Turn the LED off (Note that LOW is the voltage level
 }
 
 /////////////////////////////////////
 void loop()
 {
-
-    osc_message_pump();
-
-
+  receiveOsc();
 }
 
 
 
 /////////////////////////////////////
 /// READ OSC MESSAGES ///
-void osc_message_pump() {  
+void receiveOsc() {
   OSCMessage in;
   int size;
 
@@ -177,8 +152,8 @@ void osc_message_pump() {
     }
 
     if(!in.hasError()) {
-      in.route("/xenopixels", on_xenopixels);
-      in.route("/xenoshutter", on_xenoshutter);
+      in.route("/xenopixels", onXenopixels);
+      in.route("/xenoshutter", onXenoshutter);
      }
   } // if
 
@@ -192,55 +167,50 @@ void osc_message_pump() {
 }
 
 /////////////////////////////////////
-void on_xenopixels(OSCMessage &msg, int addrOffset) {
+void onXenopixels(OSCMessage &msg, int addrOffset) {
 
-   int osc_red, osc_green, osc_blue;
-  
+  int r, g, b;
+
   if( msg.isInt(0)) {
-    osc_red = msg.getInt(0);
-    osc_green = msg.getInt(1);
-    osc_blue = msg.getInt(2);   
+    r = msg.getInt(0);
+    g = msg.getInt(1);
+    b = msg.getInt(2);
   }
 
-  Serial.println("osc_color: " + String(osc_red) + " " + String(osc_green) + " " + String(osc_blue));
-  
- 
+  Serial.println("osc_color: " + String(r) + " " + String(g) + " " + String(b));
 
-  RgbColor osc_color(osc_red, osc_green, osc_blue);
+  RgbColor oscColor(r, g, b);
 
-      for (int i=0; i< PixelCount; ++i){
-        strip.SetPixelColor(i, osc_color);
-    }  
-        strip.Show(); 
+  for (int i=0; i< N_PIXELS; ++i){
+    strip.SetPixelColor(i, oscColor);
+  }
+  strip.Show();
 
-    // delay(20);
+  // delay(20);
 }
 
 
 /////////////////////////////////////
-void on_xenoshutter(OSCMessage &msg, int addrOffset) {
+void onXenoshutter(OSCMessage &msg, int addrOffset) {
 
- // myservo.attach(servoPin, 500, 2400); 
+ // myservo.attach(SERVO_PIN, 500, 2400);
 
  // delay(50);
-  
+
   if( msg.isInt(0)) {
-    Sangle = msg.getInt(0);  
+    sangle = msg.getInt(0);
   }
 
-  if (Sangle == 0){ Sangle = 12;}
+  if (sangle == 0){ sangle = 12;}
 
-  Serial.println("servo angle: " + String(Sangle));
+  Serial.println("servo angle: " + String(sangle));
 
-  if (Sangle <=12) { Sangle = 12; }
-  
-  Servo1.write(Sangle); // set the servo position to the given angle
-  
+  if (sangle <=12) { sangle = 12; }
+
+  servo.write(sangle); // set the servo position to the given angle
+
   delay(100);
 
  // myservo.detach();   // detaches the servo
 
 }
-
-
-
