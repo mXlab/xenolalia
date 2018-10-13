@@ -193,24 +193,17 @@ void onXenopixels(OSCMessage &msg, int addrOffset) {
 /////////////////////////////////////
 void onXenoshutter(OSCMessage &msg, int addrOffset) {
 
- // myservo.attach(SERVO_PIN, 500, 2400);
-
- // delay(50);
-
   if( msg.isInt(0)) {
-    sangle = msg.getInt(0);
+    int sangle = msg.getInt(0);
+
+    if (sangle == 0) { sangle = 12;}
+
+    Serial.println("servo angle: " + String(sangle));
+
+    if (sangle <=12) { sangle = 12; }
+  
+    servo.write(sangle); // set the servo position to the given angle
+  
+    delay(100);
   }
-
-  if (sangle == 0){ sangle = 12;}
-
-  Serial.println("servo angle: " + String(sangle));
-
-  if (sangle <=12) { sangle = 12; }
-
-  servo.write(sangle); // set the servo position to the given angle
-
-  delay(100);
-
- // myservo.detach();   // detaches the servo
-
 }
