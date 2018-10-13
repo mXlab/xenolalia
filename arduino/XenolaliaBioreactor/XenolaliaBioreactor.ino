@@ -35,8 +35,10 @@ DS3231_Simple rtc;
 
 // Euglena optimum growth rate 25-30 C (source: http://www.metamicrobe.com/euglena/)
 // So we keep it around 27.5+-1 C
-#define TEMPERATURE_MIN   26.5f
-#define TEMPERATURE_MAX   28.5f
+//#define TEMPERATURE_MIN   26.5f
+//#define TEMPERATURE_MAX   28.5f
+#define TEMPERATURE_MIN   25.5f
+#define TEMPERATURE_MAX   27.5f
 
 #define TEMPERATURE_TARGET_MIN 25.0f
 #define TEMPERATURE_TARGET_MAX 30.0f
