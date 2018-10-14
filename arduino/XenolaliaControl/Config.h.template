@@ -1,0 +1,15 @@
+// Your WiFi network SSID.
+const char* ssid = "MySSID";
+
+// Your WiFi network password.
+const char* pass = "MyPassword"; 
+
+// The destination IP.
+const IPAddress dest(192, 168, 10, 255);
+
+// Remote port to receive OSC.
+const unsigned int rxport = 12345;
+        
+// Local port to listen for OSC packets (actually not used for sending).
+const unsigned int txport = 54321;
+

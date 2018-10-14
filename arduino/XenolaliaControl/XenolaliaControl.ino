@@ -20,8 +20,7 @@
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 #include <OSCMessage.h>
-#include <Metro.h>
-#include <NeoPixelBus.h>
+#include <FastLED.h>
 
 // Config file needs to be edited to match network settings.
 #include "Config.h"
@@ -37,28 +36,14 @@ IPAddress thisip;
 
 // Pixel strip control.
 #define N_PIXELS 20 // how many neopixels in your strip?
-#define PIXEL_PIN 4 // ignored for Esp8266 - Wemos, it uses GPIO 2 = PIN D4 (UART MODE)
+#define DATA_PIN 4 // green wire
+#define CLOCK_PIN 5 // yellow wire
+#define COLOR_ORDER BGR //  (adjust for RGB)
 
-#define COLOR_SATURATION 128
+// This is an array of leds.  One item for each led in your strip.
+CRGB leds[N_PIXELS];
 
-// UART MODE, HIGH SPEED
-NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart800KbpsMethod> strip(N_PIXELS, PIXEL_PIN);
-
-
-RgbColor red(COLOR_SATURATION, 0, 0);
-RgbColor green(0, COLOR_SATURATION, 0);
-RgbColor blue(0, 0, COLOR_SATURATION);
-RgbColor white(COLOR_SATURATION);
-RgbColor black(0);
-
-HslColor hslRed(red);
-HslColor hslGreen(green);
-HslColor hslBlue(blue);
-HslColor hslWhite(white);
-HslColor hslBlack(black);
-
-bool INLED = false;
-
+#define DEFAULT_BRIGHTNESS 128
 
 void setup()
 {
@@ -94,47 +79,26 @@ void setup()
   Serial.print("Local port: ");
   Serial.println(Udp.localPort());
 
-
   // Init LED strip.
-  strip.Begin();
-  strip.Show();
-
-  for (int i=0; i< N_PIXELS; ++i){
-    strip.SetPixelColor(i, red);
-  }
-  strip.Show();
-  delay(500);
-
-  for (int i=0; i< N_PIXELS; ++i){
-    strip.SetPixelColor(i, green);
-  }
-  strip.Show();
-  delay(500);
-
-  for (int i=0; i< N_PIXELS; ++i){
-    strip.SetPixelColor(i, blue);
-  }
-  strip.Show();
-  delay(500);
-
-  for (int i=0; i< N_PIXELS; ++i){
-    strip.SetPixelColor(i, hslBlack);
-  }
-  strip.Show();
-  delay(100);
+  FastLED.addLeds<APA102, DATA_PIN, CLOCK_PIN, COLOR_ORDER>(leds, N_PIXELS);
+  FastLED.setBrightness(DEFAULT_BRIGHTNESS);
 
   // Blink indicator led.
   digitalWrite(LED_BUILTIN, LOW);   // Turn the LED on (Note that HIGH is the voltage level
   delay(1000);
   digitalWrite(LED_BUILTIN, HIGH);   // Turn the LED off (Note that LOW is the voltage level
+
+  for (int i=0; i<N_PIXELS; i++)
+    leds[i] = CRGB::White;
+  FastLED.show();
 }
 
 /////////////////////////////////////
 void loop()
 {
   receiveOsc();
+  delay(1);
 }
-
 
 
 /////////////////////////////////////
@@ -152,46 +116,85 @@ void receiveOsc() {
     }
 
     if(!in.hasError()) {
-      in.route("/xenopixels", onXenopixels);
-      in.route("/xenoshutter", onXenoshutter);
+      in.route("/xeno/pixels/all",  onXenoPixelsAll);
+      in.route("/xeno/pixels/one",  onXenoPixelsOne);
+      in.route("/xeno/pixels/brightness",  onXenoPixelsBrightness);
+      in.route("/xeno/shutter", onXenoShutter);
      }
   } // if
+}
 
-   INLED = !(INLED);
-   if(INLED){
-      digitalWrite(LED_BUILTIN, LOW);   // Turn the LED on (Note that LOW is the voltage level
-   }else{
-     digitalWrite(LED_BUILTIN, HIGH);   // Turn the LED on (Note that LOW is the voltage level
-   }
+void onXenoPixels(OSCMessage &msg, int addrOffset, bool allPixels) {
+  int arg = 0;
+  int pixelIndex = (-1);
+  if (!allPixels) {
+    pixelIndex = msg.getInt(arg++);
+  }
 
+  if (msg.match("/rgb", addrOffset)) {
+    Serial.println("RGB");
+    int r = msg.getInt(arg++);
+    int g = msg.getInt(arg++);
+    int b = msg.getInt(arg++);
+
+    if (allPixels) {
+      for (int i=0; i<N_PIXELS; i++)
+        leds[i].setRGB(r, g, b);
+    }
+    else {
+      leds[pixelIndex].setRGB(r, g, b);
+    }
+  }
+  else if (msg.match("/hsv", addrOffset)) {
+    Serial.println("HSV");
+    int h = msg.getInt(arg++);
+    int s = msg.getInt(arg++);
+    int v = msg.getInt(arg++);
+    if (allPixels) {
+      for (int i=0; i<N_PIXELS; i++)
+        leds[i].setHSV(h, s, v);
+    }
+    else {
+      leds[pixelIndex].setHSV(h, s, v);
+    }
+  }
+  else if (msg.match("/clear", addrOffset)) {
+    Serial.println("CLEAR");
+    if (allPixels) {
+      for (int i=0; i<N_PIXELS; i++)
+        leds[i] = CRGB::Black;
+    }
+    else {
+      leds[pixelIndex] = CRGB::Black;
+    }
+  }
+  else {
+    Serial.println("Error: no match.");
+  }
+
+  // Update leds.
+  FastLED.show();
+}
+
+void onXenoPixelsAll(OSCMessage &msg, int addrOffset) {
+  onXenoPixels(msg, addrOffset, true);
 }
 
 /////////////////////////////////////
-void onXenopixels(OSCMessage &msg, int addrOffset) {
+void onXenoPixelsOne(OSCMessage &msg, int addrOffset) {
+  onXenoPixels(msg, addrOffset, false);
+}
 
-  int r, g, b;
-
-  if( msg.isInt(0)) {
-    r = msg.getInt(0);
-    g = msg.getInt(1);
-    b = msg.getInt(2);
-  }
-
-  Serial.println("osc_color: " + String(r) + " " + String(g) + " " + String(b));
-
-  RgbColor oscColor(r, g, b);
-
-  for (int i=0; i< N_PIXELS; ++i){
-    strip.SetPixelColor(i, oscColor);
-  }
-  strip.Show();
-
-  // delay(20);
+void onXenoPixelsBrightness(OSCMessage &msg, int addrOffset) {
+  Serial.println("Adjust brightness");
+  int brightness = msg.getInt(0);
+  FastLED.setBrightness(brightness);
+  FastLED.show();
 }
 
 
 /////////////////////////////////////
-void onXenoshutter(OSCMessage &msg, int addrOffset) {
+void onXenoShutter(OSCMessage &msg, int addrOffset) {
 
   if( msg.isInt(0)) {
     int sangle = msg.getInt(0);
