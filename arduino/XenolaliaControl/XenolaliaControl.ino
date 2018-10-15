@@ -16,8 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <Servo.h>
+#ifdef ARDUINO_ARCH_ESP32
+#include <ESP32Servo.h>
+#include <WiFi.h>
+#else
 #include <ESP8266WiFi.h>
+#include <Servo.h>
+#endif
+
 #include <WiFiUdp.h>
 #include <OSCMessage.h>
 #include <FastLED.h>
@@ -26,7 +32,12 @@
 #include "Config.h"
 
 // Servomotor.
+
+#ifdef ARDUINO_ARCH_ESP32
+#define SERVO_PIN 2
+#else
 #define SERVO_PIN 0
+#endif
 Servo servo;
 int sangle = 90; // initial servo angle
 
@@ -76,21 +87,26 @@ void setup()
   Udp.begin(rxport);
 
   Serial.println("Starting UDP");
+#ifndef ARDUINO_ARCH_ESP32
   Serial.print("Local port: ");
   Serial.println(Udp.localPort());
+#endif
 
   // Init LED strip.
+  Serial.println("Starting LED strip");
   FastLED.addLeds<APA102, DATA_PIN, CLOCK_PIN, COLOR_ORDER>(leds, N_PIXELS);
   FastLED.setBrightness(DEFAULT_BRIGHTNESS);
-
-  // Blink indicator led.
-  digitalWrite(LED_BUILTIN, LOW);   // Turn the LED on (Note that HIGH is the voltage level
-  delay(1000);
-  digitalWrite(LED_BUILTIN, HIGH);   // Turn the LED off (Note that LOW is the voltage level
 
   for (int i=0; i<N_PIXELS; i++)
     leds[i] = CRGB::White;
   FastLED.show();
+
+  Serial.println("Done");
+  
+  // Blink indicator led.
+  digitalWrite(LED_BUILTIN, LOW);   // Turn the LED on (Note that HIGH is the voltage level
+  delay(1000);
+  digitalWrite(LED_BUILTIN, HIGH);   // Turn the LED off (Note that LOW is the voltage level
 }
 
 /////////////////////////////////////
