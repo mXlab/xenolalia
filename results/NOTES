@@ -1,0 +1,33 @@
+Best models
+===========
+1. model_sparse_conv_enc20-40_dec40-20_k5_b128.hdf5
+2. model_conv_enc16-32_dec32-16_k5_b128
+3. model_sparse_conv_enc16-32_dec32-16_k5_b128
+
+Characteristics:
+- 2 layers
+- 5x5 conv. kernel
+- sparse models have dropouts on encoding layers at 25%
+
+Mid range
+=========
+model_conv_enc32-16-16_dec16-16-32_k5_b128
+model_conv_enc32-16-8_dec32-16-8_k3_b128
+model_enc32_b128
+
+Too dark
+========
+model_conv_enc16-8-8_dec8-8-16_k3_b128
+model_sparse_conv_enc32-16-16_dec16-16-32_k5_b128
+
+Characteristics:
+- 3 layers
+
+Too bright
+==========
+model_conv_enc16-32_dec32-16_k3_b128
+model_conv_enc32-64_dec64-32_k3_b128
+
+Characteristics:
+- 2 layers
+- 16,32,64 units per layer
