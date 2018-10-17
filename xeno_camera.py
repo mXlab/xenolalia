@@ -102,7 +102,9 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
-    if (args.input_quad != None):
+    if args.raw_image:
+        input_quad = (0, 0, 0, 1, 1, 1, 1, 1, 0) # dummy
+    elif (args.input_quad != None):
         input_quad = tuple([ float(x) for x in args.input_quad.split(',') ])
     else:
     	with open(args.configuration_file, "rb") as f:
