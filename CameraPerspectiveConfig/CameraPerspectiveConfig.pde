@@ -1,7 +1,16 @@
-/**
- *  Please note that the code for interfacing with Capture devices
- *  will change in future releases of this library. This is just a
- *  filler till something more permanent becomes available.
+/** 
+ * This program allows to find the 4 corners of the projected image in order
+ * to crop and unskew it. It creates a camera_perspective.conf file to be used
+ * in conjunction with the other programs.
+ *
+ * Required Processing library: GL Video, Video (*)
+ * (*) Download the most recent version, otherwise you might run into problems.
+ *     Link to releases: https://github.com/processing/processing-video/releases
+ * 
+ * The program allows to use either of these two libraries. On RPi we recommend
+ * using GL Video.
+ *
+ * (c) Sofian Audry
  *
  *  For use with the Raspberry Pi camera, make sure the camera is
  *  enabled in the Raspberry Pi Configuration tool and add the line
@@ -9,17 +18,16 @@
  *  /etc/modules. After a restart you should be able to see the
  *  camera device as /dev/video0.
  */
-
-
 import gohai.glvideo.*;
-GLCapture video;
+
+AbstractCam cam;
+
+// Edit these values to match camera specs.
+final int DEVICE_ID = 0;
+final int CAM_WIDTH = 640;
+final int CAM_HEIGHT = 480;
 
 final String CONFIG_FILE_SAVE = "camera_perspective.conf";
-final int SCALING_FACTOR = 2;
-final int CAM_WIDTH = 320;
-final int CAM_HEIGHT = 200;
-
-final int DEVICE_ID = 0;
 
 int currentPoint = 0;
 final int N_POINTS = 4;
@@ -39,7 +47,8 @@ void setup() {
   }
 
   // this will use the first recognized camera by default
-  video = new GLCapture(this, devices[DEVICE_ID]);
+  //cam = new GLCaptureCam(this, devices[DEVICE_ID]);
+  cam = new CaptureCam(this, devices[DEVICE_ID]);
 
   // you could be more specific also, e.g.
   //
@@ -47,7 +56,7 @@ void setup() {
   //video = new GLCapture(this, devices[0], 640, 480, 25);
   //video = new GLCapture(this, devices[0], configs[0]);
 
-  video.play();
+  cam.start();
 
   // Initialize positions.
   points[0] = new PVector(0, 0);
@@ -60,10 +69,10 @@ void draw() {
   background(0);
 
   // Draw video.
-  if (video.available()) {
-    video.read();
+  if (cam.available()) {
+    cam.read();
   }
-  image(video, 0, 0, width, height);
+  cam.draw();
 
   // Draw controls.
   for (int i=0; i<N_POINTS; i++) {

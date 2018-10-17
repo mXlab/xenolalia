@@ -1,9 +1,42 @@
 import os
 
 import io
-from PIL import Image
+from PIL import Image, ImageEnhance, ImageFilter, ImageOps
 import time
 import numpy
+
+from scipy import stats
+
+# Normalize across RGB channels.
+def normalize_rgb(arr):
+    """
+    Linear normalization
+    http://en.wikipedia.org/wiki/Normalization_%28image_processing%29
+    """
+    arr = arr.astype('float')
+    # Do not touch the alpha channel
+    for i in range(3):
+        minval = arr[...,i].min()
+        maxval = arr[...,i].max()
+        if minval != maxval:
+            arr[...,i] -= minval
+            arr[...,i] *= (255.0/(maxval-minval))
+    return arr
+
+# Normalize across single channel (grayscale).
+def normalize_l(arr):
+    """
+    Linear normalization
+    http://en.wikipedia.org/wiki/Normalization_%28image_processing%29
+    """
+    arr = arr.astype('float')
+    # Do not touch the alpha channel
+    minval = arr.min()
+    maxval = arr.max()
+    if (minval != maxval):
+        arr -= minval
+        arr *= (255.0/(maxval-minval))
+    return arr
 
 # Raspberry Pi camera
 if os.uname()[4].startswith('arm'):
@@ -41,6 +74,12 @@ if os.uname()[4].startswith('arm'):
 
 	    def sample(self):
 		    image = self.raw_sample()
+		    # Apply filters on image.
+		    image = ImageOps.invert(image)
+		    image = ImageOps.autocontrast(image)
+		    image = ImageOps.equalize(image)
+		    image = image.convert('L')
+		    # Apply transforms on image.
 		    w = image.size[0]
 		    h = image.size[1]
 		    input_quad_abs = ( self.input_quad[0]*w, self.input_quad[1]*h, self.input_quad[2]*w, self.input_quad[3]*h, self.input_quad[4]*w, self.input_quad[5]*h, self.input_quad[6]*w, self.input_quad[7]*h )
@@ -66,25 +105,33 @@ else:
 	    def stop(self):
 		    pass
 
-	    def raw_sample(self):
+	    def raw_sample(self, rgb=False):
 		    s, im = self.cam.read() # captures image
 		    if s:
 			    cv2_im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
-			    pil_im = Image.fromarray(cv2_im).convert("L")
+			    pil_im = Image.fromarray(cv2_im)
+
+			    if not rgb:
+			        pil_im = pil_im.convert("L")
 			    #pil_im.show()
 			    return pil_im
 		    else:
 			    return None
 
 	    def sample(self):
-		    image = self.raw_sample()
-		    print("Image created")
+		    image = self.raw_sample(True)
+		    # Apply filters on image.
+		    image = ImageOps.invert(image)
+		    image = ImageOps.autocontrast(image)
+		    image = ImageOps.equalize(image)
+		    image = image.convert('L')
+		    # Apply transforms on image.
 		    w = image.size[0]
 		    h = image.size[1]
-		    print(("Image size: {w}x{h}".format(w=w, h=h)))
 		    input_quad_abs = ( self.input_quad[0]*w, self.input_quad[1]*h, self.input_quad[2]*w, self.input_quad[3]*h, self.input_quad[4]*w, self.input_quad[5]*h, self.input_quad[6]*w, self.input_quad[7]*h )
 		    output = image.transform(image.size, Image.QUAD, input_quad_abs).resize((self.image_side, self.image_side))
 		    return output
+
 
 # Commandline script
 import argparse
@@ -102,7 +149,9 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
-    if (args.input_quad != None):
+    if args.raw_image:
+        input_quad = (0, 0, 0, 1, 1, 1, 1, 1, 0) # dummy
+    elif (args.input_quad != None):
         input_quad = tuple([ float(x) for x in args.input_quad.split(',') ])
     else:
     	with open(args.configuration_file, "rb") as f:
