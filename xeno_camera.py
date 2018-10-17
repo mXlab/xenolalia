@@ -66,11 +66,14 @@ if os.uname()[4].startswith('arm'):
 	    def stop(self):
 		    self.stop_preview()
 
-	    def raw_sample(self):
+	    def raw_sample(self, color=False):
 		    self.stream.seek(0)
 		    self.capture(self.stream, format="png")
 		    self.stream.seek(0)
-		    return Image.open(self.stream).convert("L")
+		    if color:
+		        return Image.open(self.stream)
+		    else:
+		        return Image.open(self.stream).convert("L")
 
 	    def sample(self):
 		    image = self.raw_sample()
@@ -105,16 +108,16 @@ else:
 	    def stop(self):
 		    pass
 
-	    def raw_sample(self, rgb=False):
+	    def raw_sample(self, color=False):
 		    s, im = self.cam.read() # captures image
 		    if s:
-			    cv2_im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
-			    pil_im = Image.fromarray(cv2_im)
-
-			    if not rgb:
-			        pil_im = pil_im.convert("L")
-			    #pil_im.show()
-			    return pil_im
+		        cv2_im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
+		        if color:
+		            pil_im = Image.fromarray(cv2_im)
+		        else:
+		            pil_im = Image.fromarray(cv2_im).convert("L")
+			    #pil_im.show
+		        return pil_im
 		    else:
 			    return None
 
@@ -140,8 +143,10 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-o", "--output-file", type=str, default="snapshot.png", help="Output file name for camera snapshot")
-    parser.add_argument("-c", "--configuration-file", type=str, default="CameraPerspectiveConfig/camera_perspective.conf", help="Configuration file containing input quad")
+    parser.add_argument("-C", "--configuration-file", type=str, default="CameraPerspectiveConfig/camera_perspective.conf", help="Configuration file containing input quad")
     parser.add_argument("-r", "--raw-image", default=False, action='store_true', help="Use raw image")
+    parser.add_argument("-c", "--enable-color", default=False, action='store_true', help="Enable color when taking snapshot")
+    parser.add_argument("-s", "--show", default=False, action='store_true', help="Show image on screen before saving")
     parser.add_argument("-q", "--input-quad", type=str, default=None, help="Comma-separated list of numbers defining input quad (overrides configuration file)")
     
     if not USE_RPI:
@@ -166,9 +171,11 @@ if __name__ == "__main__":
     # Sample one image.
     cam.start()
     if args.raw_image:
-        output = cam.raw_sample()
+        output = cam.raw_sample(True)
     else:
         output = cam.sample()
     cam.stop()
+
+    output.show()
 
     output.save(args.output_file)
