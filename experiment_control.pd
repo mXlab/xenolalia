@@ -1,82 +1,87 @@
-#N canvas 67 55 1299 690 10;
-#X msg 286 166 \$3;
-#X msg 90 511 disconnect;
-#X obj 82 766 netsend -u -b;
-#X obj 92 715 list prepend send;
-#X obj 90 742 list trim;
-#X msg 96 538 connect localhost 12345;
-#X obj 228 190 hsl 255 15 0 255 0 0 empty empty empty -2 -8 0 10 -258049
+#N canvas 66 78 1300 691 10;
+#X msg 274 236 \$3;
+#X msg 78 581 disconnect;
+#X obj 70 836 netsend -u -b;
+#X obj 80 785 list prepend send;
+#X obj 78 812 list trim;
+#X msg 84 608 connect localhost 12345;
+#X obj 216 260 hsl 255 15 0 255 0 0 empty empty empty -2 -8 0 10 -258049
 -1 -1 0 1;
-#X obj 228 215 hsl 255 15 0 255 0 0 empty empty empty -2 -8 0 10 -4033
+#X obj 216 285 hsl 255 15 0 255 0 0 empty empty empty -2 -8 0 10 -4033
 -1 -1 0 1;
-#X obj 228 238 hsl 255 15 0 255 0 0 empty empty empty -2 -8 0 10 -128
+#X obj 216 308 hsl 255 15 0 255 0 0 empty empty empty -2 -8 0 10 -128
 -262144 -1 0 1;
-#X obj 236 434 pack i i i;
-#X msg 237 400 bang;
-#X msg 1021 199 0;
-#X obj 1021 28 tgl 30 0 empty empty shutter 32 7 0 10 -262144 -1 -1
-1 1;
-#X obj 71 15 tgl 30 0 empty empty OSC 32 7 0 10 -262144 -1 -1 1 1;
-#X obj 70 334 sel 1;
-#X obj 1023 140 sel 0;
-#X obj 676 38 hradio 15 0 0 20 empty empty individual\ leds 0 -8 0
+#X obj 224 504 pack i i i;
+#X msg 225 470 bang;
+#X msg 1009 269 0;
+#X obj 1009 98 tgl 30 0 empty empty shutter 32 7 0 10 -262144 -1 -1
+0 1;
+#X obj 59 85 tgl 30 0 empty empty OSC 32 7 0 10 -262144 -1 -1 0 1;
+#X obj 58 404 sel 1;
+#X obj 1011 210 sel 0;
+#X obj 664 108 hradio 15 0 0 20 empty empty individual\ leds 0 -8 0
 10 -262144 -1 -1 0;
-#X obj 540 31 tgl 30 0 empty empty send\ to\ all 32 7 0 10 -262144
+#X obj 528 101 tgl 30 0 empty empty send\ to\ all 32 7 0 10 -262144
 -1 -1 1 1;
-#X obj 150 60 vsl 25 255 0 255 0 1 empty empty brightness 0 -9 0 10
--262144 -1 -1 2250 1;
-#X obj 148 616 oscformat -f i /xeno/pixels/brightness;
-#X obj 740 634 spigot;
-#X obj 780 600 == 0;
-#X obj 536 636 spigot;
-#X obj 238 544 oscformat -f iii /xeno/pixels/all/rgb;
-#X obj 842 516 oscformat -f iiii /xeno/pixels/one/rgb;
-#X msg 228 44 255 0 0;
-#X msg 288 44 0 255 0;
-#X msg 358 44 0 0 255;
-#X msg 228 88 255 255 0;
-#X msg 228 166 \$1;
-#X obj 226 126 t a;
-#X msg 256 166 \$2;
-#X msg 358 88 0 255 255;
-#X msg 292 88 255 0 255;
-#X text 228 22 red;
-#X text 286 22 green;
-#X text 356 22 blue;
-#X text 230 66 yellow;
-#X text 292 66 violet;
-#X text 358 66 cyan;
-#X msg 428 44 0 0 0;
-#X msg 424 88 255 255 255;
-#X text 430 22 black/clear;
-#X text 424 66 white;
-#X obj 1024 503 oscformat -f i /xeno/shutter;
-#X obj 512 190 hsl 255 15 0 255 0 0 empty empty empty -2 -8 0 10 -262144
+#X obj 138 130 vsl 25 255 0 255 0 1 empty empty brightness 0 -9 0 10
+-262144 -1 -1 2850 1;
+#X obj 136 686 oscformat -f i /xeno/pixels/brightness;
+#X obj 728 704 spigot;
+#X obj 768 670 == 0;
+#X obj 524 706 spigot;
+#X obj 226 614 oscformat -f iii /xeno/pixels/all/rgb;
+#X obj 830 586 oscformat -f iiii /xeno/pixels/one/rgb;
+#X msg 216 114 255 0 0;
+#X msg 276 114 0 255 0;
+#X msg 346 114 0 0 255;
+#X msg 216 158 255 255 0;
+#X msg 216 236 \$1;
+#X obj 214 196 t a;
+#X msg 244 236 \$2;
+#X msg 346 158 0 255 255;
+#X msg 280 158 255 0 255;
+#X text 216 92 red;
+#X text 274 92 green;
+#X text 344 92 blue;
+#X text 218 136 yellow;
+#X text 280 136 violet;
+#X text 346 136 cyan;
+#X msg 416 114 0 0 0;
+#X msg 412 158 255 255 255;
+#X text 418 92 black/clear;
+#X text 412 136 white;
+#X obj 1012 573 oscformat -f i /xeno/shutter;
+#X obj 500 260 hsl 255 15 0 255 0 0 empty empty empty -2 -8 0 10 -262144
 -1 -1 0 1;
-#X obj 512 215 hsl 255 15 0 255 0 0 empty empty empty -2 -8 0 10 -262144
+#X obj 500 285 hsl 255 15 0 255 0 0 empty empty empty -2 -8 0 10 -262144
 -1 -1 0 1;
-#X obj 512 238 hsl 255 15 0 255 0 0 empty empty empty -2 -8 0 10 -262144
+#X obj 500 308 hsl 255 15 0 255 0 0 empty empty empty -2 -8 0 10 -262144
 -1 -1 0 1;
-#X text 212 190 R;
-#X text 212 214 G;
-#X text 212 238 B;
-#X obj 514 302 pack i i i;
-#X msg 513 266 bang;
-#X obj 532 544 oscformat -f iii /xeno/pixels/all/hsv;
-#X obj 924 398 list prepend \$1;
-#X text 500 190 H;
-#X text 500 214 S;
-#X text 500 238 V;
-#X obj 838 486 list prepend \$1;
-#X obj 850 200 t a;
-#X obj 816 200 t a;
-#X obj 922 426 oscformat -f iiii /xeno/pixels/one/hsv;
-#X msg 853 240 bang;
-#X obj 514 128 bng 30 250 50 0 empty empty apply\ HSV 17 7 0 10 -262144
+#X text 200 260 R;
+#X text 200 284 G;
+#X text 200 308 B;
+#X obj 502 372 pack i i i;
+#X msg 501 336 bang;
+#X obj 520 614 oscformat -f iii /xeno/pixels/all/hsv;
+#X obj 912 468 list prepend \$1;
+#X text 488 260 H;
+#X text 488 284 S;
+#X text 488 308 V;
+#X obj 826 556 list prepend \$1;
+#X obj 838 270 t a;
+#X obj 804 270 t a;
+#X obj 910 496 oscformat -f iiii /xeno/pixels/one/hsv;
+#X msg 841 310 bang;
+#X obj 502 198 bng 30 250 50 0 empty empty apply\ HSV 17 7 0 10 -262144
 -1 -1;
-#X floatatom 148 11 5 0 255 0 - - -, f 5;
-#X msg 72 475 connect 192.168.1.102 12345;
-#X msg 1053 199 145;
+#X floatatom 136 81 5 0 255 0 - - -, f 5;
+#X obj 217 7 tgl 30 0 empty empty flash 32 7 0 10 -262144 -1 -1 0 1
+;
+#X obj 217 42 sel 0;
+#X msg 216 68 0 0 0;
+#X msg 259 68 0 0 255;
+#X msg 60 545 connect 192.168.0.101 12345;
+#X msg 1041 269 160;
 #X connect 0 0 8 0;
 #X connect 1 0 2 0;
 #X connect 3 0 4 0;
@@ -94,10 +99,10 @@
 #X connect 11 0 44 0;
 #X connect 12 0 15 0;
 #X connect 13 0 14 0;
-#X connect 14 0 65 0;
+#X connect 14 0 69 0;
 #X connect 14 1 1 0;
 #X connect 15 0 11 0;
-#X connect 15 1 66 0;
+#X connect 15 1 70 0;
 #X connect 16 0 59 0;
 #X connect 17 0 60 0;
 #X connect 18 0 19 0;
@@ -142,5 +147,11 @@
 #X connect 62 0 9 0;
 #X connect 63 0 51 0;
 #X connect 64 0 18 0;
-#X connect 65 0 2 0;
-#X connect 66 0 44 0;
+#X connect 65 0 66 0;
+#X connect 65 0 12 0;
+#X connect 66 0 67 0;
+#X connect 66 1 68 0;
+#X connect 67 0 30 0;
+#X connect 68 0 30 0;
+#X connect 69 0 2 0;
+#X connect 70 0 44 0;
