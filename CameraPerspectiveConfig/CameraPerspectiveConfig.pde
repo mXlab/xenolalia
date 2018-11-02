@@ -3,13 +3,22 @@
  * to crop and unskew it. It creates a camera_perspective.conf file to be used
  * in conjunction with the other programs.
  *
+ * Usage:
+ * - Start the sketch.
+ * - Click on the first corner to place the first control point.
+ * - Press TAB to select the next control point; then click on the 2nd corner to place it.
+ * - Repeat operation for corners 3 & 4.
+ * - You can select one of the four control points by pressing its number (1, 2, 3, 4).
+ * - You can adjust more precisely by using the arrow keys.
+ * - Once you are satisfied, press ENTER: it will save the camera_perspective.conf file.
+ *
  * Required Processing library: GL Video, Video (*)
  * (*) Download the most recent version, otherwise you might run into problems.
  *     Link to releases: https://github.com/processing/processing-video/releases
  * 
  * The program allows to use either of these two libraries. On RPi we recommend
  * using GL Video.
- *
+ *  
  * (c) Sofian Audry
  *
  *  For use with the Raspberry Pi camera, make sure the camera is
@@ -23,11 +32,13 @@ import gohai.glvideo.*;
 AbstractCam cam;
 
 // Edit these values to match camera specs.
-final int DEVICE_ID = 0;
+final int DEVICE_ID = 1;
 final int CAM_WIDTH = 640;
 final int CAM_HEIGHT = 480;
 
 final String CONFIG_FILE_SAVE = "camera_perspective.conf";
+
+final color LINE_COLOR = #00ff00;
 
 int currentPoint = 0;
 final int N_POINTS = 4;
@@ -47,6 +58,7 @@ void setup() {
   }
 
   // this will use the first recognized camera by default
+  // NOTE: If you run into trouble you can try changing the object
   //cam = new GLCaptureCam(this, devices[DEVICE_ID]);
   cam = new CaptureCam(this, devices[DEVICE_ID]);
 
@@ -88,7 +100,7 @@ void draw() {
     fill(255);
     text(i+1, x, y);
     // Draw line.
-    stroke( color(200, 200, 200) );
+    stroke( LINE_COLOR );
     line(x, y, nx, ny);
   }
 }
