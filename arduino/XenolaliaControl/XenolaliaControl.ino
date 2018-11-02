@@ -46,7 +46,7 @@ WiFiUDP Udp;                                // A UDP instance to let us send and
 IPAddress thisip;
 
 // Pixel strip control.
-#define N_PIXELS 20 // how many neopixels in your strip?
+#define N_PIXELS 30 // how many neopixels in your strip?
 #define DATA_PIN 4 // green wire
 #define CLOCK_PIN 5 // yellow wire
 #define COLOR_ORDER BGR //  (adjust for RGB)
@@ -54,7 +54,12 @@ IPAddress thisip;
 // This is an array of leds.  One item for each led in your strip.
 CRGB leds[N_PIXELS];
 
+// Default/base brightness of pixels.
 #define DEFAULT_BRIGHTNESS 128
+
+// Servo motor min/max angles.
+#define SERVO_MIN 12
+#define SERVO_MAX 180
 
 void setup()
 {
@@ -65,6 +70,15 @@ void setup()
   // Init outputs.
   pinMode(LED_BUILTIN, OUTPUT);     // Initialize the LED_BUILTIN pin as an output
   servo.attach(SERVO_PIN); // attach servo to WEMOS pin D3
+
+  // Init LED strip.
+  Serial.println("Starting LED strip");
+  FastLED.addLeds<APA102, DATA_PIN, CLOCK_PIN, COLOR_ORDER>(leds, N_PIXELS);
+  FastLED.setBrightness(DEFAULT_BRIGHTNESS);
+
+  for (int i=0; i<N_PIXELS; i++)
+    leds[i] = CRGB::White;
+  FastLED.show();
 
   // Init network.
   Serial.println();
@@ -92,14 +106,16 @@ void setup()
   Serial.println(Udp.localPort());
 #endif
 
-  // Init LED strip.
-  Serial.println("Starting LED strip");
-  FastLED.addLeds<APA102, DATA_PIN, CLOCK_PIN, COLOR_ORDER>(leds, N_PIXELS);
-  FastLED.setBrightness(DEFAULT_BRIGHTNESS);
-
+  // Clear LED strip.
   for (int i=0; i<N_PIXELS; i++)
-    leds[i] = CRGB::White;
+    leds[i] = CRGB::Black;
   FastLED.show();
+
+  moveServo(0);
+  delay(500);
+  moveServo(180);
+  delay(500);
+  moveServo(0);  
 
   Serial.println("Done");
   
@@ -208,21 +224,24 @@ void onXenoPixelsBrightness(OSCMessage &msg, int addrOffset) {
   FastLED.show();
 }
 
+#define DEGREE_PER_SECOND 40
+const int MILLIS_PER_DEGREE = 1000 / DEGREE_PER_SECOND;
+// Move servo to angle.
+void moveServo(int angle) {
+  angle = constrain(angle, SERVO_MIN, SERVO_MAX);
+  int currentAngle = servo.read();
+  int dir = (angle > currentAngle ? +1 : -1);
+  for (; currentAngle != angle; currentAngle += dir) {
+    servo.write(currentAngle);
+    delay(MILLIS_PER_DEGREE);
+  }
+  Serial.println("servo angle: " + String(angle));  
+}
 
-/////////////////////////////////////
 void onXenoShutter(OSCMessage &msg, int addrOffset) {
-
   if( msg.isInt(0)) {
-    int sangle = msg.getInt(0);
-
-    if (sangle == 0) { sangle = 12;}
-
-    Serial.println("servo angle: " + String(sangle));
-
-    if (sangle <=12) { sangle = 12; }
-  
-    servo.write(sangle); // set the servo position to the given angle
-  
-    delay(100);
+    int angle = msg.getInt(0);
+    moveServo(angle);
+//    Serial.println("servo angle: " + String(angle));  
   }
 }
