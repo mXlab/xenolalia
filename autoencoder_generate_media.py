@@ -10,6 +10,7 @@ parser.add_argument("-f", "--fps", type=float, default=30, help="Frames per seco
 parser.add_argument("-d", "--duration", type=float, default=10, help="Duration (in seconds)")
 parser.add_argument("-n", "--n-clips", type=int, default=10, help="Number of video clips to generate")
 parser.add_argument("-D", "--output-directory", type=str, default=".", help="The directory where video clips will be saved")
+parser.add_argument("-s", "--starting-image", type=str, default=None, help="(optional) Starting image (instead of noise)")
 
 args = parser.parse_args()
 
@@ -40,8 +41,6 @@ if convolutional:
 else:
     input_shape = (1, image_dim)
 
-frame = np.random.random(input_shape)
-
 def autoencoder_generate(filename):
     global frame, model, still_images
 
@@ -51,7 +50,13 @@ def autoencoder_generate(filename):
         filename = filename + ".mp4"
 
     # Generate first image as random
-    frame = np.random.random(input_shape)
+    if args.starting_image == None:
+        frame = np.random.random(input_shape)
+    else:
+        from PIL import Image
+        img = Image.open(args.starting_image).resize((image_side, image_side)).convert('L')
+        frame = np.array(img).reshape(input_shape)
+        frame = frame / np.max(frame)
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
