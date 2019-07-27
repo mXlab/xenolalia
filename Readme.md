@@ -20,6 +20,7 @@ sudo apt upgrade
 sudo apt install -y git git-gui
 sudo apt install -y python3-dev python3-setuptools python3-h5py
 sudo apt install -y libblas-dev liblapack-dev libatlas-base-dev gfortran
+sudo apt install -y xdotool
 sudo apt install -y python-virtualenv
 sudo apt install -y software-properties-common dirmngr apt-transport-https lsb-release ca-certificates
 
