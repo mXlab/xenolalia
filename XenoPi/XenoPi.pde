@@ -55,27 +55,27 @@ boolean invert = true;
 
 // All image patterns.
 String imagez[]={
-    "xeno-pattern-white.jpg", // 0
-    "xeno-pattern-01.jpg",    // 1 (default)
-    "xeno-pattern-02.jpg",    // 2
-    "xeno-pattern-03.jpg",    // 3
-    "xeno-pattern-04.jpg",    // 4
-    "xeno-pattern-05.jpg",    // 5
-    "xeno-pattern-06.jpg",    // 6
-  };
-  
+  "xeno-pattern-white.jpg", // 0
+  "xeno-pattern-01.jpg", // 1 (default)
+  "xeno-pattern-02.jpg", // 2
+  "xeno-pattern-03.jpg", // 3
+  "xeno-pattern-04.jpg", // 4
+  "xeno-pattern-05.jpg", // 5
+  "xeno-pattern-06.jpg", // 6
+};
+
 
 ///////////////////////////////////////
 void setup() {
-  
-  
-    background(0);
-    //size(800, 600, P2D);
-    //size(600, 600, P2D);
-    fullScreen(P2D);
-    
-    capwidth = capheight = 200;
-    
+
+
+  background(0);
+  //size(800, 600, P2D);
+  //size(600, 600, P2D);
+  fullScreen(P2D);
+
+  capwidth = capheight = 200;
+
   newImage = createImage(width, height, RGB);
   processedImage = createImage(capwidth, capheight, RGB);
 
@@ -89,7 +89,7 @@ void setup() {
   }
 
   // this will use the first recognized camera by default
-//  video = new GLCapture(this, devices[0], width, height);
+  //  video = new GLCapture(this, devices[0], width, height);
   video = new GLCapture(this, devices[0], capwidth, capheight);
 
   // you could be more specific also, e.g.
@@ -98,130 +98,113 @@ void setup() {
   //video = new GLCapture(this, devices[0], configs[0]);
 
   video.start();
-  
+
   img = loadImage(imagez[imagenum]);  // Load the image into the program  
-  
+
   // opencv = new OpenCV(this, width, height);
-     opencv = new OpenCV(this, capwidth, capheight);
-
-
-  
+  opencv = new OpenCV(this, capwidth, capheight);
 }
 
 
 
- ///////////////////////////////////////
+///////////////////////////////////////
 void draw() {
-  
+
   if (video.available()) {
     video.read();
     video.loadPixels(); 
     video.updatePixels(); 
-    if(testvideo){
-        image(video,0,0); // for test only
+    if (testvideo) {
+      image(video, 0, 0); // for test only
     }
   }
 
-  if(!testvideo){
-       if(!captureflag){ 
-             background(0,100,0);
-             int ww=(width - img.width) /2;
-             int hh=(height - img.height)/2;    
-                   if(vmode){
-                      background(255,255,255);
-                      // video.read();
-                      ProcessImage();
-                      image(processedImage,0, 0); 
-                      }
-                      else{
-                           background(0);
-                           image(img, ww, hh); 
-                     }
-               }else{          
-                 ProcessImage();
-                captureLoop(); 
-               }        
-             
+  if (!testvideo) {
+    if (!captureflag) { 
+      background(0, 100, 0);
+      int ww=(width - img.width) /2;
+      int hh=(height - img.height)/2;    
+      if (vmode) {
+        background(255, 255, 255);
+        // video.read();
+        ProcessImage();
+        image(processedImage, 0, 0);
+      } else {
+        background(0);
+        image(img, ww, hh);
+      }
+    } else {          
+      ProcessImage();
+      captureLoop();
     }
-
-                
+  }
 }
 ////////////////////////////////
-void captureLoop(){
-  
-    if(capturephase==0)
-    {
-        capturephase = 1;
-        background(255,255,255);
-        video.read();
-           ProcessImage();
-        // delay(1000);
-    
-  }else if(capturephase==1){    
-       background(255,255,255);
-        capturephase = 2;
-        delay(1000);
-        
-   }else if(capturephase==2){   
-        //newImage = processedImage.copy();
-       // newImage.save("/home/pi/sketchbook/tezzy/xenopi/vid-cap.jpg");
-         processedImage.save("/home/pi/sketchbook/tezzy/xenopi/vid-cap.jpg");
-        delay(1000);
-        capturephase = 0;
-        captureflag = false;
-        Loadimage();     
-   }  
+void captureLoop() {
+
+  if (capturephase==0)
+  {
+    capturephase = 1;
+    background(255, 255, 255);
+    video.read();
+    ProcessImage();
+    // delay(1000);
+  } else if (capturephase==1) {    
+    background(255, 255, 255);
+    capturephase = 2;
+    delay(1000);
+  } else if (capturephase==2) {   
+    //newImage = processedImage.copy();
+    // newImage.save("/home/pi/sketchbook/tezzy/xenopi/vid-cap.jpg");
+    processedImage.save("/home/pi/sketchbook/tezzy/xenopi/vid-cap.jpg");
+    delay(1000);
+    capturephase = 0;
+    captureflag = false;
+    Loadimage();
+  }
 }
 
 /////////////////////////
 void keyPressed() {
-  
+
   // println("key = " + key);
-  
-   if (key == 'v') {
-     vmode = !(vmode);
-   }
-   
-    if (key == 't') {
-     testvideo = !(testvideo);
-   }
-   
-   
-   
+
+  if (key == 'v') {
+    vmode = !(vmode);
+  }
+
+  if (key == 't') {
+    testvideo = !(testvideo);
+  }
+
+
+
   if (key == CODED) {
     if (keyCode == RIGHT) {
-       captureflag = false;
-      if(imagenum <(imagez.length -1))
+      captureflag = false;
+      if (imagenum <(imagez.length -1))
         imagenum++;
-        else{
-          imagenum = 0;
-        }
-         Loadimage();
-         
+      else {
+        imagenum = 0;
+      }
+      Loadimage();
     } else if (keyCode == LEFT) {
-       captureflag = false;
-      if(imagenum > 0)
+      captureflag = false;
+      if (imagenum > 0)
         imagenum--;
-        else{
-          imagenum = imagez.length -1;
-        }
-         Loadimage();
-    } 
-    
-    else if (keyCode == UP) {
+      else {
+        imagenum = imagez.length -1;
+      }
+      Loadimage();
+    } else if (keyCode == UP) {
       print("UP");
       captureflag = true;
-     // Captureimage();
-    } 
-    
-    else if (keyCode == DOWN) {
+      // Captureimage();
+    } else if (keyCode == DOWN) {
       print("DOWN");
       captureflag = false;
-    } 
- 
-
+    }
   }
-  
 }  
 
 /////////////////////////
@@ -232,20 +215,20 @@ void Loadimage() {
 }
 
 //////////////////////
-void ProcessImage(){
-  
-   // Load the new frame of our camera in to OpenCV
- // opencv.useColor();
- opencv.loadImage(video);
- //opencv.copy(video); 
+void ProcessImage() {
 
- 
+  // Load the new frame of our camera in to OpenCV
+  // opencv.useColor();
+  opencv.loadImage(video);
+  //opencv.copy(video); 
+
+
   // Flips the image horizontally 
-//  opencv.flip(OpenCV.HORIZONTAL); 
- // opencv.flip(OpenCV.VERTICAL); 
-//  src = opencv.getSnapshot();
+  //  opencv.flip(OpenCV.HORIZONTAL); 
+  // opencv.flip(OpenCV.VERTICAL); 
+  //  src = opencv.getSnapshot();
 
- 
+
 
   ///////////////////////////////
   // <1> PRE-PROCESS IMAGE
@@ -254,7 +237,7 @@ void ProcessImage(){
   ///////////////////////////////
 
   // Gray channel
- // opencv.gray();
+  // opencv.gray();
   //opencv.brightness(brightness);
   // opencv.contrast(contrast);
   opencv.contrast(1.5);
@@ -264,36 +247,36 @@ void ProcessImage(){
   // - Threshold
   // - Noise Supression
   ///////////////////////////////
-  
+
   //  // Adaptive threshold - Good when non-uniform illumination
   //  if (useAdaptiveThreshold) {
-  
+
   //    // Block size must be odd and greater than 3
   //    if (thresholdBlockSize%2 == 0) thresholdBlockSize++;
   //    if (thresholdBlockSize < 3) thresholdBlockSize = 3;
-  
+
   //    opencv.adaptiveThreshold(thresholdBlockSize, thresholdConstant);
-  
+
   //    // Basic threshold - range [0, 255]
   //  } else {
   //    opencv.threshold(threshold);
   //  }
-  
+
   //  if(invert){
   //  // Invert (black bg, white blobs)
   //  opencv.invert();
   //  }
-    
+
   //  // Reduce noise - Dilate and erode to close holes
   //  opencv.dilate();
   //  opencv.erode();
-  
+
   //  // Blur
   //  opencv.blur(blurSize);
 
 
   // Save snapshot for display
-//   processedImage = opencv.getSnapshot();
+  //   processedImage = opencv.getSnapshot();
 
   ///////////////////////////////
   // <3> FIND CONTOURS  
@@ -306,6 +289,4 @@ void ProcessImage(){
   //contoursImage = opencv.getSnapshot();
 
   processedImage = opencv.getSnapshot();
-                
- 
 }
