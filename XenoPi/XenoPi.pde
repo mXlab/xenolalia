@@ -40,7 +40,7 @@ int xArea=0;
 import gohai.glvideo.*;
 GLCapture video;
 PImage img;  // Declare variable "a" of type PImage
-int imagenum = 0;
+int imagenum = 1;
 boolean captureflag = false;
 int capturephase = 0;
 int capwidth, capheight; 
@@ -53,14 +53,15 @@ PImage src, preProcessedImage, processedImage, contoursImage;
 boolean record = false;
 boolean invert = true;
 
+// All image patterns.
 String imagez[]={
-    "xeno-pattern-01.jpg",
-    "xeno-pattern-02.jpg",
-    "xeno-pattern-03.jpg",
-    "xeno-pattern-04.jpg",
-    "xeno-pattern-05.jpg",
-    "xeno-pattern-06.jpg",
-    "xeno-pattern-white.jpg"
+    "xeno-pattern-white.jpg", // 0
+    "xeno-pattern-01.jpg",    // 1 (default)
+    "xeno-pattern-02.jpg",    // 2
+    "xeno-pattern-03.jpg",    // 3
+    "xeno-pattern-04.jpg",    // 4
+    "xeno-pattern-05.jpg",    // 5
+    "xeno-pattern-06.jpg",    // 6
   };
   
 
