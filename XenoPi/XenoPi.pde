@@ -156,7 +156,7 @@ void captureLoop() {
   } else if (capturephase==2) {   
     //newImage = processedImage.copy();
     // newImage.save("/home/pi/sketchbook/tezzy/xenopi/vid-cap.jpg");
-    processedImage.save("/home/pi/sketchbook/tezzy/xenopi/vid-cap.jpg");
+    processedImage.save("vid-cap.jpg");
     delay(1000);
     capturephase = 0;
     captureflag = false;
