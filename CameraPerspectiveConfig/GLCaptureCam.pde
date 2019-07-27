@@ -7,6 +7,7 @@ class GLCaptureCam extends AbstractCam {
   
   GLCaptureCam(PApplet parent, String device) {
     cam = new GLCapture(parent, device);
+    this.parent = parent;
   }
   
   void start() {
