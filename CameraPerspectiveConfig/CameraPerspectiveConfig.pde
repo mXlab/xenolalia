@@ -5,6 +5,9 @@
  *
  * Usage:
  * - Start the sketch.
+ * - Press 'r' to show only the reference image.
+ * - Press 's' to pause the camera (it will take a snapshot of ref image).
+ * - Press 'c' to show only the camera image.
  * - Click on the first corner to place the first control point.
  * - Press TAB to select the next control point; then click on the 2nd corner to place it.
  * - Repeat operation for corners 3 & 4.
@@ -38,11 +41,18 @@ final int CAM_HEIGHT = 480;
 
 final String CONFIG_FILE_SAVE = "camera_perspective.conf";
 
+final String REFERENCE_IMAGE = "camera_perspective_reference.png";
+
 final color LINE_COLOR = #00ff00;
 
 int currentPoint = 0;
 final int N_POINTS = 4;
 PVector[] points = new PVector[N_POINTS];
+
+PImage referenceImg;
+int referenceAlpha;
+
+boolean cameraRunning = true;
 
 void setup() {
   //2592x1944
@@ -75,16 +85,26 @@ void setup() {
   points[1] = new PVector(0, height);
   points[2] = new PVector(width, height);
   points[3] = new PVector(width, 0);
+  
+  // Reference image.
+  referenceImg = loadImage(REFERENCE_IMAGE);
+  setReferenceAlpha(128);
 }
 
 void draw() {
   background(0);
-
+  
+  imageMode(CORNER);
   // Draw video.
-  if (cam.available()) {
+  if (cam.available() && cameraRunning) {
     cam.read();
   }
   cam.draw();
+  
+  // Draw reference image.
+  int minDim = min(width, height);
+  imageMode(CENTER);
+  image(referenceImg, width/2, height/2, minDim, minDim);
 
   // Draw controls.
   for (int i=0; i<N_POINTS; i++) {
@@ -123,6 +143,11 @@ void keyPressed() {
       case '2':   selectPoint(1); break;
       case '3':   selectPoint(2); break;
       case '4':   selectPoint(3); break;
+      case '+':   setReferenceAlpha(referenceAlpha + 64); break;
+      case '-':   setReferenceAlpha(referenceAlpha - 64); break;
+      case 'r':   setReferenceAlpha(255); break;
+      case 'c':   setReferenceAlpha(0); break;
+      case 's':   toggleCamera(); break;
     }
   }
 }
@@ -137,6 +162,19 @@ void mouseDragged() {
 
 void selectPoint(int i) {
   currentPoint = constrain(i, 0, N_POINTS-1);
+}
+
+void setReferenceAlpha(int alpha) {
+  // Set transparency of reference image.
+  referenceAlpha = constrain(alpha, 0, 255);
+  int[] mask = new int[referenceImg.width*referenceImg.height];
+  for (int i=0; i<mask.length; i++)
+    mask[i] = referenceAlpha;
+  referenceImg.mask(mask);
+}
+
+void toggleCamera() {
+  cameraRunning = !cameraRunning;
 }
 
 void movePoint(int i, float dx, float dy) {
