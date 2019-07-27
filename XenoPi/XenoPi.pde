@@ -127,14 +127,14 @@ void draw() {
       if (vmode) {
         background(255, 255, 255);
         // video.read();
-        ProcessImage();
+        processImage();
         image(processedImage, 0, 0);
       } else {
         background(0);
         image(img, ww, hh);
       }
     } else {          
-      ProcessImage();
+      processImage();
       captureLoop();
     }
   }
@@ -147,7 +147,7 @@ void captureLoop() {
     capturephase = 1;
     background(255, 255, 255);
     video.read();
-    ProcessImage();
+    processImage();
     // delay(1000);
   } else if (capturephase==1) {    
     background(255, 255, 255);
@@ -160,7 +160,7 @@ void captureLoop() {
     delay(1000);
     capturephase = 0;
     captureflag = false;
-    Loadimage();
+    loadImage();
   }
 }
 
@@ -187,7 +187,7 @@ void keyPressed() {
       else {
         imagenum = 0;
       }
-      Loadimage();
+      loadImage();
     } else if (keyCode == LEFT) {
       captureflag = false;
       if (imagenum > 0)
@@ -195,7 +195,7 @@ void keyPressed() {
       else {
         imagenum = imagez.length -1;
       }
-      Loadimage();
+      loadImage();
     } else if (keyCode == UP) {
       print("UP");
       captureflag = true;
@@ -208,14 +208,14 @@ void keyPressed() {
 }  
 
 /////////////////////////
-void Loadimage() {
+void loadImage() {
   pushMatrix();
   img = loadImage(imagez[imagenum]);
   popMatrix();
 }
 
 //////////////////////
-void ProcessImage() {
+void processImage() {
 
   // Load the new frame of our camera in to OpenCV
   // opencv.useColor();
