@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# Warning: This will display the perspective image on an RGB Matrix
+
 import Image
 import ImageDraw
 import time

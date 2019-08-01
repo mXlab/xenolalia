@@ -31,7 +31,7 @@ else:
     with open(args.configuration_file, "rb") as f:
         input_quad = tuple([ float(v) for v in f.readlines() ])
 
-OUTPUT = "screen" # or matrix
+OUTPUT = "screen" # or "matrix" to use LED matrix
 
 FLASH_INTENSITY = 0.25
 
