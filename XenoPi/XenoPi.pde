@@ -20,12 +20,9 @@ import gab.opencv.*;
 OpenCV opencv;
 float scalefactor = 1.0, scaleX = 1.0, scaleY = 1.0 ;
 float contrast = 2.0;
-int brightness = 0;
 int threshold = 100;
 boolean useAdaptiveThreshold = false; // use basic thresholding
-boolean screenmode = true;
-boolean testvideo = false;
-//boolean blobSwitch = true;
+
 boolean bSwitch = true;
 boolean srcswitch = true;
 int thresholdBlockSize = 489;
@@ -46,12 +43,17 @@ int capturephase = 0;
 int capwidth, capheight; 
 
 enum CameraMode {
-  None,
-  Test,
-  Processed,  
+  None, // default mode: no camera display
+  Test, // test mode: display camera in corner
+  Processed,  // processed mode: display camera in corner with filter
 }
 
-CameraMode mode = CameraMode.None;
+CameraMode cameraMode = CameraMode.None;
+boolean flash = false; // when in "flash" mode the background is displayed instead of image
+
+color flashColor;
+int flashH = 300, // magenta-ready
+    flashS = 0, flashB = 255; // ... but starts in white
 
 PImage newImage; 
 
@@ -78,7 +80,7 @@ void setup() {
 
   background(0);
   //size(800, 600, P2D);
-  //size(600, 600, P2D);
+  //size(480, 320, P2D);
   fullScreen(P2D);
 
   capwidth = capheight = 200;
@@ -105,46 +107,52 @@ void setup() {
   //video = new GLCapture(this, devices[0], configs[0]);
 
   video.start();
+  
+  updateFlashColor();
 
   // Load default image into the program.
   loadImage();
 
   // opencv = new OpenCV(this, width, height);
   opencv = new OpenCV(this, capwidth, capheight);
+  
+  //frameRate(10);
 }
 
 
 
+int xxx=0;
 ///////////////////////////////////////
 void draw() {
 
   // Capture video.
-  if (video.available() && mode != CameraMode.None) {
+  if (video.available() && cameraMode != CameraMode.None) {
     // Update video frame.
     video.read();
     
     // Print video out if needed.
-    if (mode == CameraMode.Test) {
+    if (cameraMode == CameraMode.Test) {
       image(video, 0, 0); // for test only
     }
   }
   
-  if (mode != CameraMode.Test) {
+  if (cameraMode != CameraMode.Test) {
       if (captureflag) {
         processImage();
         captureLoop();
-      } else {          
-        background(0, 100, 0);
+      } else {
+        colorMode(HSB, 360, 255,255);
+        background(flashColor);
         int ww=(width - img.width) /2;
         int hh=(height - img.height)/2;    
-        if (mode == CameraMode.Processed) {
-          background(255, 255, 255);
+        if (cameraMode == CameraMode.Processed) {
           fill(255, 0, 0);
           text("VIDMODE", 0, 0);
           // video.read();
           processImage();
           image(processedImage, 0, 0);
-        } else {
+        } else if (!flash) {
+          colorMode(RGB);
           background(0);
           image(img, ww, hh);
         }
@@ -156,21 +164,22 @@ void draw() {
 ////////////////////////////////
 void captureLoop() {
 
+  println("capture loop");
   if (capturephase==0)
   {
     capturephase = 1;
-    background(255, 255, 255);
+    background(flashColor);
     video.read();
     processImage();
     // delay(1000);
   } else if (capturephase==1) {    
-    background(255, 255, 255);
+    background(flashColor);
     capturephase = 2;
     delay(1000);
   } else if (capturephase==2) {   
     //newImage = processedImage.copy();
     // newImage.save("/home/pi/sketchbook/tezzy/xenopi/vid-cap.jpg");
-    processedImage.save("vid-cap.jpg");
+    snapshot();
     delay(1000);
     capturephase = 0;
     captureflag = false;
@@ -181,16 +190,82 @@ void captureLoop() {
 /////////////////////////
 void keyPressed() {
 
-  // println("key = " + key);
+  // Normal mode.
+  if (key == 'n') {
+    cameraMode = CameraMode.None;
+  }
+  
   // Processed mode.
-  if (key == 'v' || key == 'p') {
-    mode = (mode == CameraMode.Processed ? CameraMode.None : CameraMode.Processed);
+  else if (key == 'p') {
+    cameraMode = CameraMode.Processed;
   }
   
   // Test mode.
   else if (key == 't') {
-    mode = (mode == CameraMode.Test ? CameraMode.None : CameraMode.Test);
+    cameraMode = CameraMode.Test;
   }
+  
+  // Flash (toggle).
+  else if (key == 'f') {
+    flash = !flash;
+  }
+  
+  // Video capture mode (activates processed cam + flash).
+  else if (key == 'v') {
+    cameraMode = CameraMode.Processed;
+    flash = true;
+  }
+  
+  else if (key == 'H') {
+    flashH = (flashH + 30) % 360;
+  }
+
+  else if (key == 'h') {
+    flashH = (flashH - 30 + 360) % 360;
+    println(flashH);
+  }
+  
+  else if (key == 'S') {
+    flashS = constrain(flashS + 25, 0, 255);
+  }
+  
+  else if (key == 's') {
+    flashS = constrain(flashS - 25, 0, 255);
+  }
+
+  else if (key == 'B') {
+    flashB = constrain(flashB + 25, 0, 255);
+  }
+  
+  else if (key == 'b') {
+    flashB = constrain(flashB - 25, 0, 255);
+  }
+
+  // get up to full color
+  else if (key == 'c') {
+    flashS = flashB = 255;
+  }
+  
+  // revert back to white background
+  else if (key == 'w') {
+    flashS = 0;
+    flashB = 255;
+  }
+  
+  else if (key == '+') {
+    scalefactor = constrain(scalefactor + 0.05, 0.05, 2);
+    loadImage();
+  }
+  
+  else if (key == '-') {
+    scalefactor = constrain(scalefactor - 0.05, 0.05, 2);
+    loadImage();
+  }
+  
+  //// Take a snapshot.
+  //else if (key == ' ') {
+  //  snapshot(true);
+  //}
   
   // Directly change to image number.
   else if ('0' <= key && key <= '9') {
@@ -230,6 +305,8 @@ void keyPressed() {
       captureflag = false;
     }
   }
+  
+  updateFlashColor();
 }  
 
 void setImageNum(int n) {
@@ -240,7 +317,13 @@ void setImageNum(int n) {
 void loadImage() {
   pushMatrix();
   img = loadImage(imagez[imagenum]);
+  img.resize(round(scalefactor*img.width), round(scalefactor*img.height));
   popMatrix();
+}
+
+void updateFlashColor() {
+  colorMode(HSB, 360, 255, 255);
+  flashColor = color(flashH, flashS, flashB);
 }
 
 //////////////////////
@@ -291,7 +374,7 @@ void processImage() {
   //    opencv.threshold(threshold);
   //  }
 
-  //  if(invert){
+  //  if(invert){s
   //  // Invert (black bg, white blobs)
   //  opencv.invert();
   //  }
@@ -318,4 +401,14 @@ void processImage() {
   //contoursImage = opencv.getSnapshot();
 
   processedImage = opencv.getSnapshot();
+}
+
+void snapshot() {
+  String filename = generateUniqueFileName("jpg");
+  processedImage.save(savePath("snapshots/processed_"+filename));
+  video.save(savePath("snapshots/raw_"+filename));
+}
+
+String generateUniqueFileName(String ext) {
+  return year()+"-"+month()+"-"+day()+"_"+hour()+"-"+minute()+"-"+second()+"_"+millis()+"."+ext;
 }
