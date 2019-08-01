@@ -44,7 +44,14 @@ int imagenum = 1;
 boolean captureflag = false;
 int capturephase = 0;
 int capwidth, capheight; 
-boolean vmode = false;
+
+enum CameraMode {
+  None,
+  Test,
+  Processed,  
+}
+
+CameraMode mode = CameraMode.None;
 
 PImage newImage; 
 
@@ -99,7 +106,8 @@ void setup() {
 
   video.start();
 
-  img = loadImage(imagez[imagenum]);  // Load the image into the program  
+  // Load default image into the program.
+  loadImage();
 
   // opencv = new OpenCV(this, width, height);
   opencv = new OpenCV(this, capwidth, capheight);
@@ -110,35 +118,41 @@ void setup() {
 ///////////////////////////////////////
 void draw() {
 
-  if (video.available()) {
+  // Capture video.
+  if (video.available() && mode != CameraMode.None) {
+    // Update video frame.
     video.read();
-    video.loadPixels(); 
-    video.updatePixels(); 
-    if (testvideo) {
+    
+    // Print video out if needed.
+    if (mode == CameraMode.Test) {
       image(video, 0, 0); // for test only
     }
   }
-
-  if (!testvideo) {
-    if (!captureflag) { 
-      background(0, 100, 0);
-      int ww=(width - img.width) /2;
-      int hh=(height - img.height)/2;    
-      if (vmode) {
-        background(255, 255, 255);
-        // video.read();
+  
+  if (mode != CameraMode.Test) {
+      if (captureflag) {
         processImage();
-        image(processedImage, 0, 0);
-      } else {
-        background(0);
-        image(img, ww, hh);
+        captureLoop();
+      } else {          
+        background(0, 100, 0);
+        int ww=(width - img.width) /2;
+        int hh=(height - img.height)/2;    
+        if (mode == CameraMode.Processed) {
+          background(255, 255, 255);
+          fill(255, 0, 0);
+          text("VIDMODE", 0, 0);
+          // video.read();
+          processImage();
+          image(processedImage, 0, 0);
+        } else {
+          background(0);
+          image(img, ww, hh);
+        }
       }
-    } else {          
-      processImage();
-      captureLoop();
     }
-  }
+
 }
+
 ////////////////////////////////
 void captureLoop() {
 
@@ -168,18 +182,26 @@ void captureLoop() {
 void keyPressed() {
 
   // println("key = " + key);
-
-  if (key == 'v') {
-    vmode = !(vmode);
+  // Processed mode.
+  if (key == 'v' || key == 'p') {
+    mode = (mode == CameraMode.Processed ? CameraMode.None : CameraMode.Processed);
   }
-
-  if (key == 't') {
-    testvideo = !(testvideo);
+  
+  // Test mode.
+  else if (key == 't') {
+    mode = (mode == CameraMode.Test ? CameraMode.None : CameraMode.Test);
   }
-
-
-
-  if (key == CODED) {
+  
+  // Directly change to image number.
+  else if ('0' <= key && key <= '9') {
+    captureflag = false;
+    imagenum = constrain((int)(key - '0'), 0, imagez.length-1);
+    loadImage();
+  }
+  
+  // Other keys.
+  else if (key == CODED) {
+    // Image caroussel: ->
     if (keyCode == RIGHT) {
       captureflag = false;
       if (imagenum <(imagez.length -1))
@@ -188,6 +210,7 @@ void keyPressed() {
         imagenum = 0;
       }
       loadImage();
+    // Image caroussel: <-
     } else if (keyCode == LEFT) {
       captureflag = false;
       if (imagenum > 0)
@@ -196,16 +219,22 @@ void keyPressed() {
         imagenum = imagez.length -1;
       }
       loadImage();
+    // Start capture.
     } else if (keyCode == UP) {
       print("UP");
       captureflag = true;
       // Captureimage();
+    // Stop capture.
     } else if (keyCode == DOWN) {
       print("DOWN");
       captureflag = false;
     }
   }
 }  
+
+void setImageNum(int n) {
+  imagenum = constrain(n, 0, imagez.length-1);
+}
 
 /////////////////////////
 void loadImage() {
