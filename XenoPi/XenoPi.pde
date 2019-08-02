@@ -46,8 +46,8 @@ final int DEVICE_ID = 0;
 final int CAM_WIDTH = 640;
 final int CAM_HEIGHT = 480;
 
-final int OPEN_CV_WIDTH = 200;
-final int OPEN_CV_HEIGHT = 200;
+final int OPEN_CV_WIDTH = 320;
+final int OPEN_CV_HEIGHT = 320;
 
 final String CAMERA_PERSPECTIVE_FILE_NAME = "camera_perspective.conf";
 
@@ -65,7 +65,7 @@ final String OSC_IP = "127.0.0.1"; // localhost
 
 // Adjust this so that the image fits right inside the petri dish when viewed
 // from the camera.
-float IMAGE_SCALE = 0.45; // scaling ratio
+float IMAGE_SCALE = 0.35; // scaling ratio
 
 boolean cameraRunning = true;
 
