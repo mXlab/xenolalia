@@ -38,6 +38,7 @@ Add the following libraries:
  * Video
  * GL VIdeo
  * OpenCV
+ * OscP5
 
 ## LCD Screen
 
