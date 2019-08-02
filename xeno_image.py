@@ -9,14 +9,17 @@ import time
 import math
 import argparse
 
-from PIL import Image, ImageOps, ImageFilter
+from PIL import Image, ImageOps, ImageFilter, ImageEnhance
 
-# # equalizes levels to a certain average accross points
-# def equalize(arr, average=0.5):
-#     return arr * (average * arr.size) / arr.sum()
+# equalizes levels to a certain average accross points
+def equalize(arr, average=0.5):
+    return arr * (average * arr.size) / arr.sum()
 
 # Process raw grayscale image.
-def process_image(image, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0], median_filter_size=25, apply_transforms=True):
+def process_image(image, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0], apply_transforms=True):
+    median_filter_size = 25
+    contrast_factor = 2
+
     # Invert image.
     image = ImageOps.invert(image)
 
@@ -30,6 +33,7 @@ def process_image(image, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0], med
     # Equalize and denoise image.
     #    image = ImageOps.autocontrast(image)
     image = ImageOps.equalize(image)
+    image = ImageEnhance.Contrast(image).enhance(contrast_factor)
     image = image.filter(ImageFilter.MedianFilter(median_filter_size))
 
     if apply_transforms:
@@ -39,7 +43,7 @@ def process_image(image, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0], med
 
 # Loads image_path file, applies perspective transforms and returns it as
 # a numpy array formatted for the autoencoder.
-def load_image(image_path, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0], median_filter_size=25, apply_transforms=True):
+def load_image(image_path, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0], apply_transforms=True):
     # Open image as grayscale.
     image = Image.open(image_path).convert('L')
     return process_image(image, image_side, input_quad, median_filter_size, apply_transforms)
