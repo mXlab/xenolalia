@@ -16,7 +16,7 @@ from PIL import Image, ImageOps, ImageFilter
 #     return arr * (average * arr.size) / arr.sum()
 
 # Process raw grayscale image.
-def process_image(image, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0], median_filter_size=25, apply_transforms=False):
+def process_image(image, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0], median_filter_size=25, apply_transforms=True):
     # Invert image.
     image = ImageOps.invert(image)
 
@@ -39,7 +39,7 @@ def process_image(image, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0], med
 
 # Loads image_path file, applies perspective transforms and returns it as
 # a numpy array formatted for the autoencoder.
-def load_image(image_path, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0], median_filter_size=25, apply_transforms=False):
+def load_image(image_path, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0], median_filter_size=25, apply_transforms=True):
     # Open image as grayscale.
     image = Image.open(image_path).convert('L')
     return process_image(image, image_side, input_quad, median_filter_size, apply_transforms)
