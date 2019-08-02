@@ -100,3 +100,4 @@ ENV/
 
 # Other
 *.gz
+*.conf # camera configuration files
