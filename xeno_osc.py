@@ -15,6 +15,8 @@ from pythonosc import udp_client
 
 from PIL import Image, ImageOps
 
+from xeno_image import load_image
+
 USE_RPI = os.uname()[4].startswith('arm')
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -60,29 +62,6 @@ else:
 
 n_steps = args.n_steps
 
-
-# equalizes levels to a certain average accross points
-def equalize(arr, average=0.5):
-    return arr * (average * arr.size) / arr.sum()
-    
-# Loads image_path file, applies perspective transforms and returns it as
-# a numpy array formatted for the autoencoder.
-def load_image(image_path):
-    global input_quad, image_side
-    # Open image.
-    image = Image.open(image_path)
-    # Apply filters on image.
-    image = image.convert('L')
-    image = ImageOps.invert(image)
-    image = ImageOps.autocontrast(image)
-    image = ImageOps.equalize(image)
-    # Apply transforms on image.
-    w = image.size[0]
-    h = image.size[1]
-    input_quad_abs = ( input_quad[0]*w, input_quad[1]*h, input_quad[2]*w, input_quad[3]*h, input_quad[4]*w, input_quad[5]*h, input_quad[6]*w, input_quad[7]*h )
-    output = image.transform(image.size, Image.QUAD, input_quad_abs).resize((image_side, image_side))
-    return output
-
 # Generates frame from starting frame.
 def generate(n_steps, starting_frame=None):
 
@@ -109,8 +88,9 @@ def next_image(addr, image_path):
     # Load starting image sent by euglenas.
     print("Next image: {}".format(image_path))
     starting_image = load_image(image_path)
+    starting_image.show()
     starting_frame = np.asarray(starting_image).reshape(input_shape) / 255.0
-    starting_frame = equalize(starting_frame)
+#    starting_frame = equalize(starting_frame)
     # Generate new image.
 #    print("Starting frame info: min={} max={} values={}".format(starting_frame.min(), starting_frame.max(), starting_frame))
     frame = generate(n_steps, starting_frame)
