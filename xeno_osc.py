@@ -64,6 +64,7 @@ n_steps = args.n_steps
 
 # Generates frame from starting frame.
 def generate(n_steps, starting_frame=None):
+    global input_shape
 
     # Iterate.
     for t in range(n_steps):
@@ -74,7 +75,7 @@ def generate(n_steps, starting_frame=None):
         if t == 0:
             if starting_frame is None:
                 # Generate first image as random.
-                frame = np.random.random((1,image_dim))
+                frame = np.random.random(input_shape)
             else:
                 frame = starting_frame
 
@@ -83,33 +84,37 @@ def generate(n_steps, starting_frame=None):
 
     return frame
 
-def next_image(addr, image_path):
+def next_image(image_path, starting_frame_random):
     global n_steps, input_shape, image_side
-    # Load starting image sent by euglenas.
-    print("Next image: {}".format(image_path))
-    starting_image = load_image(image_path)
-    starting_image.show()
-    starting_frame = np.asarray(starting_image).reshape(input_shape) / 255.0
-#    starting_frame = equalize(starting_frame)
+    if starting_frame_random:
+        starting_frame = None
+    else:
+        starting_image = load_image(image_path)
+        starting_image.save("image_received.png")  # debug
+        starting_frame = np.asarray(starting_image).reshape(input_shape) / 255.0
+    nn_image_path = "{}/{}_nn.png".format(os.path.dirname(image_path),
+                                          os.path.splitext(os.path.basename(image_path))[0])
     # Generate new image.
-#    print("Starting frame info: min={} max={} values={}".format(starting_frame.min(), starting_frame.max(), starting_frame))
     frame = generate(n_steps, starting_frame)
-#    print("Image info: min={} max={} values={}".format(frame.min(), frame.max(), frame))
     image = Image.fromarray(frame.reshape((image_side, image_side)) * 255.0).convert('L')
     # Save image to path.
-    nn_image_path = "{}/{}_nn.png".format(os.path.dirname(image_path), os.path.splitext(os.path.basename(image_path))[0])
-    print("Saving image: {}".format(nn_image_path))
     image.save(nn_image_path)
-    starting_image.save("image_received.png") # debug
     # Return back OSC message.
     client.send_message("/xeno/neurons/step", [nn_image_path])
+
+def handle_step(addr, image_path):
+    next_image(image_path, False)
+
+def handle_begin(addr, image_path):
+    next_image(image_path, True)
 
 # Load model.
 model = load_model(args.model_file)
 
 # Create OSC dispatcher.
 dispatcher = dispatcher.Dispatcher()
-dispatcher.map("/xeno/euglenas/step", next_image)
+dispatcher.map("/xeno/euglenas/step", handle_step)
+dispatcher.map("/xeno/euglenas/begin", handle_begin)
 
 # Launch OSC server & client.
 
