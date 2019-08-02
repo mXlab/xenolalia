@@ -109,8 +109,7 @@ void setup() {
   oscP5 = new OscP5(this, OSC_PORT_RECV);  
   remoteLocation = new NetAddress(OSC_IP, OSC_PORT_SEND);
   
-  oscP5.plug(this, "nextImage", "/xeno/step/nn");
-
+  oscP5.plug(this, "nextImage", "/xeno/neurons/step");
 }
 
 void nextImage(String imagePath) {
