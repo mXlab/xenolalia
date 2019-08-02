@@ -187,7 +187,8 @@ void drawScaledImage(PImage img) {
 }
 
 String generateUniqueBaseName() {
-  return year()+"-"+month()+"-"+day()+"_"+hour()+"-"+minute()+"-"+second()+"_"+millis();
+  return nf(year(),4)+"-"+nf(month(),2)+"-"+nf(day(),2)+"_"+
+           nf(hour(),2)+":"+nf(minute(),2)+":"+nf(second(),2)+"_"+nf(millis(),6);
 }  
 
 
