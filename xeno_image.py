@@ -17,7 +17,7 @@ def equalize(arr, average=0.5):
 
 # Process raw grayscale image.
 def process_image(image, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0], apply_transforms=True):
-    median_filter_size = 25
+    median_filter_size = 5
     contrast_factor = 2
 
     # Invert image.
@@ -46,7 +46,7 @@ def process_image(image, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0], app
 def load_image(image_path, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0], apply_transforms=True):
     # Open image as grayscale.
     image = Image.open(image_path).convert('L')
-    return process_image(image, image_side, input_quad, median_filter_size, apply_transforms)
+    return process_image(image, image_side, input_quad, apply_transforms)
 
 
 if __name__ == "__main__":
