@@ -54,8 +54,9 @@ if __name__ == "__main__":
 
     parser.add_argument("-C", "--configuration-file", type=str, default="XenoPi/camera_perspective.conf", help="Configuration file containing input quad")
     parser.add_argument("-q", "--input-quad", type=str, default=None, help="Comma-separated list of numbers defining input quad (overrides configuration file)")
+    parser.add_argument("-i", "--image-side", type=int, default=28, help="Image side value")
 
-    parser.add_argument("-r", "--raw-image", default=False, action='store_true', help="Use raw image (ie. do not apply input quad)")
+    parser.add_argument("-r", "--raw-image", default=False, action='store_true', help="Use raw image (ie. do not apply any transformations, just filterings)")
     parser.add_argument("-c", "--enable-color", default=False, action='store_true', help="Enable color when taking snapshot")
     parser.add_argument("-s", "--show", default=False, action='store_true', help="Show image on screen before saving")
 
