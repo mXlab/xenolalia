@@ -111,7 +111,7 @@ def next_image(addr, image_path):
 #    print("Image info: min={} max={} values={}".format(frame.min(), frame.max(), frame))
     image = Image.fromarray(frame.reshape((image_side, image_side)) * 255.0).convert('L')
     # Save image to path.
-    nn_image_path = "{}/{}_nn.png".format(os.path.dirname(image_path), os.path.basename(image_path))
+    nn_image_path = "{}/{}_nn.png".format(os.path.dirname(image_path), os.path.splitext(os.path.basename(image_path))[0])
     print("Saving image: {}".format(nn_image_path))
     image.save(nn_image_path)
     starting_image.save("image_received.png") # debug
