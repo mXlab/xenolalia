@@ -23,10 +23,12 @@ sudo apt install -y libblas-dev liblapack-dev libatlas-base-dev gfortran
 sudo apt install -y xdotool
 sudo apt install -y python-virtualenv
 sudo apt install -y software-properties-common dirmngr apt-transport-https lsb-release ca-certificates
+sudo apt install -y liblo-tools liblo7
 
 # Install python libraries.
 # pip3 install pip3 --upgrade # DO NOT DO THIS
 pip3 install keras tensorflow scipy numpy
+pip3 install python-osc
 
 # Install Processing
 curl https://processing.org/download/install-arm.sh | sudo sh
