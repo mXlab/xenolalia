@@ -21,11 +21,12 @@ parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFo
 
 parser.add_argument("model_file", type=str, help="Model filename (hdf5)")
 
-parser.add_argument("-c", "--configuration-file", type=str, default="XenoPi/camera_perspective.conf", help="Configuration file containing input quad")
+parser.add_argument("-c", "--convolutional", default=False, action='store_true', help="Use convolutional autoencoder")
+parser.add_argument("-C", "--configuration-file", type=str, default="XenoPi/camera_perspective.conf", help="Configuration file containing input quad")
 parser.add_argument("-q", "--input-quad", type=str, default=None, help="Comma-separated list of numbers defining input quad (overrides configuration file)")
 parser.add_argument("-n", "--n-steps", type=int, default=1, help="Number of self-loop steps for each image")
 parser.add_argument("-D", "--output-directory", type=str, default=".", help="Output directory for generative images")
-    
+
 parser.add_argument("-i", "--ip", default="127.0.0.1",
                     help="Specify the ip address to send data to.")
 parser.add_argument("-s", "--send-port", default="7001",
@@ -51,6 +52,11 @@ MAX_BLUE  = 200
 # This is the size of our encoded representations.
 image_side = 28
 image_dim = image_side*image_side
+
+if args.convolutional:
+    input_shape = (1, image_side, image_side, 1)
+else:
+    input_shape = (1, image_dim)
 
 n_steps = args.n_steps
 
@@ -94,13 +100,16 @@ def generate(n_steps, starting_frame=None):
     return frame
 
 def next_image(addr, image_path):
-    global n_steps, image_dim
+    global n_steps, input_shape, image_side
+    # Load starting image sent by euglenas.
     print("Next image: {}".format(image_path))
-    # Generate new image.
     starting_image = load_image(image_path)
-    starting_frame = np.asarray(starting_image).reshape((1,image_dim))
-    frame = generate(n_steps, starting_image)
-    image = Image.fromarray(frame.asarray())
+    starting_frame = np.asarray(starting_image).reshape(input_shape) / 255.0
+    # Generate new image.
+#    print("Starting frame info: min={} max={} values={}".format(starting_frame.min(), starting_frame.max(), starting_frame))
+    frame = generate(n_steps, starting_frame)
+#    print("Image info: min={} max={} values={}".format(frame.min(), frame.max(), frame))
+    image = Image.fromarray(frame.reshape((image_side, image_side)) * 255.0).convert('L')
     # Save image to path.
     nn_image_path = "{}/{}_nn.png".format(os.path.dirname(image_path), os.path.basename(image_path))
     print("Saving image: {}".format(nn_image_path))
@@ -108,7 +117,7 @@ def next_image(addr, image_path):
     starting_image.save("image_received.png") # debug
     # Return back OSC message.
     client.send_message("/xeno/neurons/step", [nn_image_path])
-    
+
 # Load model.
 model = load_model(args.model_file)
 
@@ -137,4 +146,3 @@ print("Serving on {server.server_address}. Program ready.")
 #print("Go!")
 
 server.serve_forever()
-
