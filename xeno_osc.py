@@ -60,6 +60,11 @@ else:
 
 n_steps = args.n_steps
 
+
+# equalizes levels to a certain average accross points
+def equalize(arr, average=0.5):
+    return arr * (average * arr.size) / arr.sum()
+    
 # Loads image_path file, applies perspective transforms and returns it as
 # a numpy array formatted for the autoencoder.
 def load_image(image_path):
@@ -105,6 +110,7 @@ def next_image(addr, image_path):
     print("Next image: {}".format(image_path))
     starting_image = load_image(image_path)
     starting_frame = np.asarray(starting_image).reshape(input_shape) / 255.0
+    starting_frame = equalize(starting_frame)
     # Generate new image.
 #    print("Starting frame info: min={} max={} values={}".format(starting_frame.min(), starting_frame.max(), starting_frame))
     frame = generate(n_steps, starting_frame)
