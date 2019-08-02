@@ -110,7 +110,7 @@ def sample_frame(t):
     output.resize(OUTPUT_RESOLUTION).save("img/output_{frame:03d}.png".format(frame=t))
     #cam.raw_sample().save("img/raw_output_{frame:03d}.png".format(frame=t))
 
-    return np.asarray(output).reshape((1,image_dim))
+    return np.asarray(output).reshape((1,image_dim)) / 255.0
 
 def display_image(img, waitForKey=False):
     # Resize image.
