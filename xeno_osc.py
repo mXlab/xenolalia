@@ -15,7 +15,7 @@ from pythonosc import udp_client
 
 from PIL import Image, ImageOps
 
-from xeno_image import load_image
+import xeno_image
 
 USE_RPI = os.uname()[4].startswith('arm')
 
@@ -44,6 +44,7 @@ from keras.models import Model, load_model
 if (args.input_quad != None):
     input_quad = tuple([ float(x) for x in args.input_quad.split(',') ])
 else:
+    print("open config file")
     with open(args.configuration_file, "rb") as f:
         input_quad = tuple([ float(v) for v in f.readlines() ])
 
@@ -83,19 +84,24 @@ def generate(n_steps, starting_frame=None):
     return frame
 
 def next_image(image_path, starting_frame_random):
-    global n_steps, input_shape, image_side
+    global n_steps, input_quad, input_shape, image_side
+
+    dirname = os.path.dirname(image_path)
+    basename = os.path.splitext(os.path.basename(image_path))[0]
+
     if starting_frame_random:
         starting_frame = None
     else:
-        starting_image = load_image(image_path)
-        starting_image.save("image_received.png")  # debug
-        starting_frame = np.asarray(starting_image).reshape(input_shape) / 255.0
-    nn_image_path = "{}/{}_nn.png".format(os.path.dirname(image_path),
-                                          os.path.splitext(os.path.basename(image_path))[0])
+        starting_image, filtered_image, transformed_image = xeno_image.load_image(image_path, image_side, input_quad)
+        starting_frame = xeno_image.image_to_array(starting_image, input_shape)
+        transformed_image.save("{}/{}_0trn.png".format(dirname, basename))
+        filtered_image.save("{}/{}_1fil.png".format(dirname, basename))
     # Generate new image.
     frame = generate(n_steps, starting_frame)
-    image = Image.fromarray(frame.reshape((image_side, image_side)) * 255.0).convert('L')
+    image = xeno_image.array_to_image(frame, image_side, image_side)
+#    image = Image.fromarray(frame.reshape((image_side, image_side)) * 255.0).convert('L')
     # Save image to path.
+    nn_image_path = "{}/{}_2ann.png".format(dirname, basename)
     image.save(nn_image_path)
     # Return back OSC message.
     client.send_message("/xeno/neurons/step", [nn_image_path])
