@@ -2,15 +2,15 @@
 // with python script.
 class GenerativeMode extends AbstractMode {
   
-  OpenCV opencv;
-
   float contrast = 2.0;
   PImage img;
   boolean captureflag = false;
   
-  color flashColor;
-  int flashH = 300, // magenta-ready
-      flashS = 0, flashB = 255; // ... but starts in white
+  
+  color flashColor = color(255);
+  
+  //int flashH = 300, // magenta-ready
+  //    flashS = 0, flashB = 255; // ... but starts in white
   
   PImage processedImage;
   
@@ -94,11 +94,6 @@ class GenerativeMode extends AbstractMode {
   void nextImage(String imagePath) {
     img = loadImage(imagePath);
     snapshotRequested = false;
-  }
-
-  void updateFlashColor() {
-    colorMode(HSB, 360, 255, 255);
-    flashColor = color(flashH, flashS, flashB);
   }
   
   // Create filtered image using OpenCV.
