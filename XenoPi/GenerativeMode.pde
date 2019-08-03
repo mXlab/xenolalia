@@ -6,9 +6,13 @@ class GenerativeMode extends AbstractMode {
   PImage img;
   boolean captureflag = false;
   
+  boolean flash = false;
+  
+  boolean autoMode = true;
   
   color flashColor = color(255);
   
+  final color PROJECTION_COLOR = color(#ff00ff); // magenta
   //int flashH = 300, // magenta-ready
   //    flashS = 0, flashB = 255; // ... but starts in white
   
@@ -16,8 +20,8 @@ class GenerativeMode extends AbstractMode {
   
   boolean snapshotRequested;
   
-  // Controls exposure time.
-  final int EXPOSURE_TIME = 5*(60000); // 5 minutes  
+  // Controls exposure time (time between each snapshot)
+  final int EXPOSURE_TIME = 1 * (60000);  
   Timer exposureTimer;
   
   int capturePhase;
@@ -28,6 +32,7 @@ class GenerativeMode extends AbstractMode {
     processedImage = createImage(OPEN_CV_WIDTH, OPEN_CV_WIDTH, RGB);
     
     requestSnapshot();
+    exposureTimer.start();
   }
 
   ///////////////////////////////////////
@@ -47,9 +52,21 @@ class GenerativeMode extends AbstractMode {
     
     // Project current iteration.
     else {
-      colorMode(RGB);
-      background(0);
-      drawScaledImage(img);
+      
+      if (autoMode && exposureTimer.isFinished()) {
+        requestSnapshot();
+        exposureTimer.start();
+      }
+      
+      // Display background or projected image depending on flash status.
+      if (flash) { // flash!
+        background(flashColor);
+      } else { // projected image
+        background(0);
+        tint(PROJECTION_COLOR); // tint
+        drawScaledImage(img);
+      }
+      
     }
   }
   
@@ -79,6 +96,10 @@ class GenerativeMode extends AbstractMode {
   void keyPressed() {
     if (key == ' ')
       requestSnapshot();
+    else if (key == 'f')
+      flash = !flash;
+    else if (key == 'a') {
+      autoMode = !autoMode;
   }  
   
 
