@@ -7,8 +7,12 @@ class GenerativeMode extends AbstractMode {
   boolean captureflag = false;
   
   boolean flash = false;
+  boolean camView = false;
   
   boolean autoMode = true;
+  
+  final int CAM_VIEW_WIDTH = 200;
+  final int CAM_VIEW_HEIGHT = 200;
   
   color flashColor = color(255);
   
@@ -67,6 +71,12 @@ class GenerativeMode extends AbstractMode {
         drawScaledImage(img);
       }
       
+      // Camera view in the top-left corner.
+      if (camView) {
+        noTint();
+        imageMode(CORNER);
+        image(cam.getImage(), 0, 0, CAM_VIEW_WIDTH, CAM_VIEW_HEIGHT);
+      }
       
       textSize(32);
       String status;
@@ -107,8 +117,11 @@ class GenerativeMode extends AbstractMode {
       requestSnapshot();
     else if (key == 'f')
       flash = !flash;
+    else if (key == 'v')
+      camView = !camView;
     else if (key == 'a') {
       autoMode = !autoMode;
+    }
   }  
   
 
