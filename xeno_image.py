@@ -15,38 +15,60 @@ from PIL import Image, ImageOps, ImageFilter, ImageEnhance
 def equalize(arr, average=0.5):
     return arr * (average * arr.size) / arr.sum()
 
-# Process raw grayscale image.
-def process_image(image, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0], apply_transforms=True):
-    median_filter_size = 5
+def round_up_to_odd(f):
+    return int(np.ceil(f) // 2 * 2 + 1)
+
+# Converts a PIL grayscale image to a numpy array in [0,1] with given shape.
+def image_to_array(img, input_shape):
+    return np.asarray(img).reshape(input_shape) / 255.0
+
+# Converts a numpy array received from the neural network with all values in [0,1] to PIL grayscale image.
+def array_to_image(arr, width, height):
+    return Image.fromarray(arr.reshape((width, height)) * 255.0).convert('L')
+
+# Processes raw grayscale image. Returns a tuple containing:
+# - transformed + filtered + resized image
+# - transformed + filtered image
+# - transformed image
+def process_image(image, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0]):
+    w = image.size[0]
+    h = image.size[1]
+
+#    median_filter_size = round_up_to_odd(min(w, h) * 0.015) # this is approximated on a size of 5 for a 320x320 image
+    median_filter_size = round_up_to_odd(min(w, h) * 0.1) # this is approximated on a size of 5 for a 320x320 image
+    print("Median filter size: " + str(median_filter_size))
     contrast_factor = 2
 
-    # Invert image.
-    image = ImageOps.invert(image)
+    # Adjust image perspective based on input quad.
+    input_quad_abs = (input_quad[0] * w, input_quad[1] * h, input_quad[2] * w, input_quad[3] * h, input_quad[4] * w, input_quad[5] * h, input_quad[6] * w, input_quad[7] * h)
+    transformed = image.transform(image.size, Image.QUAD, input_quad_abs)
 
-    if apply_transforms:
-        # Apply transforms on image.
-        w = image.size[0]
-        h = image.size[1]
-        input_quad_abs = (input_quad[0] * w, input_quad[1] * h, input_quad[2] * w, input_quad[3] * h, input_quad[4] * w, input_quad[5] * h, input_quad[6] * w, input_quad[7] * h)
-        image = image.transform(image.size, Image.QUAD, input_quad_abs)
-
-    # Equalize and denoise image.
+    # Apply image filters to image. The goal is to provide a balanced and highly contrasted grayscale image
     #    image = ImageOps.autocontrast(image)
-    image = ImageOps.equalize(image)
-    image = ImageEnhance.Contrast(image).enhance(contrast_factor)
-    image = image.filter(ImageFilter.MedianFilter(median_filter_size))
 
-    if apply_transforms:
-        image = image.resize((image_side, image_side))
-    return image
+    # Apply mask to alleviate border flares / artefacts.
+    filtered = transformed.convert('RGBA')
+    image_mask = Image.open("xeno_mask.png").convert('RGBA').resize(transformed.size)
+    filtered = Image.alpha_composite(filtered, image_mask)
+    filtered = filtered.convert('L')
+
+    # Image filters to enhance contrasts.
+    filtered = ImageOps.invert(filtered)
+    filtered = filtered.filter(ImageFilter.MedianFilter(median_filter_size))
+    filtered = ImageOps.equalize(filtered)
+    filtered = ImageEnhance.Contrast(filtered).enhance(contrast_factor)
+
+    resized = filtered.resize((image_side, image_side))
+
+    return resized, filtered, transformed
 
 
 # Loads image_path file, applies perspective transforms and returns it as
 # a numpy array formatted for the autoencoder.
-def load_image(image_path, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0], apply_transforms=True):
+def load_image(image_path, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0]):
     # Open image as grayscale.
     image = Image.open(image_path).convert('L')
-    return process_image(image, image_side, input_quad, apply_transforms)
+    return process_image(image, image_side, input_quad)
 
 
 if __name__ == "__main__":
