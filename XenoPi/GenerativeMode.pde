@@ -30,7 +30,11 @@ class GenerativeMode extends AbstractMode {
   
   int capturePhase;
   
+  boolean firstStep;
+  
   void setup() {
+    firstStep = true;
+    
     exposureTimer = new Timer(EXPOSURE_TIME);
 
     processedImage = createImage(OPEN_CV_WIDTH, OPEN_CV_WIDTH, RGB);
@@ -157,7 +161,9 @@ class GenerativeMode extends AbstractMode {
     
     // Send an OSC message to announce creation of new image.
     
-    OscMessage msg = new OscMessage("/xeno/step/euglenas");
+    OscMessage msg = new OscMessage("/xeno/euglenas/" + 
+      ((firstStep && !EUGLENAS_BEGIN) ? "begin" : "step"));
+    firstStep = false;
 //    msg.add(processedImageFilename);
     msg.add(rawImageFilename);
     
