@@ -126,39 +126,35 @@ int xxx=0;
 void draw() {
 
   // Capture video.
-  if (video.available() && cameraMode != CameraMode.None) {
+  if (video.available() && (captureflag || cameraMode != CameraMode.None)) {
     // Update video frame.
     video.read();
-    
-    // Print video out if needed.
-    if (cameraMode == CameraMode.Test) {
-      image(video, 0, 0); // for test only
-    }
   }
   
-  if (cameraMode != CameraMode.Test) {
-      if (captureflag) {
-        processImage();
-        captureLoop();
-      } else {
-        colorMode(HSB, 360, 255,255);
-        background(flashColor);
-        int ww=(width - img.width) /2;
-        int hh=(height - img.height)/2;    
-        if (cameraMode == CameraMode.Processed) {
-          fill(255, 0, 0);
-          text("VIDMODE", 0, 0);
-          // video.read();
-          processImage();
-          image(processedImage, 0, 0);
-        } else if (!flash) {
-          colorMode(RGB);
-          background(0);
-          image(img, ww, hh);
-        }
-      }
+  // Snapshot requested.
+  if (captureflag) {
+    processImage();
+    captureLoop();
+  } else {
+    // Display background or projected image depending on flash status.
+    if (flash) { // flash!
+      colorMode(HSB, 360, 255,255);
+      background(flashColor);
     }
-
+    else { // project image onto petri dish
+      colorMode(RGB);
+      background(0);
+      int ww=(width - img.width) /2;
+      int hh=(height - img.height)/2;    
+      image(img, ww, hh);
+    }
+    
+    if (cameraMode != CameraMode.None) {
+      processImage();
+      image(video, 0, 0, camviewwidth, camviewheight);
+      image(processedImage, 0, camviewheight, camviewwidth, camviewheight);
+    }
+  }
 }
 
 ////////////////////////////////
@@ -404,11 +400,12 @@ void processImage() {
 }
 
 void snapshot() {
-  String filename = generateUniqueFileName("jpg");
-  processedImage.save(savePath("snapshots/processed_"+filename));
-  video.save(savePath("snapshots/raw_"+filename));
+  String basename = generateUniqueBaseName();
+  processedImage.save(savePath("snapshots/"+basename+"_pro.png"));
+  video.save(savePath("snapshots/"+basename+"_raw.png"));
 }
 
-String generateUniqueFileName(String ext) {
-  return year()+"-"+month()+"-"+day()+"_"+hour()+"-"+minute()+"-"+second()+"_"+millis()+"."+ext;
-}
+String generateUniqueBaseName() {
+  return nf(year(),4)+"-"+nf(month(),2)+"-"+nf(day(),2)+"_"+
+           nf(hour(),2)+":"+nf(minute(),2)+":"+nf(second(),2)+"_"+nf(millis(),6);
+}  
