@@ -2,32 +2,45 @@
 // with python script.
 class GenerativeMode extends AbstractMode {
   
-  OpenCV opencv;
-
   float contrast = 2.0;
   PImage img;
   boolean captureflag = false;
   
-  color flashColor;
-  int flashH = 300, // magenta-ready
-      flashS = 0, flashB = 255; // ... but starts in white
+  boolean flash = false;
+  boolean camView = false;
+  
+  boolean autoMode = true;
+  
+  final int CAM_VIEW_WIDTH = 200;
+  final int CAM_VIEW_HEIGHT = 200;
+  
+  color flashColor = color(255);
+  
+  final color PROJECTION_COLOR = color(#ff00ff); // magenta
+  //int flashH = 300, // magenta-ready
+  //    flashS = 0, flashB = 255; // ... but starts in white
   
   PImage processedImage;
   
   boolean snapshotRequested;
   
-  // Controls exposure time.
-  final int EXPOSURE_TIME = 5*(60000); // 5 minutes  
+  // Controls exposure time (time between each snapshot)
+  final int EXPOSURE_TIME = 1 * (60000);  
   Timer exposureTimer;
   
   int capturePhase;
   
+  boolean firstStep;
+  
   void setup() {
+    firstStep = true;
+    
     exposureTimer = new Timer(EXPOSURE_TIME);
 
     processedImage = createImage(OPEN_CV_WIDTH, OPEN_CV_WIDTH, RGB);
     
     requestSnapshot();
+    exposureTimer.start();
   }
 
   ///////////////////////////////////////
@@ -47,9 +60,36 @@ class GenerativeMode extends AbstractMode {
     
     // Project current iteration.
     else {
-      colorMode(RGB);
-      background(0);
-      drawScaledImage(img);
+      
+      if (autoMode && exposureTimer.isFinished()) {
+        requestSnapshot();
+        exposureTimer.start();
+      }
+      
+      // Display background or projected image depending on flash status.
+      if (flash) { // flash!
+        background(flashColor);
+      } else { // projected image
+        background(0);
+        tint(PROJECTION_COLOR); // tint
+        drawScaledImage(img);
+      }
+      
+      // Camera view in the top-left corner.
+      if (camView) {
+        noTint();
+        imageMode(CORNER);
+        image(cam.getImage(), 0, 0, CAM_VIEW_WIDTH, CAM_VIEW_HEIGHT);
+      }
+      
+      textSize(32);
+      String status;
+      if (autoMode)
+        status = "time until next snapshot: " + nf(exposureTimer.countdownTime()/1000.0f, 3, 1) + " s";
+      else
+        status = "manual mode";
+      text(status, 10, height-10);
+      
     }
   }
   
@@ -79,6 +119,13 @@ class GenerativeMode extends AbstractMode {
   void keyPressed() {
     if (key == ' ')
       requestSnapshot();
+    else if (key == 'f')
+      flash = !flash;
+    else if (key == 'v')
+      camView = !camView;
+    else if (key == 'a') {
+      autoMode = !autoMode;
+    }
   }  
   
 
@@ -95,11 +142,6 @@ class GenerativeMode extends AbstractMode {
     img = loadImage(imagePath);
     snapshotRequested = false;
   }
-
-  void updateFlashColor() {
-    colorMode(HSB, 360, 255, 255);
-    flashColor = color(flashH, flashS, flashB);
-  }
   
   // Create filtered image using OpenCV.
   void processImage() {
@@ -112,15 +154,18 @@ class GenerativeMode extends AbstractMode {
   void snapshot() {
     // Generate image paths.
     String basename = generateUniqueBaseName();
-    String processedImageFilename = savePath("snapshots/processed_"+basename+".png");
-    String rawImageFilename = savePath("snapshots/raw_"+basename+".png");
+    String processedImageFilename = savePath("snapshots/"+basename+"_pro.png");
+    String rawImageFilename = savePath("snapshots/"+basename+"_raw.png");
     processedImage.save(processedImageFilename);
     cam.getImage().save(rawImageFilename);
     
     // Send an OSC message to announce creation of new image.
     
-    OscMessage msg = new OscMessage("/xeno/step/euglenas");
-    msg.add(processedImageFilename);
+    OscMessage msg = new OscMessage("/xeno/euglenas/" + 
+      ((firstStep && !EUGLENAS_BEGIN) ? "begin" : "step"));
+    firstStep = false;
+//    msg.add(processedImageFilename);
+    msg.add(rawImageFilename);
     
     oscP5.send(msg, remoteLocation);
   }
