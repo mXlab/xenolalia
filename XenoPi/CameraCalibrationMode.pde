@@ -8,9 +8,10 @@ class CameraCalibrationMode extends AbstractMode {
   Timer snapshotTimer;
   final int SNAPSHOT_TIME = 500;
   
+  
   void setup() {
     // Load points if they exist.
-    loadPoints();
+    settings.load();
     
     // Reference image.
     referenceImg = loadImage(REFERENCE_IMAGE);
@@ -40,12 +41,16 @@ class CameraCalibrationMode extends AbstractMode {
       image(cam.getImage(), 0, 0, width, height);
       
       // Draw controls.
-      for (int i=0; i<N_POINTS; i++) {
-        float x = points[i].x;
-        float y = points[i].y;
-        int next = (i+1) % N_POINTS;
-        float nx = points[next].x;
-        float ny = points[next].y;
+      for (int i=0; i<settings.nCamQuadPoints(); i++) {
+        // Get point.
+        PVector point = settings.getCamQuadPoint(i);
+        float x = point.x;
+        float y = point.y;
+        // Get next point.
+        int next = (i+1) % settings.nCamQuadPoints();
+        PVector nextPoint = settings.getCamQuadPoint(next);
+        float nx = nextPoint.x;
+        float ny = nextPoint.y;
         // Draw point.
         fill(0, 0, 0, 0);
         stroke( i == currentPoint ? color(200, 0, 0) : color(200, 200, 200) );
@@ -71,9 +76,9 @@ class CameraCalibrationMode extends AbstractMode {
     }
     else {
       switch (key) {
-        case RETURN:
-        case ENTER: savePoints(); break;
-        case TAB:   selectPoint( (currentPoint+1) % N_POINTS); break;
+        case RETURN: case ENTER: 
+                    settings.save(); break;
+        case TAB:   selectPoint( (currentPoint+1) % settings.nCamQuadPoints()); break;
         case '1':   selectPoint(0); break;
         case '2':   selectPoint(1); break;
         case '3':   selectPoint(2); break;
@@ -84,20 +89,20 @@ class CameraCalibrationMode extends AbstractMode {
   }
   
   void mousePressed() {
-    points[currentPoint].set(mouseX, mouseY);
+    settings.getCamQuadPoint(currentPoint).set(mouseX, mouseY);
   }
   
   void mouseDragged() {
-    points[currentPoint].set(mouseX, mouseY);
+    settings.getCamQuadPoint(currentPoint).set(mouseX, mouseY);
   }
   
   void selectPoint(int i) {
-    currentPoint = constrain(i, 0, N_POINTS-1);
+    currentPoint = constrain(i, 0, settings.nCamQuadPoints()-1);
   }
   
   void movePoint(int i, float dx, float dy) {
   //  println("move point by " + dx + "," + dy);
-    points[i].add(dx, dy);
+    settings.getCamQuadPoint(i).add(dx, dy);
   }
   
   // Take a snapshot of reference image with the camera.

@@ -46,7 +46,7 @@ final int CAM_HEIGHT = 480;
 final int OPEN_CV_WIDTH = 320;
 final int OPEN_CV_HEIGHT = 320;
 
-final String CAMERA_PERSPECTIVE_FILE_NAME = "camera_perspective.conf";
+final String SETTINGS_FILE_NAME = "settings.json";
 
 final String REFERENCE_IMAGE = "camera_perspective_reference.png";
 
@@ -56,8 +56,6 @@ final color LINE_COLOR = #00ff00;
 final boolean EUGLENAS_BEGIN = false;
 
 int currentPoint = 0;
-final int N_POINTS = 4;
-PVector[] points = new PVector[N_POINTS];
 
 final int OSC_PORT_SEND = 7000;
 final int OSC_PORT_RECV = 7001;
@@ -70,6 +68,8 @@ float IMAGE_SCALE = 0.35; // scaling ratio
 boolean cameraRunning = true;
 
 AbstractMode mode;
+
+Settings settings;
 
 void setup() {
   //2592x1944
@@ -100,6 +100,9 @@ void setup() {
   
   // opencv = new OpenCV(this, width, height);
   opencv = new OpenCV(this, OPEN_CV_WIDTH, OPEN_CV_HEIGHT);
+  
+  // Load configuration file.
+  settings = new Settings();
   
   // Initialize mode.
   mode = new CameraCalibrationMode();
@@ -139,50 +142,14 @@ void mouseDragged() {
   mode.mouseDragged();
 }
 
-// Camera perspective configuration. //////////////////////
-
-void savePoints() {
-  String[] strConfig = new String[N_POINTS*2];
-  int k=0;
-  for (int i=0; i<N_POINTS; i++) {
-    PVector p = points[i];
-    float x = p.x / width;
-    float y = p.y / height;
-    strConfig[k++] = nf(x);
-    strConfig[k++] = nf(y);
-    print(x + ", " + y + ", ");
-  }
-  // Save array of strings straight to file.
-  saveStrings(CAMERA_PERSPECTIVE_FILE_NAME, strConfig);
-}
-
-void loadPoints() {
-  try {
-    String[] strConfig = loadStrings(CAMERA_PERSPECTIVE_FILE_NAME);
-    for (int i=0; i<N_POINTS; i++) {
-      points[i] = new PVector(float(strConfig[i*2])*width, float(strConfig[i*2+1])*height);
-    }
-  } catch (Exception e) {
-    println("Problem when loading camera perspective configuration file: " + e);
-    // File not found: reset points.
-    resetPoints();
-  }
-}
-
-void resetPoints() {
-  // Initialize positions.
-  points[0] = new PVector(0, 0);
-  points[1] = new PVector(0, height);
-  points[2] = new PVector(width, height);
-  points[3] = new PVector(width, 0);
-}
 
 // Display arbitrary image in center of screen with scaling factor applied.
 void drawScaledImage(PImage img) {
   pushMatrix();
-  int minDim = round(IMAGE_SCALE * min(width, height));
-  imageMode(CENTER);
-  image(img, width/2, height/2, minDim, minDim);
+  PVector topLeft = settings.getImageRectPoint(0);
+  PVector bottomRight = settings.getImageRectPoint(1);
+  imageMode(CORNERS);
+  image(img, topLeft.x, topLeft.y, bottomRight.x, bottomRight.y);
   popMatrix();
 }
 
