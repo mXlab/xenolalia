@@ -137,15 +137,16 @@ class GenerativeMode extends AbstractMode {
   void snapshot() {
     // Generate image paths.
     String basename = generateUniqueBaseName();
-    String processedImageFilename = savePath("snapshots/processed_"+basename+".png");
-    String rawImageFilename = savePath("snapshots/raw_"+basename+".png");
+    String processedImageFilename = savePath("snapshots/"+basename+"_pro.png");
+    String rawImageFilename = savePath("snapshots/"+basename+"_raw.png");
     processedImage.save(processedImageFilename);
     cam.getImage().save(rawImageFilename);
     
     // Send an OSC message to announce creation of new image.
     
     OscMessage msg = new OscMessage("/xeno/step/euglenas");
-    msg.add(processedImageFilename);
+//    msg.add(processedImageFilename);
+    msg.add(rawImageFilename);
     
     oscP5.send(msg, remoteLocation);
   }
