@@ -15,7 +15,7 @@ class GenerativeMode extends AbstractMode {
   final int CAM_VIEW_HEIGHT = 200;
   
   color flashColor = color(255);
-  
+    
   final color PROJECTION_COLOR = color(#ff00ff); // magenta
   //int flashH = 300, // magenta-ready
   //    flashS = 0, flashB = 255; // ... but starts in white
@@ -23,22 +23,25 @@ class GenerativeMode extends AbstractMode {
   PImage processedImage;
   
   boolean snapshotRequested;
-  
+  int nSnapshots;
+
   // Controls exposure time (time between each snapshot)
   final int EXPOSURE_TIME = 1 * (60000);  
   Timer exposureTimer;
   
   int capturePhase;
   
-  boolean firstStep;
+  String experimentName;
   
   void setup() {
-    firstStep = true;
-    
-    exposureTimer = new Timer(EXPOSURE_TIME);
-
     processedImage = createImage(OPEN_CV_WIDTH, OPEN_CV_WIDTH, RGB);
     
+    // Create a unique name for experiment.
+    experimentName = generateUniqueBaseName();
+    
+    // Take a first snapshot.
+    nSnapshots = 0;
+    exposureTimer = new Timer(EXPOSURE_TIME);
     requestSnapshot();
     exposureTimer.start();
   }
@@ -153,20 +156,22 @@ class GenerativeMode extends AbstractMode {
   
   void snapshot() {
     // Generate image paths.
-    String basename = generateUniqueBaseName();
-    String processedImageFilename = savePath("snapshots/"+basename+"_pro.png");
-    String rawImageFilename = savePath("snapshots/"+basename+"_raw.png");
+    String basename = "snapshot_"+nSnapshots+"_"+nf(millis(), 6);
+    String prefix = "snapshots/"+experimentName+"/"+basename;
+    String processedImageFilename = savePath(prefix+"_pro.png");
+    String rawImageFilename = savePath(prefix+"_raw.png");
     processedImage.save(processedImageFilename);
     cam.getImage().save(rawImageFilename);
     
     // Send an OSC message to announce creation of new image.
     
     OscMessage msg = new OscMessage("/xeno/euglenas/" + 
-      ((firstStep && !EUGLENAS_BEGIN) ? "begin" : "step"));
-    firstStep = false;
+      ((nSnapshots == 0 && !EUGLENAS_BEGIN) ? "begin" : "step"));
 //    msg.add(processedImageFilename);
     msg.add(rawImageFilename);
     
     oscP5.send(msg, remoteLocation);
+    
+    nSnapshots++;
   }
 }
