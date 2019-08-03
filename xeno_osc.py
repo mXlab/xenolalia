@@ -47,9 +47,7 @@ else:
     with open(args.configuration_file, "rb") as f:
         input_quad = tuple([ float(v) for v in f.readlines() ])
 
-MAX_RED   = 200
-MAX_GREEN = 200
-MAX_BLUE  = 200
+print(input_quad)
 
 # This is the size of our encoded representations.
 image_side = 28
