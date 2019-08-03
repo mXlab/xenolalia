@@ -1,13 +1,10 @@
 /** 
- * This program allows to find the 4 corners of the projected image in order
- * to crop and unskew it. It creates a camera_perspective.conf file to be used
- * in conjunction with the other programs.
+ * This is the Xenolalia main sketch to be used in conjunction with xeno_osc.py.
+ * It allows camera calibration as well as running the generative process in 
+ * inter-operability with the neural network (xeno_osc.py).
  *
  * Usage:
- * - Start the sketch.
- * - Press 'r' to show only the reference image.
- * - Press 's' to pause the camera (it will take a snapshot of ref image).
- * - Press 'c' to show only the camera image.
+ * - Start the sketch. It will start in calibration mode.
  * - Click on the first corner to place the first control point.
  * - Press TAB to select the next control point; then click on the 2nd corner to place it.
  * - Repeat operation for corners 3 & 4.
