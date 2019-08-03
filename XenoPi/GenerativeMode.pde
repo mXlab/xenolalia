@@ -67,6 +67,15 @@ class GenerativeMode extends AbstractMode {
         drawScaledImage(img);
       }
       
+      
+      textSize(32);
+      String status;
+      if (autoMode)
+        status = "time until next snapshot: " + nf(exposureTimer.countdownTime()/1000.0f, 3, 1) + " s";
+      else
+        status = "manual mode";
+      text(status, 10, height-10);
+      
     }
   }
   
