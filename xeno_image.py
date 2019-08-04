@@ -34,10 +34,10 @@ def process_image(image, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0]):
     w = image.size[0]
     h = image.size[1]
 
-#    median_filter_size = round_up_to_odd(min(w, h) * 0.015) # this is approximated on a size of 5 for a 320x320 image
-    median_filter_size = round_up_to_odd(min(w, h) * 0.1) # this is approximated on a size of 5 for a 320x320 image
-    print("Median filter size: " + str(median_filter_size))
+    median_filter_size = round_up_to_odd(min(w, h) * 0.015) # this is approximated on a size of 5 for a 320x320 image
+#    median_filter_size = round_up_to_odd(min(w, h) * 0.1) # this is approximated on a size of 5 for a 320x320 image
     contrast_factor = 2
+#    brightness_factor = 0.1
 
     # Adjust image perspective based on input quad.
     input_quad_abs = (input_quad[0] * w, input_quad[1] * h, input_quad[2] * w, input_quad[3] * h, input_quad[4] * w, input_quad[5] * h, input_quad[6] * w, input_quad[7] * h)
@@ -56,7 +56,23 @@ def process_image(image, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0]):
     filtered = ImageOps.invert(filtered)
     filtered = filtered.filter(ImageFilter.MedianFilter(median_filter_size))
     filtered = ImageOps.equalize(filtered)
+#    filtered = ImageEnhance.Brightness(filtered).enhance(brightness_factor)
     filtered = ImageEnhance.Contrast(filtered).enhance(contrast_factor)
+
+    ##################################################################
+    import cv2
+    from skimage.morphology import skeletonize, thin
+    from skimage import img_as_bool, img_as_float, img_as_ubyte
+    # Erode/thin using opencv (NOTE: This part is still experimental).
+    img = np.array(filtered)
+    ret, img = cv2.threshold(img, 191, 255, cv2.THRESH_BINARY)
+    # kernel = np.ones((5, 5), np.uint8)
+    # opencv_image = cv2.erode(opencv_image, kernel, iterations=5)
+    img = img_as_bool(img)
+    img = thin(img, max_iter=5)
+    img = img_as_ubyte(img)
+    filtered = Image.fromarray(img)
+    ##################################################################
 
     resized = filtered.resize((image_side, image_side))
 
