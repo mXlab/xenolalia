@@ -11,6 +11,9 @@ class Settings {
     load();
   }
   
+  PVector[] getCamQuadPoints() { return camQuadPoints; }
+  PVector[] getImageRectPoints() { return imageRectPoints; }
+
   PVector getCamQuadPoint(int i) { return camQuadPoints[i]; }
   PVector getImageRectPoint(int i) { return imageRectPoints[i]; }
   
