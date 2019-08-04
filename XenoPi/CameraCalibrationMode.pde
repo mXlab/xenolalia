@@ -6,7 +6,7 @@ class CameraCalibrationMode extends AbstractMode {
   boolean snapshotRequested;
   
   Timer snapshotTimer;
-  final int SNAPSHOT_TIME = 500;
+  final int SNAPSHOT_TIME = 250;
   
   boolean inputRectMode;
   PVector[] currentPoints; // current set of points
