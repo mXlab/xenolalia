@@ -125,9 +125,9 @@ void draw() {
 
 void keyPressed() {
   // Switch mode.
-  if (key == 'C')
+  if (key == 'c')
     mode = new CameraCalibrationMode();
-  else if (key == 'G')
+  else if (key == 'g')
     mode = new GenerativeMode();
   // 
   else
