@@ -57,7 +57,7 @@ class GenerativeMode extends AbstractMode {
     
     // Snapshot request.
     if (snapshotRequested) {
-      processImage();
+      //processImage();
       captureLoop();
     }
     
@@ -106,7 +106,7 @@ class GenerativeMode extends AbstractMode {
       capturePhase = 1;
       background(flashColor);
       cam.read();
-      processImage();
+      //processImage();
       // delay(1000);
     } else if (capturePhase==1) {    
       background(flashColor);
@@ -161,7 +161,7 @@ class GenerativeMode extends AbstractMode {
     String prefix = "snapshots/"+experimentName+"/"+basename;
     String processedImageFilename = savePath(prefix+"_pro.png");
     String rawImageFilename = savePath(prefix+"_raw.png");
-    processedImage.save(processedImageFilename);
+    //processedImage.save(processedImageFilename);
     cam.getImage().save(rawImageFilename);
     
     // Send an OSC message to announce creation of new image.
