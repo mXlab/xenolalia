@@ -85,6 +85,7 @@ class GenerativeMode extends AbstractMode {
         image(cam.getImage(), 0, 0, CAM_VIEW_WIDTH, CAM_VIEW_HEIGHT);
       }
       
+      fill(255);
       textSize(32);
       String status;
       if (autoMode)
