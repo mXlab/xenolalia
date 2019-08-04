@@ -50,6 +50,7 @@ class Settings {
     } catch (Exception e) {
       println("Problem loading settings, setting to defaults.");
       reset();
+      save();
     }
   }
   
