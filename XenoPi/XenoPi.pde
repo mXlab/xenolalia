@@ -145,12 +145,14 @@ void mouseDragged() {
 
 // Display arbitrary image in center of screen with scaling factor applied.
 void drawScaledImage(PImage img) {
-  pushMatrix();
-  PVector topLeft = settings.getImageRectPoint(0);
-  PVector bottomRight = settings.getImageRectPoint(1);
-  imageMode(CORNERS);
-  image(img, topLeft.x, topLeft.y, bottomRight.x, bottomRight.y);
-  popMatrix();
+  if (img != null) {
+    pushMatrix();
+    PVector topLeft = settings.getImageRectPoint(0);
+    PVector bottomRight = settings.getImageRectPoint(1);
+    imageMode(CORNERS);
+    image(img, topLeft.x, topLeft.y, bottomRight.x, bottomRight.y);
+    popMatrix();
+  }
 }
 
 String generateUniqueBaseName() {
