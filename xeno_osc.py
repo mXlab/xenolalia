@@ -97,12 +97,13 @@ def next_image(image_path, starting_frame_random):
         starting_frame = xeno_image.image_to_array(starting_image, input_shape)
         transformed_image.save("{}/{}_0trn.png".format(dirname, basename))
         filtered_image.save("{}/{}_1fil.png".format(dirname, basename))
+        starting_image.save("{}/{}_2res.png".format(dirname, basename))
     # Generate new image.
     frame = generate(n_steps, starting_frame)
     image = xeno_image.array_to_image(frame, image_side, image_side)
 #    image = Image.fromarray(frame.reshape((image_side, image_side)) * 255.0).convert('L')
     # Save image to path.
-    nn_image_path = "{}/{}_2ann.png".format(dirname, basename)
+    nn_image_path = "{}/{}_3ann.png".format(dirname, basename)
     image.save(nn_image_path)
     # Return back OSC message.
     client.send_message("/xeno/neurons/step", [nn_image_path])
