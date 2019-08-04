@@ -25,7 +25,7 @@ parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFo
 parser.add_argument("model_file", type=str, help="Model filename (hdf5)")
 
 parser.add_argument("-c", "--convolutional", default=False, action='store_true', help="Use convolutional autoencoder")
-parser.add_argument("-C", "--configuration-file", type=str, default="XenoPi/camera_perspective.conf", help="Configuration file containing input quad")
+parser.add_argument("-C", "--configuration-file", type=str, default="XenoPi/settings.json", help="Configuration file containing camera input quad")
 parser.add_argument("-q", "--input-quad", type=str, default=None, help="Comma-separated list of numbers defining input quad (overrides configuration file)")
 parser.add_argument("-n", "--n-steps", type=int, default=1, help="Number of self-loop steps for each image")
 parser.add_argument("-D", "--output-directory", type=str, default=".", help="Output directory for generative images")
@@ -45,9 +45,12 @@ from keras.models import Model, load_model
 if (args.input_quad != None):
     input_quad = tuple([ float(x) for x in args.input_quad.split(',') ])
 else:
+    import json
+
     print("open config file")
-    with open(args.configuration_file, "rb") as f:
-        input_quad = tuple([ float(v) for v in f.readlines() ])
+    with open(args.configuration_file, "r") as f:
+        data = json.load(f)
+        input_quad = tuple( data['camera_quad'] )
 
 print(input_quad)
 
