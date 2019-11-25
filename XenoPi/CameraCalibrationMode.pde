@@ -123,10 +123,10 @@ class CameraCalibrationMode extends AbstractMode {
     else {
       switch (key) {
         // Change mode.
-        case ' ': toggleMode(); break;
+        case ' ':   toggleMode(); break;
         // Save settings.
         case RETURN: case ENTER: 
-                    settings.save(); break;
+                    saveSettings(); break;
         // Change current control point.
         case TAB:   selectPoint( (currentPoint+1) ); break;
         case '1':   selectPoint(0); break;
@@ -144,6 +144,15 @@ class CameraCalibrationMode extends AbstractMode {
        // Take one snapshot.
        referenceImageSnapshot();
     }
+  }
+  
+  void saveSettings() {
+    println("Save settings!");
+    // Save settings.
+    settings.save();
+    // Send OSC message to announce that settings have been changed.
+    OscMessage msg = new OscMessage("/xeno/euglenas/settings-updated");
+    oscP5.send(msg, remoteLocation);
   }
   
   void mousePressed() {

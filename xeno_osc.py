@@ -41,18 +41,20 @@ args = parser.parse_args()
 
 from keras.models import Model, load_model
 
-# Load input quad
-if (args.input_quad != None):
-    input_quad = tuple([ float(x) for x in args.input_quad.split(',') ])
-else:
+# Load calibration settings from .json file.
+def load_settings():
     import json
-
-    print("open config file")
+    global args, data, input_quad
+    print("Loading settings")
     with open(args.configuration_file, "r") as f:
         data = json.load(f)
         input_quad = tuple( data['camera_quad'] )
 
-print(input_quad)
+# Load input quad
+if (args.input_quad != None):
+    input_quad = tuple([ float(x) for x in args.input_quad.split(',') ])
+else:
+    load_settings()
 
 # This is the size of our encoded representations.
 image_side = 28
@@ -126,7 +128,9 @@ def handle_begin(addr, image_path):
 def handle_step(addr, image_path):
     next_image(image_path, False)
 
-
+def handle_settings_updated(addr):
+    load_settings()
+handle_settings
 # Load model.
 model = load_model(args.model_file)
 
@@ -134,6 +138,7 @@ model = load_model(args.model_file)
 dispatcher = dispatcher.Dispatcher()
 dispatcher.map("/xeno/euglenas/begin", handle_begin)
 dispatcher.map("/xeno/euglenas/step", handle_step)
+dispatcher.map("/xeno/euglenas/settings-updated", handle_settings_updated)
 
 # Launch OSC server & client.
 server = osc_server.BlockingOSCUDPServer(("0.0.0.0", args.receive_port), dispatcher)
