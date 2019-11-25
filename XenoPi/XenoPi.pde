@@ -42,8 +42,6 @@ AbstractCam cam;
 
 // Edit these values to match camera specs.
 final int DEVICE_ID = 0;
-final int CAM_WIDTH = 640;
-final int CAM_HEIGHT = 480;
 
 final int OPEN_CV_WIDTH = 320;
 final int OPEN_CV_HEIGHT = 320;
@@ -75,7 +73,6 @@ Settings settings;
 
 void setup() {
   //2592x1944
-  //size(640, 400, P2D);
   fullScreen(P2D);
 
   String[] devices = GLCapture.list();
