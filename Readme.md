@@ -58,3 +58,24 @@ To restore the system in case of a mistake you can run the ```system_restore.sh`
 ## Notes
 
  * Dual monitor: I could never get my second monitor to work on the Pi4, it kept displaying the rainbow colorwheel splash screen. Did not find a solution.
+
+# Running Xenolalia
+
+Two programs are needed to run Xenolalia:
+ 1. Front-end: ```XenoPi``` Processing sketch. Manages the interaction between the camera and the screen.
+ 2. Back-end: ```xeno_main.py``` Python script. Manages the image filtering and the autoencoder image generation.
+
+To launch the process:
+ 1. Start the XenoPi program. It will start in calibration mode.
+ 2. Adjust the reference image.
+     1. Click on the first corner to place the first control point.
+     2. Press TAB to select the next control point; then click on the 2nd corner to place it.
+     3. You can use the arrow keys to make small adjustments.
+     4. Once you are satisfied, press ENTER: it will save the settings.json file.
+     5. Then press the SPACEBAR.
+ 3. Adjust the input quad.
+     1. Using the mouse and the same keys as for the previous step, adjust the four corners of the input quad to match the corners of the image picked by the camera, directly on the screen.
+     2. You can select one of the four control points by pressing its number (1, 2, 3, 4).
+     3. Once you are satisfied, press ENTER: it will save the settings.json file.
+ 4. Start the xeno_osc.py script with the appropriate parameters.
+ 5. Once the xeno_osc.py script has launched and is initialized, press the 'g' key to start the generative process.
