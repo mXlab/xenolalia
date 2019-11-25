@@ -11,6 +11,8 @@ Note: I was unable to get the Processing video libraries to work appropriately o
 
 IMPORTANT: Do *not* install MiniConda as the Python3 version it installs (3.4) is incompatible with Keras. Use the default Python 3 version instead.
 
+Troubleshooting: When running ```pip3 install``` if you get error "http.client.RemoteDisconnected: Remote end closed connection without response" just re-run the command until it works.
+
 ```
 # Update/upgrade Debian packages
 sudo apt update
@@ -24,11 +26,13 @@ sudo apt install -y xdotool
 sudo apt install -y python-virtualenv
 sudo apt install -y software-properties-common dirmngr apt-transport-https lsb-release ca-certificates
 sudo apt install -y liblo-tools liblo7
+sudo apt install -y libjasper1 libqtgui4 libqt4-test # OpenCV
 
 # Install python libraries.
 # pip3 install pip3 --upgrade # DO NOT DO THIS
 pip3 install keras tensorflow scipy numpy
 pip3 install python-osc
+pip3 install opencv-python scikit-image
 
 # Install Processing
 curl https://processing.org/download/install-arm.sh | sudo sh
