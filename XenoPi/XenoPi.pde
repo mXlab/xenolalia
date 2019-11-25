@@ -10,7 +10,9 @@
  * - Repeat operation for corners 3 & 4.
  * - You can select one of the four control points by pressing its number (1, 2, 3, 4).
  * - You can adjust more precisely by using the arrow keys.
- * - Once you are satisfied, press ENTER: it will save the camera_perspective.conf file.
+ * - Once you are satisfied, press ENTER: it will save the settings.json file.
+ * - Start the xeno_osc.py script (see Readme.md file for more details).
+ * - Once the script has started and is initialized, press the 'g' key to start the generative process.
  *
  * Required Processing library: GL Video, Video (*)
  * (*) Download the most recent version, otherwise you might run into problems.
