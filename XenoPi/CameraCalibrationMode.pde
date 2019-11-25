@@ -6,58 +6,95 @@ class CameraCalibrationMode extends AbstractMode {
   boolean snapshotRequested;
   
   Timer snapshotTimer;
-  final int SNAPSHOT_TIME = 500;
+  final int SNAPSHOT_TIME = 250;
+  
+  boolean inputRectMode;
+  PVector[] currentPoints; // current set of points
   
   void setup() {
     // Load points if they exist.
-    loadPoints();
+    settings.load();
     
     // Reference image.
     referenceImg = loadImage(REFERENCE_IMAGE);
+
+    // Begin in input quad mode.
+    inputRectMode = true;
     
     snapshotTimer = new Timer(SNAPSHOT_TIME);
 
-    // Take one snapshot.
-    referenceImageSnapshot();
   }
   
   void draw() {
     background(0);
-  
-    imageMode(CORNER);
     
-    // Draw video.
-    if (snapshotRequested) {
+    if (inputRectMode) {
+      currentPoints = settings.getImageRectPoints();
+      
       drawReferenceImage();
-      if (snapshotTimer.isFinished() &&
-          cam.available()) {
-        cam.read(); // take snapshot
-        snapshotRequested = false;
-      }
+
+      PVector topLeft = settings.getImageRectPoint(0);
+      PVector bottomRight = settings.getImageRectPoint(1);
+      float x1 = topLeft.x;
+      float y1 = topLeft.y;
+      float x2 = bottomRight.x;
+      float y2 = bottomRight.y;
+
+      // Draw points.
+      drawControlPoint(x1, y1, 0);
+      drawControlPoint(x2, y2, 1);
+      // Draw bounding box.
+      stroke( LINE_COLOR );
+      rectMode(CORNERS);
+      fill(0, 0);
+      rect(x1, y1, x2, y2);
     }
     else {
-      // Draw image fullscreen image from camera.
-      image(cam.getImage(), 0, 0, width, height);
-      
-      // Draw controls.
-      for (int i=0; i<N_POINTS; i++) {
-        float x = points[i].x;
-        float y = points[i].y;
-        int next = (i+1) % N_POINTS;
-        float nx = points[next].x;
-        float ny = points[next].y;
-        // Draw point.
-        fill(0, 0, 0, 0);
-        stroke( i == currentPoint ? color(200, 0, 0) : color(200, 200, 200) );
-        ellipse(x, y, 10, 10);
-        fill(255);
-        text(i+1, x, y);
-        // Draw line.
-        stroke( LINE_COLOR );
-        line(x, y, nx, ny);
+      currentPoints = settings.getCamQuadPoints();
+    
+      // Draw video.
+      if (snapshotRequested) {
+        drawReferenceImage();
+        if (cam.available()) {
+          cam.read();
+        }
+        if (snapshotTimer.isFinished()) {
+          snapshotRequested = false;
+        }
+      }
+      else {
+        // Draw image fullscreen image from camera.
+        imageMode(CORNER);
+        image(cam.getImage(), 0, 0, width, height);
+  //      image(cam.getImage(), 0, 0);
+        
+        // Draw controls.
+        for (int i=0; i<settings.nCamQuadPoints(); i++) {
+          // Get point.
+          PVector point = settings.getCamQuadPoint(i);
+          float x = point.x;
+          float y = point.y;
+          // Get next point.
+          int next = (i+1) % settings.nCamQuadPoints();
+          PVector nextPoint = settings.getCamQuadPoint(next);
+          float nx = nextPoint.x;
+          float ny = nextPoint.y;
+          // Draw point.
+          drawControlPoint( x, y, i );
+          // Draw line.
+          stroke( LINE_COLOR );
+          line(x, y, nx, ny);
+        }
       }
     }
-
+  }
+  
+  void drawControlPoint(float x, float y, int i) {
+    fill(0, 0, 0, 0);
+    stroke( i == currentPoint ? color(200, 0, 0) : color(200, 200, 200) );
+    ellipse(x, y, 10, 10);
+    fill(255);
+    text(i+1, x, y);
   }
   
   void keyPressed() {
@@ -71,33 +108,43 @@ class CameraCalibrationMode extends AbstractMode {
     }
     else {
       switch (key) {
-        case RETURN:
-        case ENTER: savePoints(); break;
-        case TAB:   selectPoint( (currentPoint+1) % N_POINTS); break;
+        case ' ': toggleMode(); break;
+        case RETURN: case ENTER: 
+                    settings.save(); break;
+        case TAB:   selectPoint( (currentPoint+1) ); break;
         case '1':   selectPoint(0); break;
         case '2':   selectPoint(1); break;
         case '3':   selectPoint(2); break;
         case '4':   selectPoint(3); break;
-        case ' ':   referenceImageSnapshot(); break;
       }
     }
   }
   
+  void toggleMode() {
+    inputRectMode = !inputRectMode;
+    if (!inputRectMode) {
+      println("Switch, ask for snapht");
+       // Take one snapshot.
+       referenceImageSnapshot();
+    }
+  }
+  
   void mousePressed() {
-    points[currentPoint].set(mouseX, mouseY);
+    currentPoints[currentPoint].set(mouseX, mouseY);
   }
   
   void mouseDragged() {
-    points[currentPoint].set(mouseX, mouseY);
+    currentPoints[currentPoint].set(mouseX, mouseY);
   }
   
+  // Select given point (wraps around).
   void selectPoint(int i) {
-    currentPoint = constrain(i, 0, N_POINTS-1);
+    currentPoint = constrain(i % currentPoints.length, 0, currentPoints.length-1);
   }
   
   void movePoint(int i, float dx, float dy) {
   //  println("move point by " + dx + "," + dy);
-    points[i].add(dx, dy);
+    currentPoints[i].add(dx, dy);
   }
   
   // Take a snapshot of reference image with the camera.
