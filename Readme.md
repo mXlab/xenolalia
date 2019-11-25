@@ -63,7 +63,7 @@ To restore the system in case of a mistake you can run the ```system_restore.sh`
 
 Two programs are needed to run Xenolalia:
  1. Front-end: ```XenoPi``` Processing sketch. Manages the interaction between the camera and the screen.
- 2. Back-end: ```xeno_main.py``` Python script. Manages the image filtering and the autoencoder image generation.
+ 2. Back-end: ```xeno_osc.py``` Python script. Manages the image filtering and the autoencoder image generation.
 
 To launch the process:
  1. Start the XenoPi program. It will start in calibration mode.
