@@ -1,4 +1,4 @@
-# Raspberry Pi Raspbian configuration
+# Raspberry Pi Configuration
 
 ## Specs
 
