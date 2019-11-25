@@ -66,6 +66,8 @@ class Settings {
   }
 
   // Writes points contained in an array of PVectors into a list of values.
+  // NOTE: values are always saved in *relative coordinates* [0..1, 0..1]
+  // (instead of absolute coordinates [0..width, 0..height]).
   void _writePoints(PVector[] pointsSrc, JSONArray coordDst) {
     for (int i=0; i<pointsSrc.length; i++) {
       coordDst.setFloat(i*2,   pointsSrc[i].x / width);
@@ -74,6 +76,7 @@ class Settings {
   }
 
   // Reads points contained as a simple list of values into array of PVectors.
+  // NOTE: values are read from *relative coordinates* (see above).
   void _readPoints(PVector[] pointsDst, JSONArray coordSrc) {
     for (int i=0; i<pointsDst.length; i++) {
       pointsDst[i] = new PVector(coordSrc.getFloat(i*2)   * width,
