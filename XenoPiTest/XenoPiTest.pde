@@ -18,7 +18,7 @@
 // import hypermedia.video.*;
 import gab.opencv.*;
 OpenCV opencv;
-float scalefactor = 1.0, scaleX = 1.0, scaleY = 1.0 ;
+float scalefactor = 0.35, scaleX = 1.0, scaleY = 1.0 ;
 float contrast = 2.0;
 int threshold = 100;
 boolean useAdaptiveThreshold = false; // use basic thresholding
@@ -41,6 +41,8 @@ int imagenum = 0;
 boolean captureflag = false;
 int capturephase = 0;
 int capwidth, capheight; 
+
+int camviewwidth, camviewheight;
 
 enum CameraMode {
   None, // default mode: no camera display
@@ -83,7 +85,8 @@ void setup() {
   //size(480, 320, P2D);
   fullScreen(P2D);
 
-  capwidth = capheight = 200;
+  capwidth = capheight = 320;
+  camviewwidth = camviewheight = 100;
 
   newImage = createImage(width, height, RGB);
   processedImage = createImage(capwidth, capheight, RGB);

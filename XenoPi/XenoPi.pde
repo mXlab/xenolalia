@@ -10,7 +10,9 @@
  * - Repeat operation for corners 3 & 4.
  * - You can select one of the four control points by pressing its number (1, 2, 3, 4).
  * - You can adjust more precisely by using the arrow keys.
- * - Once you are satisfied, press ENTER: it will save the camera_perspective.conf file.
+ * - Once you are satisfied, press ENTER: it will save the settings.json file.
+ * - Start the xeno_osc.py script (see Readme.md file for more details).
+ * - Once the script has started and is initialized, press the 'g' key to start the generative process.
  *
  * Required Processing library: GL Video, Video (*)
  * (*) Download the most recent version, otherwise you might run into problems.
@@ -40,8 +42,6 @@ AbstractCam cam;
 
 // Edit these values to match camera specs.
 final int DEVICE_ID = 0;
-final int CAM_WIDTH = 640;
-final int CAM_HEIGHT = 480;
 
 final int OPEN_CV_WIDTH = 320;
 final int OPEN_CV_HEIGHT = 320;
@@ -73,7 +73,6 @@ Settings settings;
 
 void setup() {
   //2592x1944
-  //size(640, 400, P2D);
   fullScreen(P2D);
 
   String[] devices = GLCapture.list();

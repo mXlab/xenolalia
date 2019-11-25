@@ -1,13 +1,15 @@
 // This mode allows the adjustment of the camera perspective.
 class CameraCalibrationMode extends AbstractMode {
 
+  // Reference image for calibration.
   PImage referenceImg;
   
+  // Used to run snapshots of reference image.
   boolean snapshotRequested;
-  
   Timer snapshotTimer;
   final int SNAPSHOT_TIME = 250;
   
+  // Input rectangle calibration.
   boolean inputRectMode;
   PVector[] currentPoints; // current set of points
   
@@ -21,18 +23,23 @@ class CameraCalibrationMode extends AbstractMode {
     // Begin in input quad mode.
     inputRectMode = true;
     
+    // Create snapshot timer.
     snapshotTimer = new Timer(SNAPSHOT_TIME);
-
   }
   
   void draw() {
+    // Reset.
     background(0);
     
+    // Input rectangle mode.
     if (inputRectMode) {
+      // Gather control points.
       currentPoints = settings.getImageRectPoints();
       
+      // Draw reference image.
       drawReferenceImage();
 
+      // We are just using the top left and bottom right points in that mode.
       PVector topLeft = settings.getImageRectPoint(0);
       PVector bottomRight = settings.getImageRectPoint(1);
       float x1 = topLeft.x;
@@ -49,10 +56,13 @@ class CameraCalibrationMode extends AbstractMode {
       fill(0, 0);
       rect(x1, y1, x2, y2);
     }
+    
+    // Quad points mode.
     else {
+      // Gather control points.
       currentPoints = settings.getCamQuadPoints();
     
-      // Draw video.
+      // Snapshot mode.
       if (snapshotRequested) {
         drawReferenceImage();
         if (cam.available()) {
@@ -62,6 +72,8 @@ class CameraCalibrationMode extends AbstractMode {
           snapshotRequested = false;
         }
       }
+      
+      // Quad adjustment mode.
       else {
         // Draw image fullscreen image from camera.
         imageMode(CORNER);
@@ -89,6 +101,7 @@ class CameraCalibrationMode extends AbstractMode {
     }
   }
   
+  // Draws the i-th control point.
   void drawControlPoint(float x, float y, int i) {
     fill(0, 0, 0, 0);
     stroke( i == currentPoint ? color(200, 0, 0) : color(200, 200, 200) );
@@ -100,6 +113,7 @@ class CameraCalibrationMode extends AbstractMode {
   void keyPressed() {
     if (key == CODED) {
       switch (keyCode) {
+        // Move points by small steps.
         case UP:     movePoint(currentPoint, 0, -1); break;
         case DOWN:   movePoint(currentPoint, 0, +1); break;
         case LEFT:   movePoint(currentPoint, -1, 0); break;
@@ -108,9 +122,12 @@ class CameraCalibrationMode extends AbstractMode {
     }
     else {
       switch (key) {
+        // Change mode.
         case ' ': toggleMode(); break;
+        // Save settings.
         case RETURN: case ENTER: 
                     settings.save(); break;
+        // Change current control point.
         case TAB:   selectPoint( (currentPoint+1) ); break;
         case '1':   selectPoint(0); break;
         case '2':   selectPoint(1); break;
@@ -120,10 +137,10 @@ class CameraCalibrationMode extends AbstractMode {
     }
   }
   
+  // Toggles mode.
   void toggleMode() {
     inputRectMode = !inputRectMode;
     if (!inputRectMode) {
-      println("Switch, ask for snapht");
        // Take one snapshot.
        referenceImageSnapshot();
     }
