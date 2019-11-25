@@ -151,6 +151,6 @@ signal.signal(signal.SIGINT, interrupt)
 
 # Indicates that server is ready.
 print("Serving on {server.server_address}. Program ready.")
-#client.send_message("/xeno/neurons/begin", [])
+client.send_message("/xeno/neurons/begin", [])
 
 server.serve_forever()
