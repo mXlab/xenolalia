@@ -1,6 +1,6 @@
 import argparse
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("model_file", type=str, help="The file containing the trained model")
 
 parser.add_argument("-I", "--still-images", default=False, action='store_true', help="Generate still images instead of videos")
