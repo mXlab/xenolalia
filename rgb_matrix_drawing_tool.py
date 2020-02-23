@@ -17,7 +17,7 @@ image = Image.new("1", (32, 32)) # Can be larger than matrix if wanted!!
 draw  = ImageDraw.Draw(image)    # Declare Draw instance before prims
 
 def modification_date(file):
-	if os.path.isfile(filename):
+	if os.path.isfile(file):
 		return time.ctime(os.stat(file)[8])
 	else:
 		return 0
