@@ -1,27 +1,72 @@
 #!/usr/bin/python
+import argparse
+
+# Base modules.
 from PIL import Image
 import cv2
 import time
-import sliplib
-import serial
-
+import sys
 import numpy as np
 
-import argparse
+# Serial modules.
+import serial
+import sliplib
 
+# OSC modules.
+from pythonosc import udp_client
+
+# Signal handling.
+import signal
+
+# Create arguments parser.
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("media_file", type=str, help="The media file to play")
 
 parser.add_argument("--resize", default=None, help="Resize image to dimensions eg. 32x32")
 parser.add_argument("--output", default="oled_mono", choices=["oled_mono", "oled_rgb24"], help="Output type")
+parser.add_argument("--protocol", default="serial", choices=["serial", "osc"], help="Transmission protocol")
 parser.add_argument("--serial-port", default="/dev/ttyUSB0", help="The serial port")
 parser.add_argument("--serial-baud", type=int, default=9600, help="The serial baudrate")
+parser.add_argument("--osc-ip", default="127.0.0.1", help="The OSC IP")
+parser.add_argument("--osc-port", type=int, default=7777, help="The OSC port")
 parser.add_argument("--fps", type=int, default=1, help="Frames per second")
 
 args = parser.parse_args()
 
-ser = serial.Serial(args.serial_port, args.serial_baud) # Establish the connection on a specific port
-driver = sliplib.Driver()
+use_serial = (args.protocol == "serial")
+
+def protocol_begin():
+    if use_serial:
+        global ser, driver
+        ser = serial.Serial(args.serial_port, args.serial_baud, timeout=10) # Establish the connection on a specific port
+        driver = sliplib.Driver()
+    else:
+        global osc_client
+        osc_client = udp_client.SimpleUDPClient(args.osc_ip, args.osc_port)
+
+def protocol_end():
+    if use_serial:
+        ser.close()
+
+def protocol_send_image(w, h, data):
+    if use_serial:
+        # Create data stream.
+        packed_data = bytearray()
+        packed_data.append(w)
+        packed_data.append(h)
+        packed_data += data
+        # Send bytes to serial using SLIP protocol.
+        encoded = driver.send(packed_data)
+        ser.write(encoded)
+        ser.flush()
+        # print(ser.readline())
+        msg = ser.read_until(b'\xc0')
+        msg = ser.read_until(b'\xc0')
+        result = driver.receive(msg)
+        print(".")
+    #    print([x for x in result])
+    else:
+        osc_client.send_message("/xeno/image", [w, h, bytes(data)])
 
 def set_bit(value, bit):
     return value | (1<<bit)
@@ -35,8 +80,6 @@ def send_image_oled_mono(image):
     n_pixels = size[0] * size[1]
 
     image_array = bytearray()
-    image_array.append(size[0])
-    image_array.append(size[1])
 
     # Pack all pixels into bytes.
     image = np.array(image).flatten()
@@ -50,15 +93,7 @@ def send_image_oled_mono(image):
         image_array.append(block)
 
     # Send bytes to serial using SLIP protocol.
-    encoded = driver.send(image_array)
-    ser.write(encoded)
-    ser.flush()
-    # print(ser.readline())
-    msg = ser.read_until(b'\xc0')
-    msg = ser.read_until(b'\xc0')
-    result = driver.receive(msg)
-    print(".")
-#    print([x for x in result])
+    protocol_send_image(size[0], size[1], image_array)
 
 media = cv2.VideoCapture(args.media_file)
 
@@ -68,6 +103,15 @@ else:
     rval = False
 
 frame_interval = 1.0/args.fps
+
+def signal_handler(sig, frame):
+    print('You pressed Ctrl+C!')
+    protocol_end()
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
+
+protocol_begin()
 
 # Read video frame by frame
 while rval:

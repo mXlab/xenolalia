@@ -1,0 +1,10 @@
+const char *NETWORK_SSID = ""; // Pointer to the SSID (max 63 char)
+const char *NETWORK_PASSWORD = ""; // for WPA2 min 8 char, for open use NULL
+
+#define DESTINATION_IP_0 192
+#define DESTINATION_IP_1 168
+#define DESTINATION_IP_2 0
+#define DESTINATION_IP_3 2
+
+#define LOCAL_PORT 7777
+#define DESTINATION_PORT 8888
