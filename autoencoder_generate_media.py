@@ -69,7 +69,10 @@ def autoencoder_generate(filename):
     im.set_clim([0,1])
     fig.set_size_inches([5,5])
 
-    tight_layout()
+    # Remove white margins.
+    fig.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=None, hspace=None)
+
+    # tight_layout()
 
     def update_img(n):
         global frame, model
