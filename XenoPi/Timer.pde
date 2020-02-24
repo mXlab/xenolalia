@@ -20,9 +20,15 @@ class Timer {
     savedTime = millis();
   }
 
+  // Total time passed.
   int passedTime() { return millis() - savedTime; }
+
+  // Countdown.
   int countdownTime() { return max(totalTime - passedTime(), 0); }
-  
+
+  // Progress (%).
+  float progress() { return min(passedTime() / float(totalTime), 1); }
+
   boolean isFinished() {
    if (running && countdownTime() == 0) {
       running = false;
