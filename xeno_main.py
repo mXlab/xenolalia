@@ -10,7 +10,7 @@ from xeno_camera import XenoCamera
 
 USE_RPI = os.uname()[4].startswith('arm')
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("-o", "--output-file", type=str, default="snapshot.png", help="Output file name for camera snapshot")
 parser.add_argument("-c", "--configuration-file", type=str, default="CameraPerspectiveConfig/camera_perspective.conf", help="Configuration file containing input quad")
 parser.add_argument("-q", "--input-quad", type=str, default=None, help="Comma-separated list of numbers defining input quad (overrides configuration file)")

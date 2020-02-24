@@ -1,6 +1,6 @@
 import argparse
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("model_file", type=str, help="The file containing the trained model")
 
 parser.add_argument("-I", "--still-images", default=False, action='store_true', help="Generate still images instead of videos")
@@ -69,7 +69,10 @@ def autoencoder_generate(filename):
     im.set_clim([0,1])
     fig.set_size_inches([5,5])
 
-    tight_layout()
+    # Remove white margins.
+    fig.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=None, hspace=None)
+
+    # tight_layout()
 
     def update_img(n):
         global frame, model

@@ -92,6 +92,8 @@ ENV/
 *.mp4
 *.png
 *.jpg
+*.jpeg
+*.gif
 
 # Models
 *.hdf5
