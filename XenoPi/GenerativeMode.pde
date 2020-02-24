@@ -17,6 +17,14 @@ class GenerativeMode extends AbstractMode {
   // Base colors.
   final color FLASH_COLOR = color(255);
   final color PROJECTION_COLOR = color(#ff00ff); // magenta
+  final color PROJECTION_BACKGROUND_COLOR = color(0);
+
+  // Capture FSM state enum.
+  final int CAPTURE_FLASH = 0;
+  final int CAPTURE_FLASH_WAIT  = 1;
+  final int CAPTURE_SNAPSHOT = 2;
+  final int CAPTURE_SNAPSHOT_WAIT = 3;
+  final int CAPTURE_DONE = 4;
 
   // OpenCV processed image.
   PImage processedImage;
@@ -25,6 +33,7 @@ class GenerativeMode extends AbstractMode {
   boolean snapshotRequested;
   int nSnapshots;
   Timer exposureTimer;
+  Timer captureTimer;
 
   // Used during capture to go through different phases.
   int capturePhase;
@@ -59,7 +68,7 @@ class GenerativeMode extends AbstractMode {
     }
 
     // Snapshot request.
-    if (snapshotRequested) {
+    if (snapshotRequested || capturePhase != CAPTURE_DONE) {
       //processImage();
       captureLoop();
     }
@@ -77,7 +86,7 @@ class GenerativeMode extends AbstractMode {
       if (flash) { // flash!
         background(FLASH_COLOR);
       } else { // projected image
-        background(0);
+        background(PROJECTION_BACKGROUND_COLOR);
         tint(PROJECTION_COLOR); // tint
         drawScaledImage(img);
       }
@@ -102,27 +111,49 @@ class GenerativeMode extends AbstractMode {
     }
   }
 
+  void startCaptureLoop() {
+    capturePhase = CAPTURE_FLASH;
+    captureTimer = new Timer(1000);
+    captureTimer.start();
+  }
+
+
   // Capture image loop (FSM).
   void captureLoop() {
+    
+//    println(capturePhase, captureTimer.progress(), captureTimer.isFinished(), captureTimer.running);
 
-    println("capture loop");
-    if (capturePhase==0)
+    if (capturePhase == CAPTURE_FLASH) //<>//
     {
-      background(FLASH_COLOR);
-      capturePhase = 1;
-      cam.read();
+      if (!captureTimer.isFinished()) {
+        background(lerpColor(PROJECTION_BACKGROUND_COLOR, FLASH_COLOR, captureTimer.progress()));
+      } else {
+        background(FLASH_COLOR);
+        delay(10);
+        cam.read();
+        capturePhase = CAPTURE_FLASH_WAIT;
+        //captureTimer = new Timer(1000);
+        captureTimer.start();
+      }
     }
-
-    else if (capturePhase==1) {
+    else if (capturePhase == CAPTURE_FLASH_WAIT) {
       background(FLASH_COLOR);
-      capturePhase = 2;
-      delay(1000);
+      if (captureTimer.isFinished())
+        capturePhase = CAPTURE_SNAPSHOT;
     }
-
-    else if (capturePhase==2) {
+    else if (capturePhase == CAPTURE_SNAPSHOT) {
       snapshot();
-      capturePhase = 3; // will wait for response
-      delay(1000);
+      capturePhase = CAPTURE_SNAPSHOT_WAIT; // will wait for response
+//      captureTimer = new Timer(1000);
+      captureTimer.start();
+    }
+    else { // CAPTURE_SNAPSHOT_WAIT
+      if (!captureTimer.isFinished())      
+        background(lerpColor(FLASH_COLOR, PROJECTION_BACKGROUND_COLOR, captureTimer.progress()));
+      else {
+        background(PROJECTION_BACKGROUND_COLOR);
+        capturePhase = CAPTURE_DONE;
+      }
     }
   }
 
@@ -151,7 +182,7 @@ class GenerativeMode extends AbstractMode {
     println("Snapshot requested");
     snapshotRequested = true;
 //    snapshotTimer.start();
-    capturePhase = 0;
+    startCaptureLoop();
   }
 
   // Called when receiving OSC message.
