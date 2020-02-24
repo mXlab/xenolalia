@@ -147,7 +147,7 @@ client = udp_client.SimpleUDPClient(args.ip, args.send_port)
 # Allows program to end cleanly on a CTRL-C command.
 def interrupt(signup, frame):
     global client, server
-    print("Exiting program... {np.mean(perf_measurements)}")
+    print("Exiting program... {}".format(np.mean(perf_measurements)))
     client.send_message("/xeno/neurons/end", [])
     server.server_close()
     sys.exit()
@@ -155,7 +155,7 @@ def interrupt(signup, frame):
 signal.signal(signal.SIGINT, interrupt)
 
 # Indicates that server is ready.
-print("Serving on {server.server_address}. Program ready.")
+print("Serving on {}. Program ready. You can now start XenoPi generative mode.".format(server.server_address))
 client.send_message("/xeno/neurons/begin", [])
 
 server.serve_forever()
