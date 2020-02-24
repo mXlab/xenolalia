@@ -8,6 +8,7 @@ class Settings {
   PVector[] imageRectPoints = new PVector[N_IMAGE_RECT_POINTS];
 
   String nodeName;
+  String sessionName;
   int oscSendPort;
   int oscReceivePort;
   String oscRemoteIp;
@@ -28,6 +29,7 @@ class Settings {
   int nImageRectPoints() { return N_IMAGE_RECT_POINTS; }
 
   String nodeName() { return nodeName; }
+  String sessionName() { return sessionName; }
   int oscSendPort() { return oscSendPort; }
   int oscReceivePort()  { return oscReceivePort;}
   String oscRemoteIp() { return oscRemoteIp; }
@@ -49,6 +51,7 @@ class Settings {
       settings.setJSONArray("image_rect", imageRect);
       // Save other parameters.
       settings.setString("node_name", nodeName);
+      settings.setString("session_name", sessionName);
       settings.setInt("osc_send_port", oscSendPort);
       settings.setInt("osc_receive_port", oscReceivePort);
       settings.setString("osc_remote_ip", oscRemoteIp);
@@ -72,6 +75,7 @@ class Settings {
       _readPoints(imageRectPoints, imageRect);
       // Read other parameters.
       nodeName = settings.getString("node_name");
+      sessionName = settings.getString("session_name");
       oscSendPort = settings.getInt("osc_send_port");
       oscReceivePort = settings.getInt("osc_receive_port");
       oscRemoteIp = settings.getString("osc_remote_ip");

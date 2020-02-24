@@ -47,6 +47,7 @@ class GenerativeMode extends AbstractMode {
   void setup() {
     // Create a unique name for experiment.
     experimentInfo = new ExperimentInfo();
+    experimentInfo.saveInfoFile(savePath(experimentDir()+"/info.json"));
 
     // Take a first snapshot.
     nSnapshots = 0;
@@ -103,7 +104,7 @@ class GenerativeMode extends AbstractMode {
       textSize(32);
       String status;
       if (autoMode)
-        status = "time until next snapshot: " + nf(exposureTimer.countdownTime()/1000.0f, 3, 1) + " s";
+        status = "auto mode: " + nf(exposureTimer.countdownTime()/1000.0f, 3, 1) + " s";
       else
         status = "manual mode";
       text(status, 10, height-10);
@@ -119,10 +120,7 @@ class GenerativeMode extends AbstractMode {
 
 
   // Capture image loop (FSM).
-  void captureLoop() {
-    
-//    println(capturePhase, captureTimer.progress(), captureTimer.isFinished(), captureTimer.running);
-
+  void captureLoop() { //<>//
     if (capturePhase == CAPTURE_FLASH) //<>//
     {
       if (!captureTimer.isFinished()) {
@@ -198,13 +196,17 @@ class GenerativeMode extends AbstractMode {
     opencv.contrast(contrast);
     processedImage = opencv.getSnapshot();
   }
+  
+  String experimentDir() {
+    return "snapshots/"+experimentInfo.getUid();
+  }
 
   // Saves snapshot to disk and sends OSC message to announce
   // creation of new image.
   void snapshot() {
     // Generate image paths.
     String basename = "snapshot_"+nSnapshots+"_"+nf(millis(), 6);
-    String prefix = "snapshots/"+experimentInfo.getUid()+"/"+basename;
+    String prefix = experimentDir()+"/"+basename;
 //    String processedImageFilename = savePath(prefix+"_pro.png");
     String rawImageFilename = savePath(prefix+"_raw.png");
     //processedImage.save(processedImageFilename);

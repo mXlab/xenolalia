@@ -8,6 +8,7 @@ class ExperimentInfo {
   
   String timeZone;
   int unixTime;
+  String timeSource;
   
   ExperimentInfo() {
     reset();
@@ -18,17 +19,19 @@ class ExperimentInfo {
       JSONObject data = loadJSONObject(TIME_API_URL);
       timeZone = data.getString("timezone");
       unixTime = data.getInt("unixtime");
+      timeSource = "worldtimeapi";
     } catch (Exception e) {
       Calendar cal = Calendar.getInstance();
       timeZone = cal.getTimeZone().getDisplayName(false, TimeZone.LONG);
       unixTime = (int)(cal.getTimeInMillis()/1000);
+      timeSource = "local";
     }
   }
   
   String getUid() {
     Calendar cal = Calendar.getInstance();
     cal.setTimeInMillis((long)unixTime*1000);
-    return timeStamp(cal) + "_" + settings.nodeName();
+    return timeStamp(cal) + "_" + settings.sessionName() + "_" + settings.nodeName();
   }
 
   JSONObject getInfo() {
@@ -36,20 +39,29 @@ class ExperimentInfo {
 
     data.setString("node_name", settings.nodeName());
     data.setString("uid", getUid());
+    data.setString("time_source", timeSource);
     
     data.setString("time_zone", timeZone);
     data.setInt("unix_time", unixTime);
 
+    // UTC time.
     Calendar cal = Calendar.getInstance();
     cal.setTimeInMillis((long)unixTime*1000);
+    data.setString("utc_time_stamp", timeStamp(cal));
     data.setJSONObject("utc_time", dateToJSON(cal));
 
+    // Local time.
     cal.setTimeZone(TimeZone.getTimeZone(timeZone));
     data.setJSONObject("local_time", dateToJSON(cal));
     
     return data;
   }
   
+  void saveInfoFile(String filename) {
+    saveJSONObject(getInfo(), filename);
+  }
+  
+  // Returns UTC timestamp.
   String timeStamp(Calendar cal) {
     SimpleDateFormat formatter= new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
     return formatter.format(cal.getTime());
@@ -63,7 +75,6 @@ class ExperimentInfo {
     obj.setInt("hour", cal.get(Calendar.HOUR_OF_DAY));
     obj.setInt("minute", cal.get(Calendar.MINUTE));
     obj.setInt("second", cal.get(Calendar.SECOND));
-    obj.setString("time_stamp", timeStamp(cal));
     
     return obj;
   }
