@@ -151,12 +151,6 @@ void drawScaledImage(PImage img) {
   }
 }
 
-String generateUniqueBaseName() {
-  return nf(year(),4)+"-"+nf(month(),2)+"-"+nf(day(),2)+"_"+
-           nf(hour(),2)+":"+nf(minute(),2)+":"+nf(second(),2);
-}
-
-
 /* incoming osc message are forwarded to the oscEvent method. */
 void oscEvent(OscMessage theOscMessage) {
   /* with theOscMessage.isPlugged() you check if the osc message has already been

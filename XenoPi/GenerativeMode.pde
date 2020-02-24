@@ -39,14 +39,14 @@ class GenerativeMode extends AbstractMode {
   int capturePhase;
 
   // Unique experiment name (to save images).
-  String experimentName;
+  ExperimentInfo experimentInfo;
 
   // Basic contrast (for filtering).
   float contrast = 2.0;
 
   void setup() {
     // Create a unique name for experiment.
-    experimentName = generateUniqueBaseName();
+    experimentInfo = new ExperimentInfo();
 
     // Take a first snapshot.
     nSnapshots = 0;
@@ -204,7 +204,7 @@ class GenerativeMode extends AbstractMode {
   void snapshot() {
     // Generate image paths.
     String basename = "snapshot_"+nSnapshots+"_"+nf(millis(), 6);
-    String prefix = "snapshots/"+experimentName+"/"+basename;
+    String prefix = "snapshots/"+experimentInfo.getUid()+"/"+basename;
 //    String processedImageFilename = savePath(prefix+"_pro.png");
     String rawImageFilename = savePath(prefix+"_raw.png");
     //processedImage.save(processedImageFilename);
