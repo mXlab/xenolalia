@@ -1,26 +1,30 @@
-/** 
+/**
  * This is the Xenolalia main sketch to be used in conjunction with xeno_osc.py.
- * It allows camera calibration as well as running the generative process in 
+ * It allows camera calibration as well as running the generative process in
  * inter-operability with the neural network (xeno_osc.py).
  *
  * Usage:
- * - Start the sketch. It will start in calibration mode.
- * - Click on the first corner to place the first control point.
- * - Press TAB to select the next control point; then click on the 2nd corner to place it.
- * - Repeat operation for corners 3 & 4.
- * - You can select one of the four control points by pressing its number (1, 2, 3, 4).
- * - You can adjust more precisely by using the arrow keys.
- * - Once you are satisfied, press ENTER: it will save the settings.json file.
- * - Start the xeno_osc.py script (see Readme.md file for more details).
- * - Once the script has started and is initialized, press the 'g' key to start the generative process.
+ * 1. Start the program. It will start in calibration mode.
+ * 2. Adjust the reference image.
+ *   1. Click on the first corner to place the first control point.
+ *   2. Press TAB to select the next control point; then click on the 2nd corner to place it.
+ *   3. You can use the arrow keys to make small adjustments.
+ *   4. Once you are satisfied, press ENTER: it will save the settings.json file.
+ *   5. Then press the SPACEBAR.
+ * 3. Adjust the input quad.
+ *   1. Using the mouse and the same keys as for the previous step, adjust the four corners of the input quad to match the corners of the image picked by the camera, directly on the screen.
+ *   2. You can select one of the four control points by pressing its number (1, 2, 3, 4).
+ *   3. Once you are satisfied, press ENTER: it will save the settings.json file.
+ * 4. Start the xeno_osc.py script with the appropriate parameters.
+ * 5. Once the xeno_osc.py script has launched and is initialized, press the 'g' key to start the generative process.
  *
  * Required Processing library: GL Video, Video (*)
  * (*) Download the most recent version, otherwise you might run into problems.
  *     Link to releases: https://github.com/processing/processing-video/releases
- * 
+ *
  * The program allows to use either of these two libraries. On RPi we recommend
  * using GL Video.
- *  
+ *
  * (c) Sofian Audry & TeZ
  *
  *  For use with the Raspberry Pi camera, make sure the camera is
@@ -121,7 +125,7 @@ void keyPressed() {
     mode = new CameraCalibrationMode();
   else if (key == 'g')
     mode = new GenerativeMode();
-  // 
+  //
   else
     mode.keyPressed();
 }
@@ -150,16 +154,16 @@ void drawScaledImage(PImage img) {
 String generateUniqueBaseName() {
   return nf(year(),4)+"-"+nf(month(),2)+"-"+nf(day(),2)+"_"+
            nf(hour(),2)+":"+nf(minute(),2)+":"+nf(second(),2);
-}  
+}
 
 
 /* incoming osc message are forwarded to the oscEvent method. */
 void oscEvent(OscMessage theOscMessage) {
   /* with theOscMessage.isPlugged() you check if the osc message has already been
-   * forwarded to a plugged method. if theOscMessage.isPlugged()==true, it has already 
-   * been forwared to another method in your sketch. theOscMessage.isPlugged() can 
+   * forwarded to a plugged method. if theOscMessage.isPlugged()==true, it has already
+   * been forwared to another method in your sketch. theOscMessage.isPlugged() can
    * be used for double posting but is not required.
-  */  
+  */
   if(theOscMessage.isPlugged()==false) {
   /* print the address pattern and the typetag of the received OscMessage */
   println("### received an osc message.");
