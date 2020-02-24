@@ -130,7 +130,7 @@ def handle_step(addr, image_path):
 
 def handle_settings_updated(addr):
     load_settings()
-handle_settings
+
 # Load model.
 model = load_model(args.model_file)
 
