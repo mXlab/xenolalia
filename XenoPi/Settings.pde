@@ -1,25 +1,39 @@
 // Contains the settings for the application.
 class Settings {
-  
+
   final int N_CAM_QUAD_POINTS = 4;
   PVector[] camQuadPoints = new PVector[N_CAM_QUAD_POINTS];
 
   final int N_IMAGE_RECT_POINTS = 2;
   PVector[] imageRectPoints = new PVector[N_IMAGE_RECT_POINTS];
-  
+
+  int oscSendPort;
+  int oscReceivePort;
+  String oscRemoteIp;
+  int cameraId;
+  float exposureTime;
+
   Settings() {
     load();
   }
-  
+
   PVector[] getCamQuadPoints() { return camQuadPoints; }
   PVector[] getImageRectPoints() { return imageRectPoints; }
 
   PVector getCamQuadPoint(int i) { return camQuadPoints[i]; }
   PVector getImageRectPoint(int i) { return imageRectPoints[i]; }
-  
+
   int nCamQuadPoints() { return N_CAM_QUAD_POINTS; }
   int nImageRectPoints() { return N_IMAGE_RECT_POINTS; }
-  
+
+  int oscSendPort() { return oscSendPort; }
+  int oscReceivePort()  { return oscReceivePort;}
+  String oscRemoteIp() { return oscRemoteIp; }
+
+  float exposureTime() { return exposureTime; }
+  int exposureTimeMs() { return int(exposureTime*1000); }
+  int cameraId() { return cameraId; }
+
   void save() {
     try {
       JSONObject settings = new JSONObject();
@@ -31,13 +45,19 @@ class Settings {
       JSONArray imageRect = new JSONArray();
       _writePoints(imageRectPoints, imageRect);
       settings.setJSONArray("image_rect", imageRect);
+      // Save other parameters.
+      settings.setInt("osc_send_port", oscSendPort);
+      settings.setInt("osc_receive_port", oscReceivePort);
+      settings.setString("osc_remote_ip", oscRemoteIp);
+      settings.setFloat("exposure_time", exposureTime);
+      settings.setInt("camera_id", cameraId);
       // Save file.
       saveJSONObject(settings, SETTINGS_FILE_NAME);
     } catch (Exception e) {
       println("Problem saving settings: " + e + ".");
     }
   }
-  
+
   void load() {
     try {
       JSONObject settings = loadJSONObject(SETTINGS_FILE_NAME);
@@ -47,13 +67,19 @@ class Settings {
       // Read image quad.
       JSONArray imageRect = settings.getJSONArray("image_rect");
       _readPoints(imageRectPoints, imageRect);
+      // Read other parameters.
+      oscSendPort = settings.getInt("osc_send_port");
+      oscReceivePort = settings.getInt("osc_receive_port");
+      oscRemoteIp = settings.getString("osc_remote_ip");
+      exposureTime = settings.getFloat("exposure_time");
+      cameraId = settings.getInt("camera_id");
     } catch (Exception e) {
       println("Problem loading settings, setting to defaults.");
       reset();
       save();
     }
   }
-  
+
   void reset() {
     // Initialize positions.
     camQuadPoints[0] = new PVector(0, 0);

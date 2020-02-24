@@ -41,8 +41,6 @@ OpenCV opencv;
 AbstractCam cam;
 
 // Edit these values to match camera specs.
-final int DEVICE_ID = 0;
-
 final int OPEN_CV_WIDTH = 320;
 final int OPEN_CV_HEIGHT = 320;
 
@@ -57,14 +55,6 @@ final boolean EUGLENAS_BEGIN = false;
 
 int currentPoint = 0;
 
-final int OSC_PORT_SEND = 7000;
-final int OSC_PORT_RECV = 7001;
-final String OSC_IP = "127.0.0.1"; // localhost
-
-// Adjust this so that the image fits right inside the petri dish when viewed
-// from the camera.
-float IMAGE_SCALE = 0.35; // scaling ratio
-
 boolean cameraRunning = true;
 
 AbstractMode mode;
@@ -75,10 +65,13 @@ void setup() {
   //2592x1944
   fullScreen(P2D);
 
+  // Load configuration file.
+  settings = new Settings();
+
   String[] devices = GLCapture.list();
   println("Devices:");
   printArray(devices);
-  String[] configs = GLCapture.configs(devices[DEVICE_ID]);
+  String[] configs = GLCapture.configs(devices[settings.cameraId()]);
   if (devices.length > 0) {
     println("Configs:");
     printArray(configs);
@@ -86,31 +79,31 @@ void setup() {
 
   // this will use the first recognized camera by default
   // NOTE: If you run into trouble you can try changing the object
-  cam = new GLCaptureCam(this, devices[DEVICE_ID]);
-  //cam = new CaptureCam(this, devices[DEVICE_ID]);
+  cam = new GLCaptureCam(this, devices[settings.cameraId()]);
+  //cam = new CaptureCam(this, devices[settings.cameraId()]);
 
   // you could be more specific also, e.g.
   //
-  //video = new GLCapture(this, devices[DEVICE_ID], configs[1]);
+  //video = new GLCapture(this, devices[settings.cameraId()], configs[1]);
   //video = new GLCapture(this, devices[0], 640, 480, 25);
   //video = new GLCapture(this, devices[0], configs[0]);
 
   cam.start();
-  
+
   // opencv = new OpenCV(this, width, height);
   opencv = new OpenCV(this, OPEN_CV_WIDTH, OPEN_CV_HEIGHT);
-  
+
   // Load configuration file.
   settings = new Settings();
-  
+
   // Initialize mode.
   mode = new CameraCalibrationMode();
 //  mode.setup();
 
   // Setup OSC.
-  oscP5 = new OscP5(this, OSC_PORT_RECV);  
-  remoteLocation = new NetAddress(OSC_IP, OSC_PORT_SEND);
-  
+  oscP5 = new OscP5(this, settings.oscReceivePort());
+  remoteLocation = new NetAddress(settings.oscRemoteIp(), settings.oscSendPort());
+
   oscP5.plug(this, "nextImage", "/xeno/neurons/step");
 }
 

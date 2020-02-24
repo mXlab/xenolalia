@@ -26,9 +26,6 @@ class GenerativeMode extends AbstractMode {
   int nSnapshots;
   Timer exposureTimer;
 
-  // Controls exposure time (time between each snapshot)
-  final int EXPOSURE_TIME = 1 * (60000);
-
   // Used during capture to go through different phases.
   int capturePhase;
   
@@ -44,7 +41,7 @@ class GenerativeMode extends AbstractMode {
     
     // Take a first snapshot.
     nSnapshots = 0;
-    exposureTimer = new Timer(EXPOSURE_TIME);
+    exposureTimer = new Timer(settings.exposureTimeMs());
     requestSnapshot();
     exposureTimer.start();
 
