@@ -49,7 +49,7 @@ Add the following libraries:
 ## LCD Screen
 
 Follow the official instructions: http://www.lcdwiki.com/MHS-3.5inch_RPi_Display
-IMPORTANT: run ```./MHS35-show``` and *not* ```./LCD35-show```
+IMPORTANT: run ```sudo ./MHS35-show``` and *not* ```LCD35-show```
 
 After rebooting your main screen will have a 480x320 resolution. To fix this edit the ```/boot/config.txt``` by replacing the ```hdmi_cvt``` directive with your choice resolution eg. ```hdmi_cvt 1920 1080 60 6 0 0 0```
 
