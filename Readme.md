@@ -27,6 +27,7 @@ sudo apt install -y python-virtualenv
 sudo apt install -y software-properties-common dirmngr apt-transport-https lsb-release ca-certificates
 sudo apt install -y liblo-tools liblo7
 sudo apt install -y libjasper1 libqtgui4 libqt4-test # OpenCV
+sudo apt install -y lftp
 
 # Install python libraries.
 # pip3 install pip3 --upgrade # DO NOT DO THIS
