@@ -7,6 +7,7 @@ class Settings {
   final int N_IMAGE_RECT_POINTS = 2;
   PVector[] imageRectPoints = new PVector[N_IMAGE_RECT_POINTS];
 
+  String nodeName;
   int oscSendPort;
   int oscReceivePort;
   String oscRemoteIp;
@@ -26,6 +27,7 @@ class Settings {
   int nCamQuadPoints() { return N_CAM_QUAD_POINTS; }
   int nImageRectPoints() { return N_IMAGE_RECT_POINTS; }
 
+  String nodeName() { return nodeName; }
   int oscSendPort() { return oscSendPort; }
   int oscReceivePort()  { return oscReceivePort;}
   String oscRemoteIp() { return oscRemoteIp; }
@@ -46,6 +48,7 @@ class Settings {
       _writePoints(imageRectPoints, imageRect);
       settings.setJSONArray("image_rect", imageRect);
       // Save other parameters.
+      settings.setString("node_name", nodeName);
       settings.setInt("osc_send_port", oscSendPort);
       settings.setInt("osc_receive_port", oscReceivePort);
       settings.setString("osc_remote_ip", oscRemoteIp);
@@ -68,6 +71,7 @@ class Settings {
       JSONArray imageRect = settings.getJSONArray("image_rect");
       _readPoints(imageRectPoints, imageRect);
       // Read other parameters.
+      nodeName = settings.getString("node_name");
       oscSendPort = settings.getInt("osc_send_port");
       oscReceivePort = settings.getInt("osc_receive_port");
       oscRemoteIp = settings.getString("osc_remote_ip");
