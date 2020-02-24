@@ -77,5 +77,5 @@ To launch the process:
      1. Using the mouse and the same keys as for the previous step, adjust the four corners of the input quad to match the corners of the image picked by the camera, directly on the screen.
      2. You can select one of the four control points by pressing its number (1, 2, 3, 4).
      3. Once you are satisfied, press ENTER: it will save the settings.json file.
- 4. Start the xeno_osc.py script with the appropriate parameters.
+ 4. Start the xeno_osc.py script with the appropriate parameters. Example: ```python3 xeno_osc.py -c results/model_sparse_conv_enc20-40_dec40-20_k5_b128.hdf5 -n 5```
  5. Once the xeno_osc.py script has launched and is initialized, press the 'g' key to start the generative process.
