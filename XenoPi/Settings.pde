@@ -74,7 +74,7 @@ class Settings {
       exposureTime = settings.getFloat("exposure_time");
       cameraId = settings.getInt("camera_id");
     } catch (Exception e) {
-      println("Problem loading settings, setting to defaults.");
+      println("Problem loading settings, setting to defaults: " + e);
       reset();
       save();
     }
@@ -89,6 +89,12 @@ class Settings {
     // Initialize image.
     imageRectPoints[0] = new PVector(0.25*width, 0.25*height);
     imageRectPoints[1] = new PVector(0.75*width, 0.75*height);
+    // Default values for parameters.
+    oscRemoteIp = "127.0.0.1";
+    oscSendPort = 7000;
+    oscReceivePort = 7001;
+    cameraId = 0;
+    exposureTime = 60.0f;
   }
 
   // Writes points contained in an array of PVectors into a list of values.
