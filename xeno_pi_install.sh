@@ -12,5 +12,5 @@ cmd_sync_snapshots="$xeno_dir/sync_snapshots.sh"
 cron_sync_snapshots="/etc/cron.hourly/xeno_sync_snapshots"
 
 # Create cron job.
-echo "/bin/bash $cmd_sync_snapshots $ftp_username $ftp_password" > $cron_sync_snapshots
+echo -e "#!/bin/bash\n/bin/bash $cmd_sync_snapshots $ftp_username $ftp_password" > $cron_sync_snapshots
 chmod u+x $cron_sync_snapshots

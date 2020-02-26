@@ -7,5 +7,5 @@ fi
 
 lftp -c "set ftp:list-options -a;
 open ftp://$1:$2@ftp.koumbit.net; 
-lcd $HOME/xenolalia/XenoPi/snapshots;
+lcd /home/pi/xenolalia/XenoPi/snapshots;
 mirror --reverse --use-cache --allow-chown --allow-suid --no-umask --parallel=2 --exclude-glob .git"

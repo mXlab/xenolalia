@@ -66,6 +66,7 @@ boolean invert = true;
 
 // All image patterns.
 String imagez[]={
+  "ex-capture-05.png", // 0 (default)
   "xeno-pattern-00.jpg", // 0 (default)
   "xeno-pattern-01.jpg", // 1 
   "xeno-pattern-02.jpg", // 2

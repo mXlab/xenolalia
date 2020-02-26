@@ -59,7 +59,7 @@ class Settings {
       settings.setString("osc_remote_ip", oscRemoteIp);
       settings.setFloat("exposure_time", exposureTime);
       settings.setInt("camera_id", cameraId);
-      settings.setFloat("seed_image", seedImage);
+      settings.setString("seed_image", seedImage);
       // Save file.
       saveJSONObject(settings, SETTINGS_FILE_NAME);
     } catch (Exception e) {

@@ -44,6 +44,7 @@ class ExperimentInfo {
     JSONObject data = new JSONObject();
 
     data.setString("node_name", settings.nodeName());
+    data.setString("session_name", settings.sessionName());
     data.setString("uid", getUid());
     data.setString("time_source", timeSource);
 
