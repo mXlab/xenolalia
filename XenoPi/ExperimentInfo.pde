@@ -7,6 +7,7 @@ class ExperimentInfo {
   final String TIME_API_URL = "http://worldtimeapi.org/api/ip";
 
   String timeZone;
+  String shortTimeZone;
   int unixTime;
   String timeSource;
 
@@ -20,10 +21,12 @@ class ExperimentInfo {
       JSONObject data = loadJSONObject(TIME_API_URL);
       timeZone = data.getString("timezone");
       unixTime = data.getInt("unixtime");
+      shortTimeZone = data.getString("abbreviation");
       timeSource = "worldtimeapi";
     } catch (Exception e) {
       Calendar cal = Calendar.getInstance();
       timeZone = cal.getTimeZone().getID();
+      shortTimeZone = cal.getTimeZone().getDisplayName(false, TimeZone.SHORT);
       unixTime = (int)(cal.getTimeInMillis()/1000);
       timeSource = "local";
     }
@@ -54,7 +57,7 @@ class ExperimentInfo {
     data.setJSONObject("utc_time", dateToJSON(cal));
 
     // Local time.
-    cal.setTimeZone(TimeZone.getTimeZone(timeZone));
+    cal.setTimeZone(TimeZone.getTimeZone(shortTimeZone));
     data.setJSONObject("local_time", dateToJSON(cal));
 
     return data;
