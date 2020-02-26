@@ -23,7 +23,7 @@ class ExperimentInfo {
       timeSource = "worldtimeapi";
     } catch (Exception e) {
       Calendar cal = Calendar.getInstance();
-      timeZone = cal.getTimeZone().getDisplayName(false, TimeZone.LONG);
+      timeZone = cal.getTimeZone().getID();
       unixTime = (int)(cal.getTimeInMillis()/1000);
       timeSource = "local";
     }
