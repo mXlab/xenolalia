@@ -48,6 +48,7 @@ class ExperimentInfo {
     data.setString("time_source", timeSource);
 
     data.setString("time_zone", timeZone);
+    data.setString("time_zone_short", shortTimeZone);
     data.setInt("unix_time", unixTime);
 
     // UTC time.
