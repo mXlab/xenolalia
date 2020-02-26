@@ -34,8 +34,7 @@ class ExperimentInfo {
 
   // Returns UID.
   String getUid() {
-    Calendar cal = Calendar.getInstance();
-    cal.setTimeInMillis((long)unixTime*1000);
+    Calendar cal = getCalendarInstance(unixTime);
     return timeStamp(cal) + "_" + settings.sessionName() + "_" + settings.nodeName();
   }
 
@@ -52,8 +51,7 @@ class ExperimentInfo {
     data.setInt("unix_time", unixTime);
 
     // UTC time.
-    Calendar cal = Calendar.getInstance();
-    cal.setTimeInMillis((long)unixTime*1000);
+    Calendar cal = getCalendarInstance(unixTime);
     data.setString("utc_time_stamp", timeStamp(cal));
     data.setJSONObject("utc_time", dateToJSON(cal));
 
