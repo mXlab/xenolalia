@@ -14,6 +14,7 @@ class Settings {
   String oscRemoteIp;
   int cameraId;
   float exposureTime;
+  String seedImage;
 
   Settings() {
     load();
@@ -37,6 +38,7 @@ class Settings {
   float exposureTime() { return exposureTime; }
   int exposureTimeMs() { return int(exposureTime*1000); }
   int cameraId() { return cameraId; }
+  String seedImage()  { return seedImage; }
 
   void save() {
     try {
@@ -57,6 +59,7 @@ class Settings {
       settings.setString("osc_remote_ip", oscRemoteIp);
       settings.setFloat("exposure_time", exposureTime);
       settings.setInt("camera_id", cameraId);
+      settings.setFloat("seed_image", seedImage);
       // Save file.
       saveJSONObject(settings, SETTINGS_FILE_NAME);
     } catch (Exception e) {
@@ -81,6 +84,7 @@ class Settings {
       oscRemoteIp = settings.getString("osc_remote_ip");
       exposureTime = settings.getFloat("exposure_time");
       cameraId = settings.getInt("camera_id");
+      seedImage = settings.getString("seed_image");
     } catch (Exception e) {
       println("Problem loading settings, setting to defaults: " + e);
       reset();

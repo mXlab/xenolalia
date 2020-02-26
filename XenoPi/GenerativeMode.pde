@@ -214,7 +214,7 @@ class GenerativeMode extends AbstractMode {
 
     // Send an OSC message to announce creation of new image.
     OscMessage msg = new OscMessage("/xeno/euglenas/" +
-      ((nSnapshots == 0 && !EUGLENAS_BEGIN) ? "begin" : "step"));
+      ((nSnapshots == 0 && settings.seedImage() != "euglenas") ? "begin" : "step"));
 //    msg.add(processedImageFilename);
     msg.add(rawImageFilename);
 

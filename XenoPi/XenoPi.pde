@@ -54,9 +54,6 @@ final String REFERENCE_IMAGE = "camera_perspective_reference.png";
 
 final color LINE_COLOR = #00ff00;
 
-// Set to true to let the euglenas begin, otherwise the neural net will.
-final boolean EUGLENAS_BEGIN = false;
-
 int currentPoint = 0;
 
 boolean cameraRunning = true;

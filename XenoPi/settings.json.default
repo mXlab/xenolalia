@@ -6,6 +6,7 @@
   "osc_remote_ip": "127.0.0.1",
   "osc_send_port": 7000,
   "osc_receive_port": 7001,
+  "seed_image": "random",
   "camera_quad": [
     0,
     0,
