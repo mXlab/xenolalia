@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html>
+<title>XenoData</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Karma">
+<link rel="stylesheet" href="style.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script src="jquery.tablesort.min.js"></script>
+<body>
+
+<!-- Sidebar (hidden by default) -->
+<nav class="w3-sidebar w3-bar-block w3-card w3-top w3-xlarge w3-animate-left" style="display:none;z-index:2;width:40%;min-width:300px" id="mySidebar">
+  <a href="javascript:void(0)" onclick="w3_close()"
+  class="w3-bar-item w3-button">Close Menu</a>
+  <a href="#food" onclick="w3_close()" class="w3-bar-item w3-button">Food</a>
+  <a href="#about" onclick="w3_close()" class="w3-bar-item w3-button">About</a>
+</nav>
+
+<!-- Top menu -->
+<div class="w3-top">
+  <div class="w3-white w3-xlarge" style="max-width:1200px;margin:auto">
+    <div class="w3-button w3-padding-16 w3-left" onclick="w3_open()">☰</div>
+    <div class="w3-right w3-padding-16">Mail</div>
+    <div class="w3-center w3-padding-16">XenoData</div>
+  </div>
+</div>
+
+<!-- !PAGE CONTENT! -->
+<div class="w3-main w3-content w3-padding" style="max-width:1200px;margin-top:100px">
+
+  <!-- !TOOLBAR! -->
+  <div class="w3-row-padding w3-padding-16 w3-medium" id="xeno-toolbar">
+    <div class="w3-third" id="xeno-toolbar-general">
+      <!-- Rectangular switch -->
+      <label class="switch">
+        <input type="checkbox" id="toggle-hidden">
+        <span class="slider"></span>
+      </label>
+      Show Hidden
+    </div>
+    <div class="w3-third">
+      <button class="w3-button w3-black" id="button-hide">Hide</button>
+      <button class="w3-button w3-black" id="button-show">Show</button>
+      <button class="w3-button w3-black" id="button-download">Download</button>
+    </div>
+  </div>
+
+  <!-- First Photo Grid-->
+  <div class="w3-row-padding w3-padding-16 w3-center w3-small" id="xeno-main">
+    <div class="w3-twothird">
+
+      <table class="w3-table w3-striped w3-bordered w3-hoverable" id="xeno-table">
+        <thead>
+          <tr class="w3-black">
+            <th class="no-sort">Images</th>
+            <th>Session</th>
+            <th>Node</th>
+            <th>Local Time</th>
+      <!--      <th>UTC Time</th>-->
+            <th>Time zone</th>
+            <td class="no-sort"><input id="select-all" class="w3-check" type="checkbox"></th>
+      <!--      <th>Time source</th>-->
+          </tr>
+        <thead>
+        <tbody>
+        </tbody>
+      </table>
+
+    </div>
+
+    <div class="w3-third" id="xeno-info" style="display:none;">
+
+      <div class="w3-container w3-padding-32" id="xeno-info-preview">
+        <img id="preview-thumbnail" class="preview" src="http://tats.name/xenolalia/2020-02-24_17:04:50_optofonica-2020_nodepi-01/snapshot_1_015958_raw.png" />
+        <img id="preview-ann" class="preview" src="http://tats.name/xenolalia/2020-02-24_17:04:50_optofonica-2020_nodepi-01/snapshot_1_015958_raw_3ann.png" />
+      </div>
+
+      <table class="w3-table w3-striped w3-bordered w3-padding-32" id="xeno-info-table">
+        <tbody></tbody>
+      </table>
+
+      <table class="w3-table w3-bordered w3-centered w3-padding-32" id="xeno-gallery-table">
+        <thead>
+          <tr class="w3-black">
+            <th>Step</th>
+            <th>Time</th>
+            <th>Raw</th>
+            <th>Trans.</th>
+            <th>Filt.</th>
+            <!-- <th>Resized</th> -->
+            <th>ANN</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- Pagination -->
+  <div class="w3-center w3-padding-32">
+    <div class="w3-bar">
+      <a href="#" class="w3-bar-item w3-button w3-hover-black">«</a>
+      <a href="#" class="w3-bar-item w3-black w3-button">1</a>
+      <a href="#" class="w3-bar-item w3-button w3-hover-black">2</a>
+      <a href="#" class="w3-bar-item w3-button w3-hover-black">3</a>
+      <a href="#" class="w3-bar-item w3-button w3-hover-black">4</a>
+      <a href="#" class="w3-bar-item w3-button w3-hover-black">»</a>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="w3-row-padding w3-padding-32">
+    <div class="w3-third">
+      <h3>FOOTER</h3>
+      <p>Praesent tincidunt sed tellus ut rutrum. Sed vitae justo condimentum, porta lectus vitae, ultricies congue gravida diam non fringilla.</p>
+      <p>Powered by <a href="https://www.w3schools.com/w3css/default.asp" target="_blank">w3.css</a></p>
+    </div>
+
+    <div class="w3-third">
+      <h3>BLOG POSTS</h3>
+      <ul class="w3-ul w3-hoverable">
+        <li class="w3-padding-16">
+          <img src="/w3images/workshop.jpg" class="w3-left w3-margin-right" style="width:50px">
+          <span class="w3-large">Lorem</span><br>
+          <span>Sed mattis nunc</span>
+        </li>
+        <li class="w3-padding-16">
+          <img src="/w3images/gondol.jpg" class="w3-left w3-margin-right" style="width:50px">
+          <span class="w3-large">Ipsum</span><br>
+          <span>Praes tinci sed</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="w3-third w3-serif">
+      <h3>POPULAR TAGS</h3>
+      <p>
+        <span class="w3-tag w3-black w3-margin-bottom">Travel</span> <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">New York</span> <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Dinner</span>
+        <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Salmon</span> <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">France</span> <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Drinks</span>
+        <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Ideas</span> <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Flavors</span> <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Cuisine</span>
+        <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Chicken</span> <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Dressing</span> <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Fried</span>
+        <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Fish</span> <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Duck</span>
+      </p>
+    </div>
+  </footer>
+
+<!-- End page content -->
+</div>
+
+<script>
+// Script to open and close sidebar
+function w3_open() {
+  document.getElementById("mySidebar").style.display = "block";
+}
+
+function w3_close() {
+  document.getElementById("mySidebar").style.display = "none";
+}
+
+
+function infoDateTime(info, label) {
+  let t = info[label];
+  return `${t.year}-${t.month}-${t.day} ${t.hour}:${t.minute}:${t.second}`;
+}
+
+function infoColumn(info, label, time=false) {
+  if (time)
+    return `<td data-sort-value="${info.unix_time}">` + infoDateTime(info, label) + '</td>';
+  else
+    return `<td><a class="filter" href="#" data-query-filter="${label}">${info[label]}</a></td>`;
+}
+
+function infoProperty(property, info, label, time=false) {
+  return `<tr class="property"><td>${property}</td>` + infoColumn(info, label, time) + '</tr>'
+}
+
+function galleryColumn(img) {
+  return '<td>' + (img ? `<img class="snapshot" src="${img}" />` : '&nbsp;') + '</td>';
+}
+
+function encode_uri_json(elements) {
+  var s = "";
+  Object.keys(elements).forEach(function(key) {
+    s += key + "=" + encodeURIComponent(JSON.stringify(elements[key])) + "&";
+  });
+  return s;
+}
+
+function query(q, itemCallback, preCallback, postCallback) {
+  var tt = $.getJSON( "api.php?action=query&" + encode_uri_json({q: q}), function( data ) {
+    if (data.error) {
+//      alert("Errors were found, see console.");
+      console.log(data.error);
+    }
+    if (preCallback)
+      postCallback(data.result);
+    if (itemCallback) {
+      $.each( data.result, function(key, item) {
+        itemCallback(item.info.uid, item.info, item.images);
+      });
+    }
+    if (postCallback)
+      postCallback(data.result);
+  });
+  return tt;
+}
+
+function update_tags(operation, uids, tags, postCallback) {
+  var tt = $.getJSON( `api.php?action=update_tags&operation=${operation}&` +
+                        encode_uri_json({uids: uids, tags: tags}), function( data ) {
+    if (data.error) {
+      alert("Errors were found, see console.");
+      console.log(data.error);
+    }
+
+    if (postCallback)
+      postCallback(data.result);
+  });
+  return tt;
+}
+
+function download(uids, postCallback) {
+  var tt = $.getJSON( `api.php?action=download&` + encode_uri_json({uids: uids}), function( data ) {
+    if (data.error) {
+      alert("Errors were found, see console.");
+      console.log(data.error);
+    }
+
+    if (postCallback)
+      postCallback(data.result);
+  });
+  return tt;
+}
+
+function preloadImages(images) {
+  var preloaded = [];
+  images.forEach(img => { x = new Image(); x.src = img; preloaded.push(x); });
+  return preloaded;
+}
+
+
+// function displayOneImage(imgObj, imgSrc, duration, onTimeOut) {
+//   imgObj.src = imgSrc;
+//   setTimeOut(onTimeOut, duration);
+// }
+
+function update(q) {
+  // Clearn table.
+  $("table#xeno-table tbody").empty();
+  i=0;
+  // Send query.
+  return query( q,
+    function(uid, info, images) {
+      i += 1;
+      let nImages = images.length;
+      let lastImage = images[nImages-1];
+      let thumbnail = lastImage["raw"];
+      let annThumbnail = lastImage["ann"];
+      $("table#xeno-table tbody").append(
+        `<tr class="item" data-uid="${uid}">` +
+          `<td><img class="thumbnail w3-round w3-hover-opacity" src="${thumbnail}" alt="${uid}">
+               <img class="thumbnail w3-round w3-hover-opacity" src="${annThumbnail}" alt="${uid}">
+</td>` +
+          infoColumn(info, 'session_name') +
+          infoColumn(info, 'node_name') +
+//                    infoColumn(info, 'local_time', true) +
+          infoColumn(info, 'utc_time', true) +
+          infoColumn(info, 'time_zone') +
+          `<td><input class="select-item w3-check" type="checkbox" name="${uid}"></td>` +
+//                    infoColumn(info, 'time_source') +
+        '</tr>');
+    },
+
+    // Pre-callback.
+    function(data) {
+      $("table#xeno-table tbody").empty();
+      $("a.filter").unbind('click');
+    },
+
+    // Post-callback.
+    function(data) {
+      // Sort table.
+      $("table#xeno-table").tablesort();
+
+      // Filterable links.
+      $("a.filter").unbind('click').click(function(e) {
+        let q = {};
+        console.log($(this));
+        q[ $(this).attr('data-query-filter') ] = $(this).text();
+        update( q );
+        console.log("Filter was clicked : ", q);
+        e.preventDefault();
+      });
+
+      // CHeckbox handling.
+      $('#select-all').on('change', function() {
+        $('.select-item').prop('checked', this.checked);
+      });
+
+      $(".item *").click(function(e) {
+        $(".item").removeClass("selected");
+        $(this).parent().addClass("selected");
+        var tt = query( { uid : $(this).parent().attr("data-uid")} ,
+
+          function(uid, info, images) {
+            // Collect parameters.
+            let nImages = images.length;
+            let lastImage = images[nImages-1];
+            let thumbnail = lastImage["raw"];
+            let annThumbnail = lastImage["ann"];
+
+            // Display info panel.
+            $("#xeno-info").show();
+
+            // Display preview images.
+            thumbnailObj = $("img#preview-thumbnail");
+            // thumbnailAnimation = new PreviewAnimation(thumbnailObj, images["raw"], 1, 2000);
+            //
+            thumbnailObj.attr("src", thumbnail)
+               .height($("img#preview-thumbnail").width())
+            //    .hover(
+            //      function() { thumbnailAnimation.start(); },
+            //      function() { thumbnailAnimation.stop(); }
+            //    );
+
+            $("img#preview-ann").attr("src", annThumbnail);
+
+            // Display information table.
+            $("table#xeno-info-table tbody").empty().append(
+              infoProperty("UID", info, 'uid') +
+              infoProperty("Session name", info, 'session_name') +
+              infoProperty("Node name", info, 'node_name') +
+              infoProperty("Local time", info, 'local_time', true) +
+              infoProperty("UTC time", info, 'utc_time', true) +
+              infoProperty("Duration", info, 'duration') +
+              infoProperty("Nb images", info, 'n_images') +
+              infoProperty("Time zone", info, 'time_zone') +
+              infoProperty("Time source", info, 'time_source') +
+              infoProperty("Tags", info, 'tags')
+            );
+
+            // Display image strips.
+            $("table#xeno-gallery-table tbody").empty();
+            for (let step=0; step<images.length; step++) {
+              let imageInfo = images[step];
+              console.log(step, imageInfo)
+              $("table#xeno-gallery-table tbody").append(
+                '<tr>' +
+                  `<td>${step}</td>` +
+                  `<td>${imageInfo.time}</td>` +
+                  galleryColumn(imageInfo.raw) +
+                  galleryColumn(imageInfo.transformed) +
+                  galleryColumn(imageInfo.filtered) +
+//                  galleryColumn(imageInfo.resized) +
+                  galleryColumn(imageInfo.ann) +
+                '</tr>'
+              );
+            }
+
+            //
+            // .append(
+            //   infoProperty("UID", info, 'uid') +
+            //   infoProperty("Session name", info, 'session_name') +
+            //   infoProperty("Node name", info, 'node_name') +
+            //   infoProperty("Local time", info, 'local_time', true) +
+            //   infoProperty("UTC time", info, 'utc_time', true) +
+            //   infoProperty("Duration", info, 'duration') +
+            //   infoProperty("Nb images", info, 'n_images') +
+            //   infoProperty("Time zone", info, 'time_zone') +
+            //   infoProperty("Time source", info, 'time_source') +
+            //   infoProperty("Tags", info, 'tags')
+            // );
+
+        });
+
+      });
+    }
+  );
+
+}
+
+function refresh(q={}) {
+  if (!$('input#toggle-hidden').is(':checked')) {
+    q.tags_exclude = ["_hidden"];
+  }
+
+  console.log(q);
+
+  // Show all.
+  update( q )
+}
+
+$(document).ready(function() {
+  // Fetch everything.
+  refresh();
+
+  // Implement hide button.
+  $('#button-hide').click(function(e) {
+    var uids = [];
+    $(".select-item").each(function() {
+      if ($(this).is(":checked")) {
+       uids.push($(this).attr("name"));
+     }
+   });
+   a = update_tags('add', uids, ['_hidden'], function() {
+     refresh();
+   });
+  })
+
+  // Implement show button.
+  $('#button-show').click(function(e) {
+    var uids = [];
+    $(".select-item").each(function() {
+      if ($(this).is(":checked")) {
+       uids.push($(this).attr("name"));
+     }
+   });
+   a = update_tags('remove', uids, ['_hidden'], function() {
+     refresh();
+   });
+  })
+
+  // Implement download button.
+  $('#button-download').click(function(e) {
+    var uids = [];
+    $(".select-item").each(function() {
+      if ($(this).is(":checked")) {
+       uids.push($(this).attr("name"));
+     }
+   });
+   a = download(uids, function(data) {
+     location.href = data.zipfile;
+   });
+  })
+
+  $('#toggle-hidden').click(function() {
+    console.log("click toggle")
+    refresh();
+  });
+
+});
+
+//
+// // This class did not work...
+// class PreviewAnimation {
+//   constructor(container, images, fps, finalPause) {
+//     this.container = container;
+//     this.images = preloadImages(images);
+//     this.framePeriod = 1000/fps;
+//     this.finalPause = finalPause;
+//     console.log(this.images)
+//   }
+//
+//   start() {
+//     this.frame = 0;
+//     var _this = this;
+//     this.interval = setInterval(function() {
+//       _this.setFrame(_this.frame);
+//       if (_this.frame >= _this.images.length-1) {
+//         _this.stop();
+//         // Schedule restart.
+//         _this.timeout = setTimeout(function() { _this.start(); }, _this.finalPause);
+//       }
+//       else
+//         _this.frame += 1;
+//     }, _this.framePeriod);
+//   }
+//
+//   stop() {
+//     console.log("stop")
+//     clearTimeout(this.timeout);
+//     clearInterval(this.interval);
+//     this.setFrame(this.frame.length-1);
+//   }
+//
+//   setFrame(i) {
+//     if (i >= 0 && i < this.images.length)
+//       this.container.attr("src", this.images[i].src);
+//   }
+// }
+
+</script>
+
+</body>
+</html>
