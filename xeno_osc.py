@@ -44,11 +44,12 @@ from keras.models import Model, load_model
 # Load calibration settings from .json file.
 def load_settings():
     import json
-    global args, data, input_quad
+    global args, data, input_quad, n_steps
     print("Loading settings")
     with open(args.configuration_file, "r") as f:
         data = json.load(f)
         input_quad = tuple( data['camera_quad'] )
+        n_steps = data['n_feedback_steps']
 
 # Load input quad
 if (args.input_quad != None):
