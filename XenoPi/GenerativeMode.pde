@@ -31,32 +31,26 @@ class GenerativeMode extends AbstractMode {
 
   // Snapshot-related.
   boolean snapshotRequested;
-  int nSnapshots;
   Timer exposureTimer;
   Timer captureTimer;
 
   // Used during capture to go through different phases.
   int capturePhase;
 
-  // Unique experiment name (to save images).
-  ExperimentInfo experimentInfo;
+  // Experiment manager.
+  Experiment experiment;
+  int nExperiments;
 
   // Basic contrast (for filtering).
   float contrast = 2.0;
 
   void setup() {
-    // Create a unique name for experiment.
-    experimentInfo = new ExperimentInfo();
-    experimentInfo.saveInfoFile(savePath(experimentDir()+"/info.json"));
-
-    // Take a first snapshot.
-    nSnapshots = 0;
-    exposureTimer = new Timer(settings.exposureTimeMs());
-    requestSnapshot();
-    exposureTimer.start();
-
     // Create processed image canvas.
     processedImage = createImage(OPEN_CV_WIDTH, OPEN_CV_WIDTH, RGB);
+    
+    // Launch new experiment.
+    newExperiment();
+    nExperiments = 0;
   }
 
   ///////////////////////////////////////
@@ -102,13 +96,12 @@ class GenerativeMode extends AbstractMode {
       // Display help text.
       fill(255);
       textSize(32);
-      String status;
+      String status = "exp # " + nExperiments + "  ";
       if (autoMode)
-        status = "auto mode: " + nf(exposureTimer.countdownTime()/1000.0f, 3, 1) + " s";
+        status += "auto mode: " + nf(exposureTimer.countdownTime()/1000.0f, 3, 1) + " s";
       else
-        status = "manual mode";
+        status += "manual mode";
       text(status, 10, height-10);
-
     }
   }
 
@@ -172,8 +165,26 @@ class GenerativeMode extends AbstractMode {
     else if (key == 'a') {
       autoMode = !autoMode;
     }
+    
+    // Launch new experiment.
+    else if (key == 'n') {
+      newExperiment();
+    }
   }
 
+  // Launch new experiment.
+  void newExperiment() {
+    // Reset experiment.
+    experiment = new Experiment();
+    experiment.start();
+    
+    // Take a first snapshot.
+    exposureTimer = new Timer(settings.exposureTimeMs());
+    requestSnapshot();
+    exposureTimer.start();
+    
+    nExperiments++;
+  }
 
   // Take a snapshot of reference image with the camera.
   void requestSnapshot() {
@@ -197,30 +208,10 @@ class GenerativeMode extends AbstractMode {
     processedImage = opencv.getSnapshot();
   }
   
-  String experimentDir() {
-    return "snapshots/"+experimentInfo.getUid();
-  }
-
   // Saves snapshot to disk and sends OSC message to announce
   // creation of new image.
   void snapshot() {
-    // Generate image paths.
-    String basename = "snapshot_"+nSnapshots+"_"+nf(millis(), 6);
-    String prefix = experimentDir()+"/"+basename;
-//    String processedImageFilename = savePath(prefix+"_pro.png");
-    String rawImageFilename = savePath(prefix+"_raw.png");
-    //processedImage.save(processedImageFilename);
-    cam.getImage().save(rawImageFilename);
-
-    // Send an OSC message to announce creation of new image.
-    OscMessage msg = new OscMessage("/xeno/euglenas/" +
-      ((nSnapshots == 0 && settings.seedImage() != "euglenas") ? "begin" : "step"));
-//    msg.add(processedImageFilename);
-    msg.add(rawImageFilename);
-
-    oscP5.send(msg, remoteLocation);
-
-    // Update snapshot counter.
-    nSnapshots++;
+    // Record snapshot.
+    experiment.recordSnapshot(cam.getImage());
   }
 }
