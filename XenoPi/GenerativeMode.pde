@@ -26,9 +26,6 @@ class GenerativeMode extends AbstractMode {
   final int CAPTURE_SNAPSHOT_WAIT = 3;
   final int CAPTURE_DONE = 4;
 
-  // OpenCV processed image.
-  PImage processedImage;
-
   // Snapshot-related.
   boolean snapshotRequested;
   Timer exposureTimer;
@@ -41,13 +38,7 @@ class GenerativeMode extends AbstractMode {
   Experiment experiment;
   int nExperiments;
 
-  // Basic contrast (for filtering).
-  float contrast = 2.0;
-
   void setup() {
-    // Create processed image canvas.
-    processedImage = createImage(OPEN_CV_WIDTH, OPEN_CV_WIDTH, RGB);
-    
     // Launch new experiment.
     newExperiment();
     nExperiments = 0;
@@ -200,14 +191,6 @@ class GenerativeMode extends AbstractMode {
     snapshotRequested = false;
   }
 
-  // Create filtered image using OpenCV.
-  void processImage() {
-    // Load the new frame of our camera in to OpenCV
-    opencv.loadImage(cam.getImage());
-    opencv.contrast(contrast);
-    processedImage = opencv.getSnapshot();
-  }
-  
   // Saves snapshot to disk and sends OSC message to announce
   // creation of new image.
   void snapshot() {

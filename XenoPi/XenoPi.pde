@@ -34,33 +34,25 @@
  *  camera device as /dev/video0.
  */
 import gohai.glvideo.*;
-import gab.opencv.*;
 import oscP5.*;
 import netP5.*;
 
 OscP5 oscP5;
 NetAddress remoteLocation;
-OpenCV opencv;
 
 AbstractCam cam;
+AbstractMode mode;
+Settings settings;
 
-// Edit these values to match camera specs.
-final int OPEN_CV_WIDTH = 320;
-final int OPEN_CV_HEIGHT = 320;
-
+// Constants.
 final String SETTINGS_FILE_NAME = "settings.json";
-
 final String REFERENCE_IMAGE = "camera_perspective_reference.png";
-
 final color LINE_COLOR = #00ff00;
 
+// Variables.
+
 int currentPoint = 0;
-
 boolean cameraRunning = true;
-
-AbstractMode mode;
-
-Settings settings;
 
 void setup() {
   //2592x1944
@@ -90,9 +82,6 @@ void setup() {
   //video = new GLCapture(this, devices[0], configs[0]);
 
   cam.start();
-
-  // opencv = new OpenCV(this, width, height);
-  opencv = new OpenCV(this, OPEN_CV_WIDTH, OPEN_CV_HEIGHT);
 
   // Load configuration file.
   settings = new Settings();

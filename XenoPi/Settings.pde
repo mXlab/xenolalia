@@ -7,12 +7,21 @@ class Settings {
   final int N_IMAGE_RECT_POINTS = 2;
   PVector[] imageRectPoints = new PVector[N_IMAGE_RECT_POINTS];
 
+  // Session.
   String nodeName;
   String sessionName;
+  
+  // OSC.
   int oscSendPort;
   int oscReceivePort;
   String oscRemoteIp;
+
+  // Camera.
   int cameraId;
+  int cameraWidth;
+  int cameraHeight;
+  
+  // Generation.
   float exposureTime;
   String seedImage;
   int nFeedbackSteps;
@@ -32,7 +41,8 @@ class Settings {
 
   String nodeName() { return nodeName; }
   String sessionName() { return sessionName; }
-  int oscSendPort() { return oscSendPort; }
+
+int oscSendPort() { return oscSendPort; }
   int oscReceivePort()  { return oscReceivePort;}
   String oscRemoteIp() { return oscRemoteIp; }
   
@@ -42,6 +52,7 @@ class Settings {
   
   float exposureTime() { return exposureTime; }
   int exposureTimeMs() { return int(exposureTime*1000); }
+
   String seedImage()  { return seedImage; }
   int nFeedbackSteps() { return nFeedbackSteps; }
 
@@ -56,13 +67,15 @@ class Settings {
       JSONArray imageRect = new JSONArray();
       _writePoints(imageRectPoints, imageRect);
       settings.setJSONArray("image_rect", imageRect);
+
       // Save other parameters.
       settings.setString("node_name", nodeName);
       settings.setString("session_name", sessionName);
+      
       settings.setInt("osc_send_port", oscSendPort);
       settings.setInt("osc_receive_port", oscReceivePort);
       settings.setString("osc_remote_ip", oscRemoteIp);
-      settings.setFloat("exposure_time", exposureTime);
+      
       
       settings.setInt("camera_id", cameraId);
       settings.setInt("camera_width", cameraWidth);
@@ -70,6 +83,8 @@ class Settings {
       
       settings.setString("seed_image", seedImage);
       settings.setInt("n_feedback_steps", nFeedbackSteps);
+      settings.setFloat("exposure_time", exposureTime);
+      
       // Save file.
       saveJSONObject(settings, SETTINGS_FILE_NAME);
     } catch (Exception e) {
@@ -89,17 +104,19 @@ class Settings {
       // Read other parameters.
       nodeName = settings.getString("node_name");
       sessionName = settings.getString("session_name");
+      
       oscSendPort = settings.getInt("osc_send_port");
       oscReceivePort = settings.getInt("osc_receive_port");
       oscRemoteIp = settings.getString("osc_remote_ip");
       
-      exposureTime = settings.getFloat("exposure_time");
       cameraId = settings.getInt("camera_id");
       cameraWidth = settings.getInt("camera_width");
       cameraHeight = settings.getInt("camera_height");
 
       seedImage = settings.getString("seed_image");
       nFeedbackSteps = settings.getInt("n_feedback_steps");
+
+      exposureTime = settings.getFloat("exposure_time");
     } catch (Exception e) {
       println("Problem loading settings, setting to defaults: " + e);
       reset();
