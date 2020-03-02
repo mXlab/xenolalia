@@ -30,12 +30,18 @@ parser.add_argument("-q", "--input-quad", type=str, default=None, help="Comma-se
 parser.add_argument("-n", "--n-feedback-steps", type=int, default=1, help="Number of self-loop steps for each image")
 parser.add_argument("-D", "--output-directory", type=str, default=".", help="Output directory for generative images")
 
-parser.add_argument("-i", "--ip", default="127.0.0.1",
-                    help="Specify the ip address to send data to.")
-parser.add_argument("-s", "--send-port", default="7001",
-                    type=int, help="Specify the port number to send data to.")
+parser.add_argument("-ix", "--xenopi-ip", default="127.0.0.1",
+                    help="The IP address where the XenoPi program runs.")
+parser.add_argument("-sx", "--xenopi-send-port", default="7001",
+                    type=int, help="The port number used to send data to XenoPi.")
+
+parser.add_argument("-ie", "--orbiter-ip", default="127.0.0.1",
+                    help="The IP address where the orbiter program runs.")
+parser.add_argument("-se", "--orbiter-send-port", default="8001",
+                    type=int, help="The port number used to send data to the orbiter.")
+
 parser.add_argument("-r", "--receive-port", default="7000",
-                    type=int, help="Specify the port number to listen on.")
+                    type=int, help="The port number to listen on.")
 
 args = parser.parse_args()
 
@@ -91,6 +97,11 @@ def generate(n_steps, starting_frame=None):
 
     return frame
 
+# Broadcast message.
+def send_message(addr, data = []):
+    xenopi_client.send_message(addr, data)
+    orbiter_client.send_message(addr, data)
+
 # Processes next image based on image path and sends an OSC message back to the XenoPi program.
 # At each step, this function will save the following images:
 # - (basename)_0trn.png : transformed image
@@ -119,7 +130,7 @@ def next_image(image_path, starting_frame_random):
     nn_image_path = "{}/{}_3ann.png".format(dirname, basename)
     image.save(nn_image_path)
     # Return back OSC message.
-    client.send_message("/xeno/neurons/step", [nn_image_path])
+    send_message("/xeno/neurons/step", [nn_image_path])
 
 # Handler for first image step.
 def handle_begin(addr, image_path):
@@ -143,13 +154,14 @@ dispatcher.map("/xeno/euglenas/settings-updated", handle_settings_updated)
 
 # Launch OSC server & client.
 server = osc_server.BlockingOSCUDPServer(("0.0.0.0", args.receive_port), dispatcher)
-client = udp_client.SimpleUDPClient(args.ip, args.send_port)
+xenopi_client = udp_client.SimpleUDPClient(args.xenopi_ip, args.xenopi_send_port)
+orbiter_client = udp_client.SimpleUDPClient(args.orbiter_ip, args.orbiter_send_port)
 
 # Allows program to end cleanly on a CTRL-C command.
 def interrupt(signup, frame):
-    global client, server
+    global xenopi_client, orbiter_client, server
     print("Exiting program... {}".format(np.mean(perf_measurements)))
-    client.send_message("/xeno/neurons/end", [])
+    send_message("/xeno/neurons/end")
     server.server_close()
     sys.exit()
 
@@ -157,6 +169,6 @@ signal.signal(signal.SIGINT, interrupt)
 
 # Indicates that server is ready.
 print("Serving on {}. Program ready. You can now start XenoPi generative mode.".format(server.server_address))
-client.send_message("/xeno/neurons/begin", [])
+send_message("/xeno/neurons/begin")
 
 server.serve_forever()
