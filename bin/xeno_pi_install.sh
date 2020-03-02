@@ -14,3 +14,12 @@ cron_sync_snapshots="/etc/cron.hourly/xeno_sync_snapshots"
 # Create cron job.
 echo -e "#!/bin/bash\n/bin/bash $cmd_sync_snapshots $ftp_username $ftp_password" > $cron_sync_snapshots
 chmod u+x $cron_sync_snapshots
+
+# Allow VNC copy-paste from remote client.
+sudo apt-get install -y autocutsel
+cat <<EOF>$HOME/.vnc/xstartup
+/bin/bash
+xrdb $HOME/.Xresources
+autocutsel -fork
+startxfce4 &
+EOF
