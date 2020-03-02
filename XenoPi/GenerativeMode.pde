@@ -1,3 +1,4 @@
+
 // This mode runs the generative process through interoperability
 // with python script.
 class GenerativeMode extends AbstractMode {
@@ -104,14 +105,13 @@ class GenerativeMode extends AbstractMode {
 
 
   // Capture image loop (FSM).
-  void captureLoop() { //<>//
-    if (capturePhase == CAPTURE_FLASH) //<>//
-    {
-      if (!captureTimer.isFinished()) {
-        background(lerpColor(PROJECTION_BACKGROUND_COLOR, FLASH_COLOR, captureTimer.progress()));
-      } else {
-        background(FLASH_COLOR);
-        delay(10);
+  void captureLoop() {
+    if (capturePhase == CAPTURE_FLASH)
+    {      
+      background(lerpColor(PROJECTION_BACKGROUND_COLOR, FLASH_COLOR, captureTimer.progress()));
+      delay(10);
+      if (cam.available()) {
+        println("Cam is available.");
         cam.read();
         capturePhase = CAPTURE_FLASH_WAIT;
         //captureTimer = new Timer(1000);
