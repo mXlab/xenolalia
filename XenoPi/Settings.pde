@@ -35,10 +35,13 @@ class Settings {
   int oscSendPort() { return oscSendPort; }
   int oscReceivePort()  { return oscReceivePort;}
   String oscRemoteIp() { return oscRemoteIp; }
-
+  
+  int cameraId() { return cameraId; }
+  int cameraWidth() { return cameraWidth; }
+  int cameraHeight() { return cameraHeight; }
+  
   float exposureTime() { return exposureTime; }
   int exposureTimeMs() { return int(exposureTime*1000); }
-  int cameraId() { return cameraId; }
   String seedImage()  { return seedImage; }
   int nFeedbackSteps() { return nFeedbackSteps; }
 
@@ -60,7 +63,11 @@ class Settings {
       settings.setInt("osc_receive_port", oscReceivePort);
       settings.setString("osc_remote_ip", oscRemoteIp);
       settings.setFloat("exposure_time", exposureTime);
+      
       settings.setInt("camera_id", cameraId);
+      settings.setInt("camera_width", cameraWidth);
+      settings.setInt("camera_height", cameraHeight);
+      
       settings.setString("seed_image", seedImage);
       settings.setInt("n_feedback_steps", nFeedbackSteps);
       // Save file.
@@ -85,8 +92,12 @@ class Settings {
       oscSendPort = settings.getInt("osc_send_port");
       oscReceivePort = settings.getInt("osc_receive_port");
       oscRemoteIp = settings.getString("osc_remote_ip");
+      
       exposureTime = settings.getFloat("exposure_time");
       cameraId = settings.getInt("camera_id");
+      cameraWidth = settings.getInt("camera_width");
+      cameraHeight = settings.getInt("camera_height");
+
       seedImage = settings.getString("seed_image");
       nFeedbackSteps = settings.getInt("n_feedback_steps");
     } catch (Exception e) {

@@ -3,6 +3,8 @@
   "session_name": "optofonica-2020",
   "exposure_time": 60,
   "camera_id": 0,
+  "camera_width": 480,
+  "camera_height": 480,
   "osc_remote_ip": "127.0.0.1",
   "osc_send_port": 7000,
   "osc_receive_port": 7001,

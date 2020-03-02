@@ -80,7 +80,7 @@ void setup() {
 
   // this will use the first recognized camera by default
   // NOTE: If you run into trouble you can try changing the object
-  cam = new GLCaptureCam(this, devices[settings.cameraId()]);
+  cam = new GLCaptureCam(this, devices[settings.cameraId()], settings.cameraWidth(), settings.cameraHeight());
   //cam = new CaptureCam(this, devices[settings.cameraId()]);
 
   // you could be more specific also, e.g.
