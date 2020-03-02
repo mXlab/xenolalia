@@ -1,8 +1,8 @@
 #!/bin/bash
 if [ $# -ne 2 ];
 then
- echo "Syntax: $(basename $0) <ftp_username> <ftp_password>"
- exit 1
+  echo "Syntax: $(basename $0) <ftp_username> <ftp_password>"
+  exit 1
 fi
 
 ftp_username="$1"
