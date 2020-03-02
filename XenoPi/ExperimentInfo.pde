@@ -10,7 +10,7 @@ class ExperimentInfo {
   String shortTimeZone;
   int unixTime;
   String timeSource;
-
+  
   ExperimentInfo() {
     reset();
   }
@@ -46,6 +46,8 @@ class ExperimentInfo {
     data.setString("session_name", settings.sessionName());
     data.setString("uid", getUid());
     data.setString("time_source", timeSource);
+
+    data.setInt("n_feedback_steps", settings.nFeedbackSteps());
 
     data.setString("time_zone", timeZone);
     data.setString("time_zone_short", shortTimeZone);

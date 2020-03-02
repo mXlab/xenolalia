@@ -27,7 +27,7 @@ parser.add_argument("model_file", type=str, help="Model filename (hdf5)")
 parser.add_argument("-c", "--convolutional", default=False, action='store_true', help="Use convolutional autoencoder")
 parser.add_argument("-C", "--configuration-file", type=str, default="XenoPi/settings.json", help="Configuration file containing camera input quad")
 parser.add_argument("-q", "--input-quad", type=str, default=None, help="Comma-separated list of numbers defining input quad (overrides configuration file)")
-parser.add_argument("-n", "--n-steps", type=int, default=1, help="Number of self-loop steps for each image")
+parser.add_argument("-n", "--n-feedback-steps", type=int, default=1, help="Number of self-loop steps for each image")
 parser.add_argument("-D", "--output-directory", type=str, default=".", help="Output directory for generative images")
 
 parser.add_argument("-i", "--ip", default="127.0.0.1",
@@ -44,11 +44,12 @@ from keras.models import Model, load_model
 # Load calibration settings from .json file.
 def load_settings():
     import json
-    global args, data, input_quad
+    global args, data, input_quad, n_steps
     print("Loading settings")
     with open(args.configuration_file, "r") as f:
         data = json.load(f)
         input_quad = tuple( data['camera_quad'] )
+        n_steps = data['n_feedback_steps']
 
 # Load input quad
 if (args.input_quad != None):
@@ -66,7 +67,7 @@ if args.convolutional:
 else:
     input_shape = (1, image_dim)
 
-n_steps = args.n_steps
+n_steps = args.n_feedback_steps
 
 # Generates frame from starting frame.
 def generate(n_steps, starting_frame=None):

@@ -15,6 +15,7 @@ class Settings {
   int cameraId;
   float exposureTime;
   String seedImage;
+  int nFeedbackSteps;
 
   Settings() {
     load();
@@ -39,6 +40,7 @@ class Settings {
   int exposureTimeMs() { return int(exposureTime*1000); }
   int cameraId() { return cameraId; }
   String seedImage()  { return seedImage; }
+  int nFeedbackSteps() { return nFeedbackSteps; }
 
   void save() {
     try {
@@ -60,6 +62,7 @@ class Settings {
       settings.setFloat("exposure_time", exposureTime);
       settings.setInt("camera_id", cameraId);
       settings.setString("seed_image", seedImage);
+      settings.setInt("n_feedback_steps", nFeedbackSteps);
       // Save file.
       saveJSONObject(settings, SETTINGS_FILE_NAME);
     } catch (Exception e) {
@@ -85,6 +88,7 @@ class Settings {
       exposureTime = settings.getFloat("exposure_time");
       cameraId = settings.getInt("camera_id");
       seedImage = settings.getString("seed_image");
+      nFeedbackSteps = settings.getInt("n_feedback_steps");
     } catch (Exception e) {
       println("Problem loading settings, setting to defaults: " + e);
       reset();

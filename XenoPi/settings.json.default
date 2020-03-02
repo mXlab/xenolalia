@@ -7,6 +7,7 @@
   "osc_send_port": 7000,
   "osc_receive_port": 7001,
   "seed_image": "random",
+  "n_feedback_steps": 4,
   "camera_quad": [
     0,
     0,
