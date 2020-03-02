@@ -7,8 +7,8 @@ fi
 
 ftp_username="$1"
 ftp_password="$2"
-xeno_dir=`pwd`
-cmd_sync_snapshots="$xeno_dir/bin/sync_snapshots.sh"
+sync_snapshots_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+cmd_sync_snapshots="$sync_snapshots_dir/sync_snapshots.sh"
 cron_sync_snapshots="/etc/cron.hourly/xeno_sync_snapshots"
 
 # Create cron job.
