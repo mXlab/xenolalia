@@ -5,6 +5,7 @@ then
   exit 1
 fi
 
+home_dir="/home/pi"
 ftp_username="$1"
 ftp_password="$2"
 sync_snapshots_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
@@ -12,14 +13,15 @@ cmd_sync_snapshots="$sync_snapshots_dir/sync_snapshots.sh"
 cron_sync_snapshots="/etc/cron.hourly/xeno_sync_snapshots"
 
 # Create cron job.
-echo -e "#!/bin/bash\n/bin/bash $cmd_sync_snapshots $ftp_username $ftp_password" > $cron_sync_snapshots
+sudo echo -e "#!/bin/bash\n/bin/bash $cmd_sync_snapshots $ftp_username $ftp_password" > $cron_sync_snapshots
 chmod u+x $cron_sync_snapshots
 
 # Allow VNC copy-paste from remote client.
 sudo apt-get install -y autocutsel
-cat <<EOF>$HOME/.vnc/xstartup
+cat <<EOF>$home_dir/.vnc/xstartup
 /bin/bash
-xrdb $HOME/.Xresources
+xrdb $home_dir/.Xresources
 autocutsel -fork
 startxfce4 &
 EOF
+sudo chown pi:pi $home_dir/.vnc/xstartup
