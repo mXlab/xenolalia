@@ -42,26 +42,29 @@ current_frame = 0
 running = True
 
 # Handler for first image step.
-def handle_begin(addr):
-	print("Orbiter: begin")
+def handle_new(addr):
+	global current_frame, device, images
+	print("Orbiter: new")
 	images = []
 	current_frame = 0
 	device.clear()
 
 # Handler for one image step.
 def handle_step(addr, image_path):
+	global device, images
 	print("Orbiter: step {}".format(image_path))
 	img = Image.open(image_path).convert(device.mode).resize((device.width, device.height), Image.ANTIALIAS)
 	images.append(img)
 
 # Handler for first image step.
 def handle_end(addr):
+	global running
 	print("Orbiter: end")
 	running = False
 
 # Create OSC dispatcher.
 dispatcher = dispatcher.Dispatcher()
-dispatcher.map("/xeno/neurons/begin", handle_begin)
+dispatcher.map("/xeno/neurons/new", handle_new)
 dispatcher.map("/xeno/neurons/step", handle_step)
 dispatcher.map("/xeno/neurons/end", handle_end)
 #dispatcher.map("/xeno/euglenas/settings-updated", handle_settings_updated)
@@ -80,7 +83,7 @@ def interrupt(signup, frame):
 signal.signal(signal.SIGINT, interrupt)
 
 async def loop():
-	global current_frame
+	global current_frame, device, images
 	print("current_frame = {} images = {}", current_frame, images)
 	while (running):
 		# Get next frame and display it.
@@ -91,8 +94,6 @@ async def loop():
 		# Wait.
 		await asyncio.sleep(frame_interval)
 		
-		print("Looping");
-	
 async def init():
 	server = osc_server.AsyncIOOSCUDPServer(("0.0.0.0", args.receive_port), dispatcher, asyncio.get_event_loop())
 	transport, protocol = await server.create_serve_endpoint()  # Create datagram endpoint and start serving

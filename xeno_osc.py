@@ -132,6 +132,10 @@ def next_image(image_path, starting_frame_random):
     # Return back OSC message.
     send_message("/xeno/neurons/step", [nn_image_path])
 
+# Handler for new experiment..
+def handle_new(addr):
+    send_message("/xeno/neurons/new");
+
 # Handler for first image step.
 def handle_begin(addr, image_path):
     next_image(image_path, True)
@@ -148,6 +152,7 @@ model = load_model(args.model_file)
 
 # Create OSC dispatcher.
 dispatcher = dispatcher.Dispatcher()
+dispatcher.map("/xeno/euglenas/new", handle_new)
 dispatcher.map("/xeno/euglenas/begin", handle_begin)
 dispatcher.map("/xeno/euglenas/step", handle_step)
 dispatcher.map("/xeno/euglenas/settings-updated", handle_settings_updated)

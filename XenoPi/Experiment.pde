@@ -16,6 +16,10 @@ class Experiment {
     info = new ExperimentInfo();
     startTimeMs = millis();
     info.saveInfoFile(savePath(experimentDir()+"/info.json"));
+
+    // Send message that a new experiment has started.
+    OscMessage msg = new OscMessage("/xeno/euglenas/new");
+    oscP5.send(msg, remoteLocation);
   }
   
   ExperimentInfo getInfo() {
