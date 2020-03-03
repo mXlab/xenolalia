@@ -16,6 +16,9 @@ cron_sync_snapshots="/etc/cron.hourly/xeno_sync_snapshots"
 sudo echo -e "#!/bin/bash\n/bin/bash $cmd_sync_snapshots $ftp_username $ftp_password" > $cron_sync_snapshots
 chmod u+x $cron_sync_snapshots
 
+# Reset configuration file.
+sudo cp /boot/config.txt /boot/config.txt.bckp
+sudo cp $sync_snapshots_dir/config.xeno_pi.txt /boot/config.txt
 # Allow VNC copy-paste from remote client.
 sudo apt-get install -y autocutsel
 cat <<EOF>$home_dir/.vnc/xstartup
