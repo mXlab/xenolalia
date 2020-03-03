@@ -84,7 +84,6 @@ signal.signal(signal.SIGINT, interrupt)
 
 async def loop():
 	global current_frame, device, images
-	print("current_frame = {} images = {}", current_frame, images)
 	while (running):
 		# Get next frame and display it.
 		if (images):

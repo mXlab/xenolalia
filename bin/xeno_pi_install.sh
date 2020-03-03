@@ -5,7 +5,6 @@ then
   exit 1
 fi
 
-home_dir="/home/pi"
 ftp_username="$1"
 ftp_password="$2"
 sync_snapshots_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
