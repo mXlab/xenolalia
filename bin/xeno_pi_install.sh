@@ -19,12 +19,3 @@ chmod u+x $cron_sync_snapshots
 # Reset configuration file.
 sudo cp /boot/config.txt /boot/config.txt.bckp
 sudo cp $sync_snapshots_dir/config.xeno_pi.txt /boot/config.txt
-# Allow VNC copy-paste from remote client.
-sudo apt-get install -y autocutsel
-cat <<EOF>$home_dir/.vnc/xstartup
-/bin/bash
-xrdb $home_dir/.Xresources
-autocutsel -fork
-startxfce4 &
-EOF
-sudo chown pi:pi $home_dir/.vnc/xstartup
