@@ -98,9 +98,12 @@ def generate(n_steps, starting_frame=None):
     return frame
 
 # Broadcast message.
-def send_message(addr, data = []):
-    xenopi_client.send_message(addr, data)
-    orbiter_client.send_message(addr, data)
+def send_message(addr, data=[], client=False):
+    if client:
+        client.send_message(addr, data)
+    else:
+        xenopi_client.send_message(addr, data)
+        orbiter_client.send_message(addr, data)
 
 # Processes next image based on image path and sends an OSC message back to the XenoPi program.
 # At each step, this function will save the following images:
@@ -134,7 +137,7 @@ def next_image(image_path, starting_frame_random):
 
 # Handler for new experiment..
 def handle_new(addr):
-    send_message("/xeno/neurons/new");
+    send_message("/xeno/neurons/new")
 
 # Handler for first image step.
 def handle_begin(addr, image_path):
@@ -144,6 +147,11 @@ def handle_begin(addr, image_path):
 def handle_step(addr, image_path):
     next_image(image_path, False)
 
+# Handler for XenoPi handshake.
+def handle_handshake(addr):
+    send_message("/xeno/neurons/handshake",client=xenopi_client)
+
+# Handler for settings updated.
 def handle_settings_updated(addr):
     load_settings()
 
@@ -155,6 +163,7 @@ dispatcher = dispatcher.Dispatcher()
 dispatcher.map("/xeno/euglenas/new", handle_new)
 dispatcher.map("/xeno/euglenas/begin", handle_begin)
 dispatcher.map("/xeno/euglenas/step", handle_step)
+dispatcher.map("/xeno/euglenas/handshake", handle_handshake)
 dispatcher.map("/xeno/euglenas/settings-updated", handle_settings_updated)
 
 # Launch OSC server & client.

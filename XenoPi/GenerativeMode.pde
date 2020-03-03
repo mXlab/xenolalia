@@ -39,61 +39,75 @@ class GenerativeMode extends AbstractMode {
   Experiment experiment;
   int nExperiments;
 
+  boolean isReady;
+  
   void setup() {
-    // Launch new experiment.
-    newExperiment();
-    nExperiments = 0;
+    isReady = false;
+    nExperiments = -1;
   }
 
-  ///////////////////////////////////////
   void draw() {
+    if (isReady) {
 
-    // Capture video.
-    if (cam.available()) {
-      // Update video frame.
-      cam.read();
+      // Capture video.
+      if (cam.available()) {
+        // Update video frame.
+        cam.read();
+      }
+  
+      // Snapshot request.
+      if (snapshotRequested || capturePhase != CAPTURE_DONE) {
+        //processImage();
+        captureLoop();
+      }
+  
+      // Project current iteration.
+      else {
+  
+        // In auto-mode: collect snapshots at a regular pace.
+        if (autoMode && exposureTimer.isFinished()) {
+          requestSnapshot();
+          exposureTimer.start();
+        }
+  
+        // Display background or projected image depending on flash status.
+        if (flash) { // flash!
+          background(FLASH_COLOR);
+        } else { // projected image
+          background(PROJECTION_BACKGROUND_COLOR);
+          tint(PROJECTION_COLOR); // tint
+          drawScaledImage(img);
+        }
+  
+        // Camera view in the top-left corner.
+        if (camView) {
+          noTint();
+          imageMode(CORNER);
+          image(cam.getImage(), 0, 0, CAM_VIEW_WIDTH, CAM_VIEW_HEIGHT);
+        }
+  
+        // Display help text.
+        fill(255);
+        textSize(32);
+        String status = "exp # " + nExperiments + "  ";
+        if (autoMode)
+          status += "auto mode: " + nf(exposureTimer.countdownTime()/1000.0f, 3, 1) + " s";
+        else
+          status += "manual mode";
+        text(status, 10, height-10);
+      }
     }
-
-    // Snapshot request.
-    if (snapshotRequested || capturePhase != CAPTURE_DONE) {
-      //processImage();
-      captureLoop();
-    }
-
-    // Project current iteration.
+    // Not ready.
     else {
-
-      // In auto-mode: collect snapshots at a regular pace.
-      if (autoMode && exposureTimer.isFinished()) {
-        requestSnapshot();
-        exposureTimer.start();
-      }
-
-      // Display background or projected image depending on flash status.
-      if (flash) { // flash!
-        background(FLASH_COLOR);
-      } else { // projected image
-        background(PROJECTION_BACKGROUND_COLOR);
-        tint(PROJECTION_COLOR); // tint
-        drawScaledImage(img);
-      }
-
-      // Camera view in the top-left corner.
-      if (camView) {
-        noTint();
-        imageMode(CORNER);
-        image(cam.getImage(), 0, 0, CAM_VIEW_WIDTH, CAM_VIEW_HEIGHT);
-      }
-
-      // Display help text.
+      background(0);
       fill(255);
       textSize(32);
-      String status = "exp # " + nExperiments + "  ";
-      if (autoMode)
-        status += "auto mode: " + nf(exposureTimer.countdownTime()/1000.0f, 3, 1) + " s";
-      else
-        status += "manual mode";
-      text(status, 10, height-10);
+      text("Waiting for xeno_osc.py response", 10, height-10);
+      
+      // Send handshake.
+      OscMessage msg = new OscMessage("/xeno/euglenas/handshake");
+      oscP5.send(msg, remoteLocation);
+      delay(100);
     }
   }
 
@@ -189,6 +203,16 @@ class GenerativeMode extends AbstractMode {
   void nextImage(String imagePath) {
     img = loadImage(imagePath);
     snapshotRequested = false;
+  }
+  
+  // Called when generative script has responded to handshake.
+  void ready() {
+    if (!isReady) {
+      // Launch new experiment.
+      newExperiment();
+      nExperiments = 0;
+      isReady = true;
+    }
   }
 
   // Saves snapshot to disk and sends OSC message to announce

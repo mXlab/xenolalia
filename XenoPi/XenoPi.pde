@@ -95,10 +95,16 @@ void setup() {
   remoteLocation = new NetAddress(settings.oscRemoteIp(), settings.oscSendPort());
 
   oscP5.plug(this, "nextImage", "/xeno/neurons/step");
+  oscP5.plug(this, "ready", "/xeno/neurons/handshake");
+  oscP5.plug(this, "ready", "/xeno/neurons/begin");
 }
 
 void nextImage(String imagePath) {
   mode.nextImage(imagePath);
+}
+
+void ready() {
+  mode.ready();
 }
 
 void draw() {

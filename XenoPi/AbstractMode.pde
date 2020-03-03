@@ -4,6 +4,7 @@ abstract class AbstractMode {
   abstract void setup();
   abstract void draw();
   
+  void ready() {}
   void nextImage(String imagePath) {}
   
   void keyPressed() {}
