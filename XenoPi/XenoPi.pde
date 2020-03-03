@@ -69,6 +69,13 @@ void setup() {
     println("Configs:");
     printArray(configs);
   }
+  
+  if (devices.length == 0) {
+    println("Camera not found. Verify that a camera is plugged in.");
+  }
+  else if (settings.cameraId() >= devices.length) {
+    println("Camera devices have been found but the device number ('camera_id' property) does not exist. Double-check the 'camera_id' property in settings.json.");
+  }    
 
   // this will use the first recognized camera by default
   // NOTE: If you run into trouble you can try changing the object
