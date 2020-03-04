@@ -9,13 +9,18 @@ class Experiment {
   // Start time of experiment (in ms).
   int startTimeMs;
 
+  String baseImageFilename;
+  
   Experiment() {
   }
   
-  void start() {
+  void start(PImage baseImage) {
     info = new ExperimentInfo();
     startTimeMs = millis();
     info.saveInfoFile(savePath(experimentDir()+"/info.json"));
+
+    baseImageFilename = savePath(experimentDir()+"/base_image.png");
+    baseImage.save(baseImageFilename);
 
     // Send message that a new experiment has started.
     OscMessage msg = new OscMessage("/xeno/euglenas/new");
@@ -42,7 +47,6 @@ class Experiment {
     String prefix = experimentDir()+"/"+basename;
 
     String rawImageFilename = savePath(prefix+"_raw.png");
-    
     boolean firstSnapshotExternal = (nSnapshots == 0 && settings.seedImage() != "euglenas");
     
     if (!firstSnapshotExternal)
@@ -51,6 +55,7 @@ class Experiment {
     // Send an OSC message to announce creation of new image.
     OscMessage msg = new OscMessage("/xeno/euglenas/" + (firstSnapshotExternal ? "begin" : "step"));
     msg.add(rawImageFilename);
+    msg.add(baseImageFilename);
 
     oscP5.send(msg, remoteLocation);
 

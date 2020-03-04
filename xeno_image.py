@@ -9,7 +9,7 @@ import time
 import math
 import argparse
 
-from PIL import Image, ImageOps, ImageFilter, ImageEnhance
+from PIL import Image, ImageOps, ImageFilter, ImageEnhance, ImageChops
 
 # equalizes levels to a certain average accross points
 def equalize(arr, average=0.5):
@@ -30,7 +30,7 @@ def array_to_image(arr, width, height):
 # - transformed + filtered + resized image
 # - transformed + filtered image
 # - transformed image
-def process_image(image, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0]):
+def process_image(image, base_image=False, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0]):
     w = image.size[0]
     h = image.size[1]
 
@@ -41,13 +41,23 @@ def process_image(image, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0]):
 
     # Adjust image perspective based on input quad.
     input_quad_abs = (input_quad[0] * w, input_quad[1] * h, input_quad[2] * w, input_quad[3] * h, input_quad[4] * w, input_quad[5] * h, input_quad[6] * w, input_quad[7] * h)
-    transformed = image.transform(image.size, Image.QUAD, input_quad_abs)
+
+    # Remove averaged background file from image.
+    if base_image:
+        prefiltered = ImageChops.subtract(image.convert('RGB'), base_image.convert('RGB'), scale=0.1, offset=127)
+    else:
+        prefiltered = image.convert('RGB')
+    
+    # Transform image using input quad.
+    transformed = prefiltered.transform(prefiltered.size, Image.QUAD, input_quad_abs)
 
     # Apply image filters to image. The goal is to provide a balanced and highly contrasted grayscale image
     #    image = ImageOps.autocontrast(image)
 
-    # Apply mask to alleviate border flares / artefacts.
     filtered = transformed.convert('RGBA')
+
+
+    # Apply mask to alleviate border flares / artefacts.
     image_mask = Image.open("xeno_mask.png").convert('RGBA').resize(transformed.size)
     filtered = Image.alpha_composite(filtered, image_mask)
     filtered = filtered.convert('L')
@@ -81,11 +91,14 @@ def process_image(image, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0]):
 
 # Loads image_path file, applies perspective transforms and returns it as
 # a numpy array formatted for the autoencoder.
-def load_image(image_path, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0]):
+def load_image(image_path, base_image_path=False, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0]):
     # Open image as grayscale.
     image = Image.open(image_path).convert('L')
-    return process_image(image, image_side, input_quad)
-
+    if base_image_path:
+        base_image = Image.open(base_image_path).convert('L')
+    else:
+        base_image = False
+    return process_image(image, base_image, image_side, input_quad)
 
 if __name__ == "__main__":
 
@@ -94,7 +107,8 @@ if __name__ == "__main__":
     parser.add_argument("input_image", type=str, help="Input image file")
     parser.add_argument("output_image", type=str, help="Output image file")
 
-    parser.add_argument("-C", "--configuration-file", type=str, default="XenoPi/camera_perspective.conf", help="Configuration file containing input quad")
+    parser.add_argument("-b", "--base-image", type=str, default=False, help="Base image from which to subtract image")
+    parser.add_argument("-C", "--configuration-file", type=str, default="XenoPi/settings.json", help="Configuration file containing camera input quad")
     parser.add_argument("-q", "--input-quad", type=str, default=None, help="Comma-separated list of numbers defining input quad (overrides configuration file)")
     parser.add_argument("-i", "--image-side", type=int, default=28, help="Image side value")
 
@@ -104,16 +118,25 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    # Load calibration settings from .json file.
+    def load_settings():
+        import json
+        global args, data, input_quad, n_steps
+        print("Loading settings")
+        with open(args.configuration_file, "r") as f:
+            data = json.load(f)
+            input_quad = tuple( data['camera_quad'] )
+
+    # Load input quad
     if args.raw_image:
         input_quad = (0, 0, 0, 1, 1, 1, 1, 1, 0)  # dummy
     elif (args.input_quad != None):
         input_quad = tuple([float(x) for x in args.input_quad.split(',')])
     else:
-        with open(args.configuration_file, "rb") as f:
-            input_quad = tuple([float(v) for v in f.readlines()])
+        load_settings()
 
-    img = load_image(args.input_image, input_quad=input_quad, apply_transforms=not args.raw_image)
+    starting_image, filtered_image, transformed_image = load_image(args.input_image, args.base_image, input_quad=input_quad)#, apply_transforms=(not args.raw_image))
     if args.show:
-        img.show()
+        filtered_image.show()
 
-    img.save(args.output_image)
+    filtered_image.save(args.output_image)

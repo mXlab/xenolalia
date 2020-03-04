@@ -56,6 +56,7 @@ boolean cameraRunning = true;
 
 void setup() {
   //2592x1944
+//  size(1184, 624, P2D);
   fullScreen(P2D);
 
   // Load configuration file.

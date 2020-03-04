@@ -4,7 +4,7 @@
 class GenerativeMode extends AbstractMode {
 
   // The "glyph" image currently displayed in background.
-  PImage img;
+  PImage glyph;
 
   // Status flags.
   boolean flash = false;
@@ -39,16 +39,50 @@ class GenerativeMode extends AbstractMode {
   Experiment experiment;
   int nExperiments;
 
-  boolean isReady;
+  PImage baseImage;
+
+  boolean neuronsReady;
+  boolean baseImageRecorded;
   
   void setup() {
-    isReady = false;
+    neuronsReady = false;
+    baseImageRecorded = false;
     nExperiments = -1;
+    
+    // For first flash: record base image.
+    background(FLASH_COLOR);
+    requestSnapshot();
   }
 
   void draw() {
-    if (isReady) {
+    // Record base image.
+    if (!baseImageRecorded) {
+      background(FLASH_COLOR);
+      while (cam.available())
+        cam.read();
+        
+      if (capturePhase != CAPTURE_DONE)
+        captureLoop();
+      else {
+        snapshot(true);
+        baseImageRecorded = true;
+      }
+    }
 
+    // Not ready.
+    else if (!neuronsReady) {
+      background(0);
+      fill(255);
+      textSize(32);
+      text("Waiting for xeno_osc.py response", 10, height-10);
+      
+      // Send handshake.
+      OscMessage msg = new OscMessage("/xeno/euglenas/handshake");
+      oscP5.send(msg, remoteLocation);
+      delay(100);
+    }
+
+    else {
       // Capture video.
       if (cam.available()) {
         // Update video frame.
@@ -76,7 +110,7 @@ class GenerativeMode extends AbstractMode {
         } else { // projected image
           background(PROJECTION_BACKGROUND_COLOR);
           tint(PROJECTION_COLOR); // tint
-          drawScaledImage(img);
+          drawScaledImage(glyph);
         }
   
         // Camera view in the top-left corner.
@@ -97,23 +131,11 @@ class GenerativeMode extends AbstractMode {
         text(status, 10, height-10);
       }
     }
-    // Not ready.
-    else {
-      background(0);
-      fill(255);
-      textSize(32);
-      text("Waiting for xeno_osc.py response", 10, height-10);
-      
-      // Send handshake.
-      OscMessage msg = new OscMessage("/xeno/euglenas/handshake");
-      oscP5.send(msg, remoteLocation);
-      delay(100);
-    }
   }
 
   void startCaptureLoop() {
     capturePhase = CAPTURE_FLASH;
-    captureTimer = new Timer(1000);
+    captureTimer = new Timer(3000);
     captureTimer.start();
   }
 
@@ -121,11 +143,11 @@ class GenerativeMode extends AbstractMode {
   // Capture image loop (FSM).
   void captureLoop() {
     if (capturePhase == CAPTURE_FLASH)
-    {      
-      background(lerpColor(PROJECTION_BACKGROUND_COLOR, FLASH_COLOR, captureTimer.progress()));
+    {
+      background(FLASH_COLOR);
+//      background(lerpColor(PROJECTION_BACKGROUND_COLOR, FLASH_COLOR, captureTimer.progress()));
       delay(10);
       if (cam.available()) {
-        println("Cam is available.");
         cam.read();
         capturePhase = CAPTURE_FLASH_WAIT;
         //captureTimer = new Timer(1000);
@@ -138,17 +160,21 @@ class GenerativeMode extends AbstractMode {
         capturePhase = CAPTURE_SNAPSHOT;
     }
     else if (capturePhase == CAPTURE_SNAPSHOT) {
-      snapshot();
+      background(FLASH_COLOR);
+      snapshot(!baseImageRecorded);
       capturePhase = CAPTURE_SNAPSHOT_WAIT; // will wait for response
 //      captureTimer = new Timer(1000);
       captureTimer.start();
     }
     else { // CAPTURE_SNAPSHOT_WAIT
-      if (!captureTimer.isFinished())      
-        background(lerpColor(FLASH_COLOR, PROJECTION_BACKGROUND_COLOR, captureTimer.progress()));
+      if (!captureTimer.isFinished())
+        background(FLASH_COLOR);
+//        background(lerpColor(FLASH_COLOR, PROJECTION_BACKGROUND_COLOR, captureTimer.progress()));
       else {
         background(PROJECTION_BACKGROUND_COLOR);
         capturePhase = CAPTURE_DONE;
+        // Stop request.
+        snapshotRequested = false;
       }
     }
   }
@@ -181,7 +207,7 @@ class GenerativeMode extends AbstractMode {
   void newExperiment() {
     // Reset experiment.
     experiment = new Experiment();
-    experiment.start();
+    experiment.start(baseImage);
     
     // Take a first snapshot.
     exposureTimer = new Timer(settings.exposureTimeMs());
@@ -201,24 +227,34 @@ class GenerativeMode extends AbstractMode {
 
   // Called when receiving OSC message.
   void nextImage(String imagePath) {
-    img = loadImage(imagePath);
+    glyph = loadImage(imagePath);
     snapshotRequested = false;
   }
   
   // Called when generative script has responded to handshake.
   void ready() {
-    if (!isReady) {
+    if (!neuronsReady) {
       // Launch new experiment.
       newExperiment();
       nExperiments = 0;
-      isReady = true;
+      neuronsReady = true;
     }
   }
 
   // Saves snapshot to disk and sends OSC message to announce
   // creation of new image.
-  void snapshot() {
-    // Record snapshot.
-    experiment.recordSnapshot(cam.getImage());
+  void snapshot(boolean baseImageSnapshot) {
+    background(FLASH_COLOR);
+    while (cam.available())
+      cam.read();
+    
+    if (baseImageSnapshot) {
+      // Record snapshot.
+      baseImage = cam.getImage();
+      baseImage.save(savePath("test_base_image.png"));
+    }
+    else {
+      experiment.recordSnapshot(cam.getImage());
+    }
   }
 }
