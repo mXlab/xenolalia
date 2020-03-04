@@ -7,7 +7,7 @@
 
 Note: I was unable to get the Processing video libraries to work appropriately on a Raspberry Pi 4 (2G) w/ Rasbian Buster. I was also never able to boot the Pi 4 on Raspbian Stretch so I had to downgrade to a Pi 3.
 
-## Installs
+## Installation
 
 IMPORTANT: Do *not* install MiniConda as the Python3 version it installs (3.4) is incompatible with Keras. Use the default Python 3 version instead.
 
@@ -39,6 +39,14 @@ pip3 install opencv-python scikit-image
 curl https://processing.org/download/install-arm.sh | sudo sh
 ```
 
+### Xenolalia installation script
+
+From the ```~/xenolalia``` directory the following script once with the login information for the FTP server:
+
+```
+sudo bash bin/xeno_pi_install.sh
+```
+
 ### Processing libraries
 
 Add the following libraries:
@@ -59,6 +67,8 @@ To restore the system in case of a mistake you can run the ```system_restore.sh`
 ## Notes
 
  * Dual monitor: I could never get my second monitor to work on the Pi4, it kept displaying the rainbow colorwheel splash screen. Did not find a solution.
+
+
 
 # Running Xenolalia
 
@@ -147,6 +157,9 @@ You can exit ```XenoPi``` with the ESC key. If you started the programs using ``
 | ←↑→↓ | Moves selected control point by one pixel |
 | TAB | Select next control point |
 | 1234 | Select specific control point |
+| m | Toggle the mouse crosshair |
+| p | Toggle the control point crosshair |
+| +- | Adjust the size of the control point lines |
 | g | Start generative mode |
 
 ### Generative mode
@@ -158,6 +171,19 @@ You can exit ```XenoPi``` with the ESC key. If you started the programs using ``
 | n | Start new experiment |
 
 (\*) In auto mode (default) snapshots will be taken at a regular pace as specified by the "exposure_time" setting. In manual mode (ie. non-auto mode) the user has the responsibility to manually take snapshots using the SPACEBAR.
+
+
+# Xenodata
+
+Xenodata provides an online interface to the generated contents.
+
+The installation script will setup a hourly cron that will automatically upload all new generated contents.
+
+To sync the contents manually:
+```
+sudo /etc/cron.hourly/xeno_sync_snapshots
+```
+
 
 # Troubleshooting
 
