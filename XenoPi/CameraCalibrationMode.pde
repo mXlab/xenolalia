@@ -12,6 +12,11 @@ class CameraCalibrationMode extends AbstractMode {
   // Input rectangle calibration.
   boolean inputRectMode;
   PVector[] currentPoints; // current set of points
+ 
+  // GUI Control parameters.
+  boolean mouseCrosshair;
+  boolean pointCrosshair;
+  float controlSize;
   
   void setup() {
     // Load points if they exist.
@@ -25,11 +30,16 @@ class CameraCalibrationMode extends AbstractMode {
     
     // Create snapshot timer.
     snapshotTimer = new Timer(SNAPSHOT_TIME);
+    
+    mouseCrosshair = true;
+    pointCrosshair = true;
+    controlSize = 5;
   }
   
   void draw() {
     // Reset.
     background(0);
+    cursor();
     
     // Input rectangle mode.
     if (inputRectMode) {
@@ -47,14 +57,16 @@ class CameraCalibrationMode extends AbstractMode {
       float x2 = bottomRight.x;
       float y2 = bottomRight.y;
 
-      // Draw points.
-      drawControlPoint(x1, y1, 0);
-      drawControlPoint(x2, y2, 1);
       // Draw bounding box.
+      strokeWeight(controlSize);
       stroke( LINE_COLOR );
       rectMode(CORNERS);
       fill(0, 0);
       rect(x1, y1, x2, y2);
+
+      // Draw points.
+      drawControlPoint(x1, y1, 0);
+      drawControlPoint(x2, y2, 1);
     }
     
     // Quad points mode.
@@ -91,25 +103,62 @@ class CameraCalibrationMode extends AbstractMode {
           PVector nextPoint = settings.getCamQuadPoint(next);
           float nx = nextPoint.x;
           float ny = nextPoint.y;
-          // Draw point.
-          drawControlPoint( x, y, i );
           // Draw line.
+          strokeWeight(controlSize);
           stroke( LINE_COLOR );
           line(x, y, nx, ny);
+          // Draw point.
+          drawControlPoint( x, y, i );
         }
       }
     }
+    
+    // Draw crosshair if needed.
+    if (mouseCrosshair)
+      drawCrosshair(mouseX, mouseY, color(255));
   }
   
   // Draws the i-th control point.
   void drawControlPoint(float x, float y, int i) {
     fill(0, 0, 0, 0);
-    stroke( i == currentPoint ? color(200, 0, 0) : color(200, 200, 200) );
+    strokeWeight(controlSize);
+    boolean selected = (i == currentPoint);
+    
+    // Draw point.
+    stroke( selected ? color(255, 0, 0) : color(200, 200, 200) );
     ellipse(x, y, 10, 10);
+    
+    // Draw crosshair.
+    if (selected && pointCrosshair)
+      drawCrosshair(x, y, color(0, 255, 255));
+    
+    // Draw text.
     fill(255);
+    textSize(12 + controlSize);
     text(i+1, x, y);
   }
   
+  void drawCrosshair(float x, float y, color c) {
+    noCursor();
+    strokeWeight(controlSize);
+    stroke(c);
+    line(x, 0, x, height);
+    line(0, y, width, y);
+  }
+  
+  void adjustControlSize(float adjust) {
+    controlSize += adjust;
+    controlSize = constrain(controlSize, 1, 50);
+  }
+  
+  void toggleMouseCrosshair() {
+    mouseCrosshair = !mouseCrosshair;
+  }
+
+  void togglePointCrosshair() {
+    pointCrosshair = !pointCrosshair;
+  }
+
   void keyPressed() {
     if (key == CODED) {
       switch (keyCode) {
@@ -133,6 +182,11 @@ class CameraCalibrationMode extends AbstractMode {
         case '2':   selectPoint(1); break;
         case '3':   selectPoint(2); break;
         case '4':   selectPoint(3); break;
+        
+        case 'm':   toggleMouseCrosshair(); break;
+        case 'p':   togglePointCrosshair(); break;
+        case '+':   adjustControlSize(+1); break;
+        case '-':   adjustControlSize(-1); break;
       }
     }
   }
