@@ -9,7 +9,7 @@ prevent_sleep_pid=$!
 echo "Launching prevent_sleep (PID=$prevent_sleep_pid)"
 
 # Launch xeno_osc.
-/usr/bin/python3 $xeno_dir/xeno_osc.py -c $xeno_dir/results/model_sparse_conv_enc20-40_dec40-20_k5_b128.hdf5 &
+/usr/bin/python3 $xeno_dir/xeno_osc.py -c $xeno_dir/results/model_sparse_conv_enc20-40_dec40-20_k5_b128.hdf5 -n 3 &
 xeno_osc_pid=$!
 echo "Launching xeno_osc (PID=$xeno_osc_pid)"
 
