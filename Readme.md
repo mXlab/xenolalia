@@ -120,7 +120,7 @@ Alternatively you can start the programs separately.
 
 ### Step 2 : Calibration mode
 
-Upon startup ```XenoPi``` will bein in **calibration mode**. Here is how to proceed:
+Upon startup ```XenoPi``` will being in **calibration mode**. Here is how to proceed:
  1. Adjust the reference image.
      1. Click on the first corner to place the first control point.
      2. Press TAB to select the next control point; then click on the 2nd corner to place it.
