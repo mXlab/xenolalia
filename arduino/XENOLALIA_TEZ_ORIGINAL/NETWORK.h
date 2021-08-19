@@ -1,9 +1,14 @@
-//const char* ssid     = "your_wifi_ssid";
-//const char* pass = "your_wifi_password";
 
-// custom router
+////////////////////////
+///     NETWORKS     ///
+////////////////////////
+/*
+  This File contains all the code handling the network connection
+*/
+
+//vv SET THE NETWORK INFORMATIONS HERE vv
 const char* ssid = "Xenolalia";
-const char* pass = "************";
+const char* pass = "EuglenaNeuron";
 
 WiFiServer server(80);
 
@@ -26,7 +31,7 @@ IPAddress thisip;
 int WID = 1; // ID# OF THIS BOARD
 
 ////////////////////////////////
-void APConnect(){
+void APConnect(){ //NOT USED IN THE CODE
 
   Serial.println("Configuring access point...");
 
@@ -46,8 +51,11 @@ void APConnect(){
 }
 
 ////////////////////////////////
-void WiFiConnect(){
-
+void WiFiConnect()
+{
+  /*
+    This function takes the necessary steps to connect the micro controller to the wifi network
+  */
       // CONNECT TO WIFI NETWORK
   WiFi.begin(ssid, pass); 
   while (WiFi.status() != WL_CONNECTED) {
