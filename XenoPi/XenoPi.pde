@@ -105,10 +105,15 @@ void setup() {
   oscP5.plug(this, "nextImage", "/xeno/neurons/step");
   oscP5.plug(this, "ready", "/xeno/neurons/handshake");
   oscP5.plug(this, "ready", "/xeno/neurons/begin");
+  oscP5.plug(this, "testCamera", "/xeno/neurons/test-camera");
 }
 
 void nextImage(String imagePath) {
   mode.nextImage(imagePath);
+}
+
+void testCamera(String imagePath) {
+  mode.testImage(imagePath);
 }
 
 void ready() {

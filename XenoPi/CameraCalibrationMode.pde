@@ -10,7 +10,12 @@ class CameraCalibrationMode extends AbstractMode {
   final int SNAPSHOT_TIME = 250;
   
   // Input rectangle calibration.
-  boolean inputRectMode;
+  int mode;
+  final int MODE_RECT  = 0;
+  final int MODE_QUAD  = 1;
+  final int MODE_CHECK = 2;
+  final int N_MODES    = 3;
+  
   PVector[] currentPoints; // current set of points
  
   // GUI Control parameters.
@@ -18,6 +23,8 @@ class CameraCalibrationMode extends AbstractMode {
   boolean pointCrosshair;
   float controlSize;
   
+  PImage transformedTestImage = null;
+
   void setup() {
     // Load points if they exist.
     settings.load();
@@ -26,7 +33,7 @@ class CameraCalibrationMode extends AbstractMode {
     referenceImg = loadImage(REFERENCE_IMAGE);
 
     // Begin in input quad mode.
-    inputRectMode = true;
+    mode = MODE_RECT;
     
     // Create snapshot timer.
     snapshotTimer = new Timer(SNAPSHOT_TIME);
@@ -41,8 +48,8 @@ class CameraCalibrationMode extends AbstractMode {
     background(0);
     cursor();
     
-    // Input rectangle mode.
-    if (inputRectMode) {
+    // Input rectangle mode. ///////////////////////////////////////////////////
+    if (mode == MODE_RECT) {
       // Gather control points.
       currentPoints = settings.getImageRectPoints();
       
@@ -69,8 +76,8 @@ class CameraCalibrationMode extends AbstractMode {
       drawControlPoint(x2, y2, 1);
     }
     
-    // Quad points mode.
-    else {
+    // Quad points mode. ///////////////////////////////////////////////////////
+    else if (mode == MODE_QUAD) {
       // Gather control points.
       currentPoints = settings.getCamQuadPoints();
     
@@ -85,7 +92,7 @@ class CameraCalibrationMode extends AbstractMode {
         }
       }
       
-      // Quad adjustment mode.
+      // Quad adjustment.
       else {
         // Draw image fullscreen image from camera.
         imageMode(CORNER);
@@ -113,9 +120,20 @@ class CameraCalibrationMode extends AbstractMode {
       }
     }
     
+    // Check mode. ////////////////////////////////////////////////////////////
+    else {
+      if (transformedTestImage != null) {
+        drawScaledImage(transformedTestImage);
+      }
+    }
+    
     // Draw crosshair if needed.
-    if (mouseCrosshair)
+    if (mode != MODE_CHECK && mouseCrosshair)
       drawCrosshair(mouseX, mouseY, color(255));
+  }
+  
+  void testImage(String imagePath) {
+    transformedTestImage = loadImage(imagePath);
   }
   
   // Draws the i-th control point.
@@ -193,10 +211,23 @@ class CameraCalibrationMode extends AbstractMode {
   
   // Toggles mode.
   void toggleMode() {
-    inputRectMode = !inputRectMode;
-    if (!inputRectMode) {
+    // Switch to next mode.
+    mode = (mode + 1) % N_MODES;
+    
+    // Begin procedure.
+    if (mode == MODE_QUAD) {
        // Take one snapshot.
        referenceImageSnapshot();
+    }
+    else if (mode == MODE_CHECK) {
+      saveSettings();
+      // Save image.
+      String testImagePath = getTestImagePath();
+      cam.getImage().save(testImagePath);
+      // Ask script for test.
+      OscMessage msg = new OscMessage("/xeno/euglenas/test-camera");
+      msg.add(testImagePath);
+      oscP5.send(msg, remoteLocation);
     }
   }
   
@@ -236,6 +267,10 @@ class CameraCalibrationMode extends AbstractMode {
   void drawReferenceImage() {
     // Draw reference image.
     drawScaledImage(referenceImg);
+  }
+
+  String getTestImagePath() {
+    return savePath("test_camera.png");
   }
   
 }

@@ -6,6 +6,7 @@ abstract class AbstractMode {
   
   void ready() {}
   void nextImage(String imagePath) {}
+  void testImage(String imagePath) {}
   
   void keyPressed() {}
   void mousePressed() {}

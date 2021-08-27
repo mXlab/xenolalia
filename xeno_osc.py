@@ -160,6 +160,18 @@ def handle_handshake(addr):
 def handle_settings_updated(addr):
     load_settings()
 
+# Handler for camera test.
+def handle_test_camera(addr, image_path):
+    global input_quad, image_side
+    dirname = os.path.dirname(image_path)
+    basename = os.path.splitext(os.path.basename(image_path))[0]
+    starting_image, filtered_image, transformed_image = xeno_image.load_image(image_path, False, image_side, input_quad)
+    transformed_image_path = "{}/{}_0trn.png".format(dirname, basename)
+    transformed_image.save(transformed_image_path.format(dirname, basename))
+    filtered_image.save("{}/{}_1fil.png".format(dirname, basename))
+    starting_image.save("{}/{}_2res.png".format(dirname, basename))
+    send_message("/xeno/neurons/test-camera", [transformed_image_path], client=xenopi_client)
+
 # Load model.
 model = load_model(args.model_file)
 
@@ -170,6 +182,7 @@ dispatcher.map("/xeno/euglenas/begin", handle_begin)
 dispatcher.map("/xeno/euglenas/step", handle_step)
 dispatcher.map("/xeno/euglenas/handshake", handle_handshake)
 dispatcher.map("/xeno/euglenas/settings-updated", handle_settings_updated)
+dispatcher.map("/xeno/euglenas/test-camera", handle_test_camera)
 
 # Launch OSC server & client.
 server = osc_server.BlockingOSCUDPServer(("0.0.0.0", args.receive_port), dispatcher)
