@@ -25,6 +25,7 @@ class Settings {
   float exposureTime;
   String seedImage;
   int nFeedbackSteps;
+  boolean useBaseImage;
 
   Settings() {
     load();
@@ -55,6 +56,7 @@ int oscSendPort() { return oscSendPort; }
 
   String seedImage()  { return seedImage; }
   int nFeedbackSteps() { return nFeedbackSteps; }
+  boolean useBaseImage() { return useBaseImage; }
 
   void save() {
     try {
@@ -83,6 +85,8 @@ int oscSendPort() { return oscSendPort; }
       
       settings.setString("seed_image", seedImage);
       settings.setInt("n_feedback_steps", nFeedbackSteps);
+      settings.setBoolean("use_base_image", useBaseImage);
+
       settings.setFloat("exposure_time", exposureTime);
       
       // Save file.
@@ -115,6 +119,7 @@ int oscSendPort() { return oscSendPort; }
 
       seedImage = settings.getString("seed_image");
       nFeedbackSteps = settings.getInt("n_feedback_steps");
+      useBaseImage = settings.getBoolean("use_base_image");
 
       exposureTime = settings.getFloat("exposure_time");
     } catch (Exception e) {
