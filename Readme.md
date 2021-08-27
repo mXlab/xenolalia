@@ -66,7 +66,7 @@ To restore the system in case of a mistake you can run the ```system_restore.sh`
 
 ## Notes
 
-Dual monitor: I could never get my second monitor to work on the Pi4, it kept displaying the rainbow colorwheel splash screen. Did not find a solution.
+ * Dual monitor: I could never get my second monitor to work on the Pi4, it kept displaying the rainbow colorwheel splash screen. Did not find a solution.
 
 
 
@@ -152,8 +152,8 @@ You can exit ```XenoPi``` with the ESC key. If you started the programs using ``
 
 ### Calibration mode
 
-|Key|Description|
-|---|---|
+| Key | Description | 
+|:---:|-------------|
 | SPACEBAR | Toggle mode from reference image to input quad |
 | ENTER | Save calibration settings |
 | ←↑→↓ | Moves selected control point by one pixel |
@@ -166,8 +166,8 @@ You can exit ```XenoPi``` with the ESC key. If you started the programs using ``
 
 ### Generative mode
 
-|Key|Description|
-|---|---|
+| Key | Description | 
+|:---:|-------------|
 | SPACEBAR | Manually take a snapshot |
 | f | Toggle flash screen (useful to look at what is happening on the petri dish) |
 | v | Toggle camera view (live camera feed appears in the corner) |
@@ -187,7 +187,7 @@ To sync the contents manually:
 ```
 sudo /etc/cron.hourly/xeno_sync_snapshots
 ```
-
+The web-app can be access here: http://xenodata.sofianaudry.com/
 
 # Troubleshooting
 
