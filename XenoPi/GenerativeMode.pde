@@ -55,6 +55,9 @@ class GenerativeMode extends AbstractMode {
   }
 
   void draw() {
+    // Remove annoying cursor.
+    noCursor();
+    
     // Record base image.
     if (!baseImageRecorded) {
       background(FLASH_COLOR);

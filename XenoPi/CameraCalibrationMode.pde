@@ -124,6 +124,10 @@ class CameraCalibrationMode extends AbstractMode {
     
     // Check mode. ////////////////////////////////////////////////////////////
     else {
+      // Remove cursor.
+      noCursor();
+      
+      // Print snapshot when it is available.
       if (transformedTestImage != null) {
         drawScaledImage(transformedTestImage);
       }
