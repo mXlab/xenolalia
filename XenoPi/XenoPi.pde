@@ -54,6 +54,9 @@ final color LINE_COLOR = #00ff00;
 int currentPoint = 0;
 boolean cameraRunning = true;
 
+// Global variable that is true iff the SHIFT key is pressed.
+boolean shiftPressed = false;
+
 void setup() {
   //2592x1944
 //  size(1184, 624, P2D);
@@ -131,8 +134,15 @@ void keyPressed() {
   else if (key == 'g')
     mode = new GenerativeMode();
   //
+  else if (key == CODED && keyCode == SHIFT)
+    shiftPressed = true;
   else
     mode.keyPressed();
+}
+
+void keyReleased()  {
+  if (key == CODED && keyCode == SHIFT)
+    shiftPressed = false;
 }
 
 void mousePressed() {

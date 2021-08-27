@@ -16,6 +16,8 @@ class CameraCalibrationMode extends AbstractMode {
   final int MODE_CHECK = 2;
   final int N_MODES    = 3;
   
+  final int FAST_MOVE_PIXELS = 10;
+  
   PVector[] currentPoints; // current set of points
  
   // GUI Control parameters.
@@ -24,7 +26,7 @@ class CameraCalibrationMode extends AbstractMode {
   float controlSize;
   
   PImage transformedTestImage = null;
-
+  
   void setup() {
     // Load points if they exist.
     settings.load();
@@ -47,7 +49,7 @@ class CameraCalibrationMode extends AbstractMode {
     // Reset.
     background(0);
     cursor();
-    
+        
     // Input rectangle mode. ///////////////////////////////////////////////////
     if (mode == MODE_RECT) {
       // Gather control points.
@@ -181,10 +183,10 @@ class CameraCalibrationMode extends AbstractMode {
     if (key == CODED) {
       switch (keyCode) {
         // Move points by small steps.
-        case UP:     movePoint(currentPoint, 0, -1); break;
-        case DOWN:   movePoint(currentPoint, 0, +1); break;
-        case LEFT:   movePoint(currentPoint, -1, 0); break;
-        case RIGHT:  movePoint(currentPoint, +1, 0); break;
+        case UP:     movePoint(currentPoint, 0, -getMoveSteps()); break;
+        case DOWN:   movePoint(currentPoint, 0, +getMoveSteps()); break;
+        case LEFT:   movePoint(currentPoint, -getMoveSteps(), 0); break;
+        case RIGHT:  movePoint(currentPoint, +getMoveSteps(), 0); break;
       }
     }
     else {
@@ -271,6 +273,10 @@ class CameraCalibrationMode extends AbstractMode {
 
   String getTestImagePath() {
     return savePath("test_camera.png");
+  }
+  
+  int getMoveSteps() {
+    return (shiftPressed ? FAST_MOVE_PIXELS : 1);
   }
   
 }
