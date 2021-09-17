@@ -11,6 +11,12 @@ import argparse
 
 from PIL import Image, ImageOps, ImageFilter, ImageEnhance, ImageChops
 
+import cv2
+from skimage.morphology import thin
+from skimage import img_as_bool, img_as_ubyte
+
+from collections import namedtuple
+
 # equalizes levels to a certain average accross points
 def equalize(arr, average=0.5):
     return arr * (average * arr.size) / arr.sum()
@@ -26,76 +32,101 @@ def image_to_array(img, input_shape):
 def array_to_image(arr, width, height):
     return Image.fromarray(arr.reshape((width, height)) * 255.0).convert('L')
 
-# Processes raw grayscale image. Returns a tuple containing:
-# - transformed + filtered + resized image
-# - transformed + filtered image
-# - transformed image
-def process_image(image, base_image=False, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0]):
-    w = image.size[0]
-    h = image.size[1]
+def create_mask(image):
+    return Image.open("xeno_mask.png").convert('RGBA').resize(image.size)
 
-    median_filter_size = round_up_to_odd(min(w, h) * 0.015) # this is approximated on a size of 5 for a 320x320 image
-#    median_filter_size = round_up_to_odd(min(w, h) * 0.1) # this is approximated on a size of 5 for a 320x320 image
-    contrast_factor = 2
-#    brightness_factor = 0.1
+# Returns image resulting from subtraction of image from base_image.
+def remove_base(image, base_image):
+    return ImageChops.subtract(image.convert('RGB'), base_image.convert('RGB'), scale=0.1, offset=127)
 
-    # Adjust image perspective based on input quad.
+# Returns square image picked from area in image defined by input_quad.
+def transform(image, input_quad):
+    w, h = image.size
     input_quad_abs = (input_quad[0] * w, input_quad[1] * h, input_quad[2] * w, input_quad[3] * h, input_quad[4] * w, input_quad[5] * h, input_quad[6] * w, input_quad[7] * h)
+    square_side = max(w, h)
+    return image.transform((square_side, square_side), Image.QUAD, input_quad_abs)
 
-    # Remove averaged background file from image.
-    if base_image:
-        prefiltered = ImageChops.subtract(image.convert('RGB'), base_image.convert('RGB'), scale=0.1, offset=127)
-    else:
-        prefiltered = image.convert('RGB')
-    
-    # Transform image using input quad.
-    transformed = prefiltered.transform(prefiltered.size, Image.QUAD, input_quad_abs)
-
-    # Apply image filters to image. The goal is to provide a balanced and highly contrasted grayscale image
-    #    image = ImageOps.autocontrast(image)
-
-    filtered = transformed.convert('RGBA')
-
-
+def add_mask(image):
     # Apply mask to alleviate border flares / artefacts.
-    image_mask = Image.open("xeno_mask.png").convert('RGBA').resize(transformed.size)
-    filtered = Image.alpha_composite(filtered, image_mask)
-    filtered = filtered.convert('L')
+    return Image.alpha_composite(image.convert('RGBA'), create_mask(image).convert('RGBA'))
+
+# Apply different kinds of filterings to image in order to enhance its shape.
+def enhance(image):
+    w, h = image.size
+    median_filter_size = round_up_to_odd(min(w, h) * 0.009375) # this is approximated on a size of 5 for a 320x320 image
+
+    # Convert to grayscale.
+    filtered = image.convert('L')
+    image_mask = ImageOps.invert(create_mask(image).convert('L'))
 
     # Image filters to enhance contrasts.
     filtered = ImageOps.invert(filtered)
     filtered = filtered.filter(ImageFilter.MedianFilter(median_filter_size))
-    filtered = ImageOps.equalize(filtered)
-#    filtered = ImageEnhance.Brightness(filtered).enhance(brightness_factor)
-    filtered = ImageEnhance.Contrast(filtered).enhance(contrast_factor)
+    filtered = ImageOps.equalize(filtered, image_mask)
+    #    filtered = ImageEnhance.Brightness(filtered).enhance(brightness_factor)
+    # filtered = ImageEnhance.Contrast(filtered).enhance(2)
+    return filtered
 
-    ##################################################################
-    import cv2
-    from skimage.morphology import skeletonize, thin
-    from skimage import img_as_bool, img_as_float, img_as_ubyte
-    # Erode/thin using opencv (NOTE: This part is still experimental).
-    img = np.array(filtered)
-    ret, img = cv2.threshold(img, 191, 255, cv2.THRESH_BINARY)
-    # kernel = np.ones((5, 5), np.uint8)
-    # opencv_image = cv2.erode(opencv_image, kernel, iterations=5)
+# Simplifies image by removing noise through thinning.
+def simplify(image):
+    # Convert to numpy array in order to apply OpenCV operations.
+    img = np.array(image)
+
+    # Apply adaptive thresholding of image to turn it to black & white.
+    ___, img = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+    # Thin image: this will turn small "speckles" into single-pixel lines.
     img = img_as_bool(img)
     img = thin(img, max_iter=5)
     img = img_as_ubyte(img)
-    filtered = Image.fromarray(img)
-    ##################################################################
 
-    resized = filtered.resize((image_side, image_side))
+    # Erode image: further reduce speckles to obtain more pure image.
+    kernel = np.ones((3, 3), np.uint8)
+    img = cv2.erode(img, kernel, iterations=5)
 
-    return resized, filtered, transformed
+    # Reconvert from numpy array back to PIL image.
+    img = Image.fromarray(img)
 
+    return img
+
+def resize(image, image_side):
+    return image.resize((image_side, image_side), resample=Image.LANCZOS)
+
+# Processes raw image.
+def process_image(image, base_image=False, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0]):
+    # Transform image using input quad.
+    raw_transformed = transform(image.convert('RGB'), input_quad)
+
+    # Remove averaged background file from image.
+    if base_image:
+        prefiltered = remove_base(image, base_image)
+    else:
+        prefiltered = image.convert('RGB')
+
+    # Transform image using input quad.
+    transformed = transform(prefiltered, input_quad).convert('L')
+
+    # Apply mask to alleviate border flares / artefacts.
+    masked = add_mask(transformed)
+
+    # Image filters to enhance contrasts.
+    enhanced = enhance(masked)
+
+    # Apply morphology enhancement.
+    simplified = simplify(enhanced)
+
+    # Resize to smaller image.
+    resized = resize(simplified, image_side)
+
+    return resized, simplified, enhanced, masked, transformed, raw_transformed
 
 # Loads image_path file, applies perspective transforms and returns it as
 # a numpy array formatted for the autoencoder.
 def load_image(image_path, base_image_path=False, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0]):
     # Open image as grayscale.
-    image = Image.open(image_path).convert('L')
+    image = Image.open(image_path)
     if base_image_path:
-        base_image = Image.open(base_image_path).convert('L')
+        base_image = Image.open(base_image_path)
     else:
         base_image = False
     return process_image(image, base_image, image_side, input_quad)
@@ -135,8 +166,17 @@ if __name__ == "__main__":
     else:
         load_settings()
 
-    starting_image, filtered_image, transformed_image = load_image(args.input_image, args.base_image, input_quad=input_quad)#, apply_transforms=(not args.raw_image))
+    resized, simplified, enhanced, masked, transformed, raw_transformed = load_image(args.input_image, args.base_image, input_quad=input_quad)#, apply_transforms=(not args.raw_image))
     if args.show:
-        filtered_image.show()
+        single_image_side = transformed.size[0]
+        print(single_image_side)
+        composition = Image.new('RGBA', (3*single_image_side, 2*single_image_side))
+        composition.paste(raw_transformed, (0, 0))
+        composition.paste(transformed, (  single_image_side, 0))
+        composition.paste(masked,      (2*single_image_side, 0))
+        composition.paste(enhanced,    (0,                   single_image_side))
+        composition.paste(simplified,  (  single_image_side, single_image_side))
+        composition.paste(resized.resize(transformed.size), (2*single_image_side, single_image_side))
+        composition.show()
 
-    filtered_image.save(args.output_image)
+    resized.save(args.output_image)
