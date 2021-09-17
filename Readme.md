@@ -19,15 +19,15 @@ sudo apt update
 sudo apt upgrade
 
 # Install debian packages.
-sudo apt install -y git git-gui
-sudo apt install -y python3-dev python3-setuptools python3-h5py
-sudo apt install -y libblas-dev liblapack-dev libatlas-base-dev gfortran
-sudo apt install -y xdotool
-sudo apt install -y python-virtualenv
-sudo apt install -y software-properties-common dirmngr apt-transport-https lsb-release ca-certificates
-sudo apt install -y liblo-tools liblo7
-sudo apt install -y libjasper1 libqtgui4 libqt4-test # OpenCV
-sudo apt install -y lftp
+sudo apt install -y git git-gui \
+                      python3-dev python3-setuptools python3-h5py \
+                      libblas-dev liblapack-dev libatlas-base-dev gfortran \
+                      xdotool \
+                      python-virtualenv \
+                      software-properties-common dirmngr apt-transport-https lsb-release ca-certificates \
+                      liblo-tools liblo7 \
+                      libjasper1 libqtgui4 libqt4-test \
+                      lftp
 
 # Install python libraries.
 # pip3 install pip3 --upgrade # DO NOT DO THIS
