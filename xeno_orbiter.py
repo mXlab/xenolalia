@@ -15,7 +15,8 @@ import asyncio
 
 from luma.core.interface.serial import i2c, spi
 from luma.core.render import canvas
-from luma.oled.device import ssd1327
+#from luma.oled.device import ssd1327
+from luma.oled.device import ssd1351
 
 from PIL import Image
 
@@ -33,7 +34,8 @@ args = parser.parse_args()
 
 # Initialize OLED control.
 serial = spi(device=0, port=0)
-device = ssd1327(serial)
+#device = ssd1327(serial)
+device = ssd1351(serial)
 
 # Initialization.
 frame_interval = 1.0/args.fps
