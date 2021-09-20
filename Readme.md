@@ -19,24 +19,32 @@ sudo apt update
 sudo apt upgrade
 
 # Install debian packages.
-sudo apt install -y git git-gui
-sudo apt install -y python3-dev python3-setuptools python3-h5py
-sudo apt install -y libblas-dev liblapack-dev libatlas-base-dev gfortran
-sudo apt install -y xdotool
-sudo apt install -y python-virtualenv
-sudo apt install -y software-properties-common dirmngr apt-transport-https lsb-release ca-certificates
-sudo apt install -y liblo-tools liblo7
-sudo apt install -y libjasper1 libqtgui4 libqt4-test # OpenCV
-sudo apt install -y lftp
+sudo apt install -y git git-gui \
+                      python3-dev python3-setuptools python3-h5py \
+                      libblas-dev liblapack-dev libatlas-base-dev gfortran \
+                      xdotool \
+                      python-virtualenv \
+                      software-properties-common dirmngr apt-transport-https lsb-release ca-certificates \
+                      liblo-tools liblo7 \
+                      libjasper1 libqtgui4 libqt4-test \
+                      lftp
 
 # Install python libraries.
-# pip3 install pip3 --upgrade # DO NOT DO THIS
-pip3 install keras tensorflow scipy numpy
-pip3 install python-osc
-pip3 install opencv-python scikit-image
+pip3 install numpy # This is important otherwise it will trigger a bug on next line
+pip3 install -r requirements.txt
+pip3 install -U six wheel mock
+wget https://github.com/lhelontra/tensorflow-on-arm/releases/download/v2.0.0/tensorflow-2.0.0-cp37-none-linux_armv7l.whl
+sudo pip3 uninstall tensorflow
+pip3 install tensorflow-2.0.0-cp37-none-linux_armv7l.whl
+# pip3 install keras tensorflow scipy numpy python-osc opencv-python scikit-image
+```
 
-# Install Processing
-curl https://processing.org/download/install-arm.sh | sudo sh
+To install Processing:
+```
+wget https://github.com/processing/processing/releases/download/processing-0269-3.5.3/processing-3.5.3-linux-armv6hf.tgz
+tar czvf processing-3.5.3-linux-armv6hf.tgz
+cd processing-3.5.3/
+sudo ./install.sh
 ```
 
 ### Xenolalia installation script

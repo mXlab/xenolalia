@@ -125,7 +125,8 @@ def next_image(image_path, base_image_path, starting_frame_random):
     else:
         if not use_base_image:
             base_image_path = False
-        starting_image, filtered_image, transformed_image = xeno_image.load_image(image_path, base_image_path, image_side, input_quad)
+
+        starting_image, filtered_image, ___, ___, transformed_image, ___ = xeno_image.load_image(image_path, base_image_path, image_side, input_quad)
         starting_frame = xeno_image.image_to_array(starting_image, input_shape)
         transformed_image.save("{}/{}_0trn.png".format(dirname, basename))
         filtered_image.save("{}/{}_1fil.png".format(dirname, basename))
