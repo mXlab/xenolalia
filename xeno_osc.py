@@ -158,7 +158,7 @@ def handle_test_camera(addr, image_path):
     global input_quad, image_side
     dirname = os.path.dirname(image_path)
     basename = os.path.splitext(os.path.basename(image_path))[0]
-    starting_image, filtered_image, transformed_image = xeno_image.load_image(image_path, False, image_side, input_quad)
+    starting_image, filtered_image, ___, ___, transformed_image, ___ = xeno_image.load_image(image_path, False, image_side, input_quad)
     transformed_image_path = "{}/{}_0trn.png".format(dirname, basename)
     transformed_image.save(transformed_image_path.format(dirname, basename))
     filtered_image.save("{}/{}_1fil.png".format(dirname, basename))
