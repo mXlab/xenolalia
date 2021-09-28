@@ -26,6 +26,10 @@ class Settings {
   String seedImage;
   int nFeedbackSteps;
   boolean useBaseImage;
+  
+  // Neural net.
+  String modelName;
+  boolean useConvolutional;
 
   Settings() {
     load();
@@ -88,7 +92,10 @@ class Settings {
       settings.setBoolean("use_base_image", useBaseImage);
 
       settings.setFloat("exposure_time", exposureTime);
-      
+
+      settings.setString("model_name", modelName);
+      settings.setBoolean("use_convolutional", useConvolutional);
+
       // Save file.
       saveJSONObject(settings, SETTINGS_FILE_NAME);
     } catch (Exception e) {
@@ -122,6 +129,10 @@ class Settings {
       useBaseImage = settings.getBoolean("use_base_image");
 
       exposureTime = settings.getFloat("exposure_time");
+      
+      modelName = settings.getString("model_name");
+      useConvolutional = settings.getBoolean("use_convolutional");
+      
     } catch (Exception e) {
       println("Problem loading settings, setting to defaults: " + e);
       reset();
