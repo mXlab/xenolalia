@@ -43,7 +43,7 @@ class Settings {
   String nodeName() { return nodeName; }
   String sessionName() { return sessionName; }
 
-int oscSendPort() { return oscSendPort; }
+  int oscSendPort() { return oscSendPort; }
   int oscReceivePort()  { return oscReceivePort;}
   String oscRemoteIp() { return oscRemoteIp; }
   
