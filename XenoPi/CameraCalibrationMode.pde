@@ -40,7 +40,7 @@ class CameraCalibrationMode extends AbstractMode {
     // Create snapshot timer.
     snapshotTimer = new Timer(SNAPSHOT_TIME);
     
-    mouseCrosshair = true;
+    mouseCrosshair = false;
     pointCrosshair = true;
     controlSize = 5;
   }
