@@ -15,10 +15,19 @@ class Experiment {
   }
   
   void start(PImage baseImage) {
+    // Generate info.
     info = new ExperimentInfo();
+    
+    // Start time.
     startTimeMs = millis();
-    info.saveInfoFile(savePath(experimentDir()+"/info.json"));
 
+    // Save info file.
+    info.saveInfoFile(savePath(experimentDir()+"/info.json"));
+    
+    // Preserve settings.json file.
+    saveJSONObject(loadJSONObject(SETTINGS_FILE_NAME), savePath(experimentDir()+"/settings.json"));
+    
+    // Save base image.
     baseImageFilename = savePath(experimentDir()+"/base_image.png");
     baseImage.save(baseImageFilename);
 
