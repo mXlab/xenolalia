@@ -108,3 +108,36 @@ def experiment_to_gif(experiment_folder, gif_file_name, mode, gif_file_side=480,
 
     save_image_list_as_gif(image_list, gif_file_name, duration=duration)
 
+
+if __name__ == "__main__":
+
+    # Create parser.
+    def tuple_type(str):
+        return tuple(map(float, str.split(",")))
+
+    def list_type(str):
+        return list(map(float, str.split(",")))
+
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    parser.add_argument("experiment_folder", type=str, help="Root folder of experiment")
+    parser.add_argument("output_gif_file", type=str, help="Output GIF file")
+
+    parser.add_argument("-m", "--mode", type=str, default="raw_transformed", help="Animation mode")
+    parser.add_argument("-i", "--image-side", type=int, default=480, help="Pixel dimension of side (square image)")
+    parser.add_argument("-d", "--duration", type=float, default=10, help="Total duration of clip (in seconds)")
+    parser.add_argument("-b", "--ann-background", type=tuple_type, default="0,0,0", help="RGB color of background (ANN images)")
+    parser.add_argument("-f", "--ann-foreground", type=tuple_type, default="255,255,255", help="RGB color of foreground (ANN images)")
+
+    parser.add_argument("-q", "--input-quad", type=list_type, default=None, help="Comma-separated list of numbers defining input quad (overrides configuration file)")
+
+    args = parser.parse_args()
+
+    # Load input quad
+    if (args.input_quad != None):
+        input_quad = args.input_quad
+    else:
+        input_quad = load_settings("{}/settings.json".format(args.experiment_folder))
+
+    # Create GIF.
+    experiment_to_gif(args.experiment_folder, args.output_gif_file, args.mode, gif_file_side=args.image_side, duration=args.duration, ann_background=args.ann_background, ann_foreground=args.ann_foreground, input_quad=args.input_quad)
