@@ -1,5 +1,9 @@
 import glob
 import argparse
+import os.path
+
+import numpy as np
+import math
 
 from PIL import Image, ImageOps
 
@@ -12,6 +16,39 @@ def load_settings(settings_file):
         data = json.load(f)
         input_quad = tuple(data['camera_quad'])
     return input_quad
+
+# Approximates and returns a new input quad that will result in a large enough border to fit
+# inside a circular mask.
+def input_quad_fit_in_circle(input_quad):
+    # Gather all corners.
+    p1 = np.array( input_quad[0:2] )
+    p2 = np.array( input_quad[2:4] )
+    p3 = np.array( input_quad[4:6] )
+    p4 = np.array( input_quad[6:8] )
+    all_points = np.array([p1, p2, p3, p4])
+
+    # Find center point.
+    p_center = (np.mean(all_points[:,0]), np.mean(all_points[:,1]))
+
+    # Resize factor estimated using trigonometry.
+    resize_factor = 1 + math.sqrt(2) * (1 - math.sin(math.pi/4.0))
+
+    # Project points according to resize factor (clamp to range [0, 1]).
+    p1 = np.clip(p_center + (p1 - p_center)*resize_factor, 0, 1)
+    p2 = np.clip(p_center + (p2 - p_center)*resize_factor, 0, 1)
+    p3 = np.clip(p_center + (p3 - p_center)*resize_factor, 0, 1)
+    p4 = np.clip(p_center + (p4 - p_center)*resize_factor, 0, 1)
+
+    # Return new input quad.
+    return list( np.concatenate( [p1, p2, p3, p4] ) )
+
+# Expand ANN (neural net) image to fit inside circle, adding a border with specific background color.
+def ann_image_fit_in_circle(img, background=(0,0,0)):
+    size = (img.width, img.height)
+    img = img.resize((img.width*2, img.height*2))
+    border_size = int( img.width * (1 - math.sin(math.pi/4.0)) * 0.5 )
+    img = ImageOps.expand(img, border=border_size, fill="rgb({},{},{})".format(int(background[0]), int(background[1]), int(background[2])))
+    return img.resize(size)
 
 # Horizontally concatenate two images.
 def concatenate_horizontal(img1, img2):
@@ -40,13 +77,28 @@ def get_ordered_snapshot_images(folder, pattern):
     return [Image.open(filename) for filename in sorted(glob.glob(f"{folder}/{pattern}"), key=snapshot_file_get_timestamp)]
 
 # Get all "ann" images in experiment folder, with optional background and foreground RGB colors.
-def get_ann_images(experiment_folder, background=(0, 0, 0), foreground=(255, 255, 255)):
+def get_ann_images(experiment_folder, gif_file_side, background=(0, 0, 0), foreground=(255, 255, 255), fit_in_circle=False):
     images = get_ordered_snapshot_images(experiment_folder, "*_3ann.png")
-    return [ImageOps.colorize(img, background, foreground) for img in images]
+    images = [ImageOps.colorize(img, background, foreground) for img in images]
+    images = resize_square_images(images, gif_file_side)
+    if fit_in_circle:
+        images = [ann_image_fit_in_circle(img, background=background) for img in images]
+    return images
 
 # Get all "raw" images in experiment folder.
-def get_raw_images(experiment_folder):
-    return get_ordered_snapshot_images(experiment_folder, "*_raw.png")
+def get_raw_images(experiment_folder, gif_file_side, input_quad, fit_in_circle=False):
+    raw_images = get_ordered_snapshot_images(experiment_folder, "*_raw.png")
+    base_image = Image.open(f"{experiment_folder}/base_image.png")
+
+    if fit_in_circle:
+        input_quad = input_quad_fit_in_circle(input_quad)
+    raw_transformed_images = []
+    for img in raw_images:
+        __, __, __, __, __, rt = xi.process_image(img, base_image, image_side=28, input_quad=input_quad)
+        if fit_in_circle:
+            rt = xi.add_mask(rt)
+        raw_transformed_images.append(rt)
+    return resize_square_images(raw_images, gif_file_side), resize_square_images(raw_transformed_images, gif_file_side)
 
 # Returns a new image list from source image list with crossfade between images.
 def crossfade(image_list, crossfade_steps=10):
@@ -66,7 +118,7 @@ def crossfade(image_list, crossfade_steps=10):
 # "ann_raw_transformed_concatenated" : animated sequence intermixing ANN and raw transformed images side by side
 # "ann_raw_transformed_sequence" : animated sequence intermixing ANN and raw transformed images one after the other
 def experiment_to_gif(experiment_folder, gif_file_name, mode, gif_file_side=480, fps=5.0, ann_background=(0, 0, 0),
-                      ann_foreground=(255, 255, 255), input_quad=None):
+                      ann_foreground=(255, 255, 255), input_quad=None, fit_in_circle=False):
     # Get input quad.
     if input_quad is None:
         import json
@@ -75,38 +127,28 @@ def experiment_to_gif(experiment_folder, gif_file_name, mode, gif_file_side=480,
         input_quad = tuple(data['camera_quad'])
 
     # Get image frames.
-    ann_frames = get_ann_images(experiment_folder, ann_background, ann_foreground)
-    raw_frames = get_raw_images(experiment_folder)
-
-    base_image = Image.open(f"{experiment_folder}/base_image.png")
-    raw_transformed_frames = []
-    for img in raw_frames:
-        __, __, __, __, __, rt = xi.process_image(img, base_image, image_side=28, input_quad=input_quad)
-        raw_transformed_frames.append(rt)
+    ann_frames = get_ann_images(experiment_folder, gif_file_side, ann_background, ann_foreground, fit_in_circle=fit_in_circle)
+    raw_frames, raw_transformed_frames = get_raw_images(experiment_folder, gif_file_side, input_quad, fit_in_circle=fit_in_circle)
 
     if mode == "ann":
-        image_list = resize_square_images(ann_frames, gif_file_side)
+        image_list = ann_frames
     elif mode == "raw":
-        image_list = resize_square_images(raw_frames, gif_file_side)
+        image_list = raw_frames
     elif mode == "raw_transformed":
-        image_list = resize_square_images(raw_transformed_frames, gif_file_side)
+        image_list = raw_transformed_frames
     elif mode == "ann_raw_transformed_concatenated":
         image_list = []
-        ann_frames = resize_square_images(ann_frames, gif_file_side)
-        raw_transformed_frames = resize_square_images(raw_transformed_frames, gif_file_side)
         for i in range(len(ann_frames) - 1):
             image_list.append(concatenate_horizontal(ann_frames[i], raw_transformed_frames[i]))
     elif mode == "ann_raw_transformed_sequence":
         image_list = []
-        ann_frames = resize_square_images(ann_frames, gif_file_side)
-        raw_transformed_frames = resize_square_images(raw_transformed_frames, gif_file_side)
         for i in range(len(ann_frames) - 1):
             image_list.append(ann_frames[i])
             image_list.append(raw_transformed_frames[i])
         image_list = crossfade(image_list, 20)
-        duration /= 20
+        fps *= 20
 
-    save_image_list_as_gif(image_list, gif_file_name, fps=fps)
+    save_images_as_animation(image_list, gif_file_name, fps=fps)
 
 
 if __name__ == "__main__":
@@ -131,6 +173,8 @@ if __name__ == "__main__":
 
     parser.add_argument("-q", "--input-quad", type=list_type, default=None, help="Comma-separated list of numbers defining input quad (overrides configuration file)")
 
+    parser.add_argument("-c", "--fit-in-circle", default=False, action='store_true', help="Append border to generated images so that they fit inside a circular mask")
+
     args = parser.parse_args()
 
     # Load input quad
@@ -140,4 +184,4 @@ if __name__ == "__main__":
         input_quad = load_settings("{}/settings.json".format(args.experiment_folder))
 
     # Create GIF.
-    experiment_to_gif(args.experiment_folder, args.output_gif_file, args.mode, gif_file_side=args.image_side, fps=args.frames_per_second, ann_background=args.ann_background, ann_foreground=args.ann_foreground, input_quad=args.input_quad)
+    experiment_to_gif(args.experiment_folder, args.output_gif_file, args.mode, gif_file_side=args.image_side, fps=args.frames_per_second, ann_background=args.ann_background, ann_foreground=args.ann_foreground, input_quad=input_quad, fit_in_circle=args.fit_in_circle)
