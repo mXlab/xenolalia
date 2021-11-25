@@ -6,7 +6,7 @@ import numpy as np
 import math
 
 from PIL import Image, ImageOps
-
+from apng import APNG
 import xeno_image as xi
 
 # Load calibration settings from .json file.
@@ -57,10 +57,20 @@ def concatenate_horizontal(img1, img2):
     dst.paste(img2, (img1.width, 0))
     return dst
 
-# Generate animated GIF from list of same-size images.
-def save_image_list_as_gif(image_list, gif_file_name, fps=5):
-    image_list[0].save(gif_file_name, format="GIF", append_images=image_list[1:],
-                       save_all=True, duration=1.0/fps, loop=0)
+# Generate animated GIF or APNG from list of same-size images.
+def save_images_as_animation(image_list, animation_file_name, fps=5):
+    delay = int(1.0 / fps * 1000)
+    type = os.path.splitext(animation_file_name)[1][1:]
+    if type == "gif":
+        image_list[0].save(animation_file_name, format="GIF", append_images=image_list[1:],
+                           save_all=True, duration=delay, loop=0)
+    elif type == "png":
+        file = APNG()
+        for img in image_list:
+            tmp_file_name = "/tmp/temp_file.png"
+            img.save(tmp_file_name, format="png")
+            file.append_file(tmp_file_name, delay=delay)
+        file.save(animation_file_name)
 
 # Batch-resize list of images to a square image of image_side x image_side.
 def resize_square_images(image_list, image_side=480):
