@@ -21,9 +21,9 @@ def concatenate_horizontal(img1, img2):
     return dst
 
 # Generate animated GIF from list of same-size images.
-def save_image_list_as_gif(image_list, gif_file_name, duration=200):
+def save_image_list_as_gif(image_list, gif_file_name, fps=5):
     image_list[0].save(gif_file_name, format="GIF", append_images=image_list[1:],
-                       save_all=True, duration=duration, loop=0)
+                       save_all=True, duration=1.0/fps, loop=0)
 
 # Batch-resize list of images to a square image of image_side x image_side.
 def resize_square_images(image_list, image_side=480):
@@ -65,7 +65,7 @@ def crossfade(image_list, crossfade_steps=10):
 # "raw_transformed" : animated sequence of raw images, transformed according to input quad
 # "ann_raw_transformed_concatenated" : animated sequence intermixing ANN and raw transformed images side by side
 # "ann_raw_transformed_sequence" : animated sequence intermixing ANN and raw transformed images one after the other
-def experiment_to_gif(experiment_folder, gif_file_name, mode, gif_file_side=480, duration=200, ann_background=(0, 0, 0),
+def experiment_to_gif(experiment_folder, gif_file_name, mode, gif_file_side=480, fps=5.0, ann_background=(0, 0, 0),
                       ann_foreground=(255, 255, 255), input_quad=None):
     # Get input quad.
     if input_quad is None:
@@ -106,7 +106,7 @@ def experiment_to_gif(experiment_folder, gif_file_name, mode, gif_file_side=480,
         image_list = crossfade(image_list, 20)
         duration /= 20
 
-    save_image_list_as_gif(image_list, gif_file_name, duration=duration)
+    save_image_list_as_gif(image_list, gif_file_name, fps=fps)
 
 
 if __name__ == "__main__":
@@ -125,7 +125,7 @@ if __name__ == "__main__":
 
     parser.add_argument("-m", "--mode", type=str, default="raw_transformed", help="Animation mode")
     parser.add_argument("-i", "--image-side", type=int, default=480, help="Pixel dimension of side (square image)")
-    parser.add_argument("-d", "--duration", type=float, default=10, help="Total duration of clip (in seconds)")
+    parser.add_argument("-fps", "--frames-per-second", type=float, default=5.0, help="Number of frames/images per second")
     parser.add_argument("-b", "--ann-background", type=tuple_type, default="0,0,0", help="RGB color of background (ANN images)")
     parser.add_argument("-f", "--ann-foreground", type=tuple_type, default="255,255,255", help="RGB color of foreground (ANN images)")
 
@@ -140,4 +140,4 @@ if __name__ == "__main__":
         input_quad = load_settings("{}/settings.json".format(args.experiment_folder))
 
     # Create GIF.
-    experiment_to_gif(args.experiment_folder, args.output_gif_file, args.mode, gif_file_side=args.image_side, duration=args.duration, ann_background=args.ann_background, ann_foreground=args.ann_foreground, input_quad=args.input_quad)
+    experiment_to_gif(args.experiment_folder, args.output_gif_file, args.mode, gif_file_side=args.image_side, fps=args.frames_per_second, ann_background=args.ann_background, ann_foreground=args.ann_foreground, input_quad=args.input_quad)
