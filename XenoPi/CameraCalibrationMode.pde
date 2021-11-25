@@ -40,7 +40,7 @@ class CameraCalibrationMode extends AbstractMode {
     // Create snapshot timer.
     snapshotTimer = new Timer(SNAPSHOT_TIME);
     
-    mouseCrosshair = true;
+    mouseCrosshair = false;
     pointCrosshair = true;
     controlSize = 5;
   }
@@ -52,6 +52,8 @@ class CameraCalibrationMode extends AbstractMode {
         
     // Input rectangle mode. ///////////////////////////////////////////////////
     if (mode == MODE_RECT) {
+      imageMode(CORNER);
+      
       // Gather control points.
       currentPoints = settings.getImageRectPoints();
       
@@ -119,6 +121,9 @@ class CameraCalibrationMode extends AbstractMode {
           // Draw point.
           drawControlPoint( x, y, i );
         }
+        
+        // Draw magnifying glass of control point in center.
+        drawMagnifyingGlass(width/2, height/2, height/4);
       }
     }
     
@@ -160,6 +165,39 @@ class CameraCalibrationMode extends AbstractMode {
     fill(255);
     textSize(12 + controlSize);
     text(i+1, x, y);
+  }
+  
+  // Draws a zoomed image centered around current control point.
+  void drawMagnifyingGlass(float x, float y, int size) {
+    final int ZOOM_NEIGHBORHOOD = 11;
+    final int ZOOM_SIZE = 2*ZOOM_NEIGHBORHOOD+1;
+
+    PImage sourceImage = cam.getImage();
+
+    // Find current control point.
+    PVector p = currentPoints[currentPoint];
+    
+    // Project control point to source image coordinates.
+    int px = round(map(p.x, 0, width, 0, sourceImage.width));
+    int py = round(map(p.y, 0, height, 0, sourceImage.height));
+
+    // Extract image in neighborhood of point.
+    PGraphics zoomImage = createGraphics(ZOOM_SIZE, ZOOM_SIZE);
+    zoomImage.beginDraw();
+    zoomImage.copy(sourceImage, px-ZOOM_NEIGHBORHOOD, py-ZOOM_NEIGHBORHOOD, ZOOM_SIZE, ZOOM_SIZE, 0, 0, ZOOM_SIZE, ZOOM_SIZE);
+    zoomImage.stroke(#ff0000);
+    zoomImage.line(0, ZOOM_NEIGHBORHOOD, ZOOM_SIZE, ZOOM_NEIGHBORHOOD);
+    zoomImage.line(ZOOM_NEIGHBORHOOD, 0, ZOOM_NEIGHBORHOOD, ZOOM_SIZE);
+    zoomImage.endDraw();
+
+    // Draw image at (x, y).
+    rectMode(CENTER);
+    imageMode(CENTER);
+    image(zoomImage, x, y, size, size);
+    fill(0, 0);
+    stroke(#ff0000);
+    strokeWeight(5);
+    rect(x, y, size, size);
   }
   
   void drawCrosshair(float x, float y, color c) {
