@@ -23,7 +23,7 @@ IPAddress primaryDNS(8, 8, 8, 8);
 IPAddress secondaryDNS(8, 8, 4, 4);
 
 WiFiUDP Udp;                                // A UDP instance to let us send and receive packets over UDP
-// const IPAddress dest(192, 168, 8, 255);
+const IPAddress dest(192, 168, 0, 199);
 const unsigned int rxport = 54321;          // remote port to receive OSC
 const unsigned int txport = 12345;        // local port to listen for OSC packets (actually not used for sending)
 IPAddress thisip;

@@ -10,7 +10,7 @@
 		}
 ,
 		"classnamespace" : "box",
-		"rect" : [ 34.0, 79.0, 680.0, 870.0 ],
+		"rect" : [ 34.0, 77.0, 987.0, 916.0 ],
 		"bglocked" : 0,
 		"openinpresentation" : 0,
 		"default_fontsize" : 12.0,
@@ -39,6 +39,96 @@
 		"subpatcher_template" : "Default Max 7",
 		"assistshowspatchername" : 0,
 		"boxes" : [ 			{
+				"box" : 				{
+					"id" : "obj-36",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 0,
+					"patching_rect" : [ 837.0, 259.0, 32.0, 22.0 ],
+					"text" : "print"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-33",
+					"maxclass" : "message",
+					"numinlets" : 2,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 623.0, 150.0, 189.0, 22.0 ],
+					"text" : "\"Starting complete shake cycle\""
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-30",
+					"maxclass" : "newobj",
+					"numinlets" : 2,
+					"numoutlets" : 2,
+					"outlettype" : [ "", "" ],
+					"patching_rect" : [ 793.0, 103.0, 76.0, 22.0 ],
+					"text" : "route /debug"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-17",
+					"maxclass" : "comment",
+					"numinlets" : 1,
+					"numoutlets" : 0,
+					"patching_rect" : [ 179.0, 285.0, 101.0, 20.0 ],
+					"text" : "Test only pumps"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-14",
+					"maxclass" : "comment",
+					"numinlets" : 1,
+					"numoutlets" : 0,
+					"patching_rect" : [ 128.0, 214.0, 101.0, 20.0 ],
+					"text" : "Starts a full cycle"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-9",
+					"maxclass" : "comment",
+					"numinlets" : 1,
+					"numoutlets" : 0,
+					"patching_rect" : [ 247.0, 436.0, 150.0, 20.0 ],
+					"text" : "Just move the servo"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-6",
+					"maxclass" : "comment",
+					"numinlets" : 1,
+					"numoutlets" : 0,
+					"patching_rect" : [ 434.0, 157.0, 150.0, 20.0 ],
+					"text" : "Empty petridish"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-4",
+					"maxclass" : "comment",
+					"numinlets" : 1,
+					"numoutlets" : 0,
+					"patching_rect" : [ 258.0, 157.0, 76.0, 20.0 ],
+					"text" : "Fill petridish"
+				}
+
+			}
+, 			{
 				"box" : 				{
 					"id" : "obj-31",
 					"maxclass" : "message",
@@ -93,7 +183,7 @@
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 560.0, 304.0, 93.0, 22.0 ],
+					"patching_rect" : [ 542.0, 296.0, 93.0, 22.0 ],
 					"text" : "/xeno/pumpin 1"
 				}
 
@@ -106,7 +196,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "int" ],
 					"parameter_enable" : 0,
-					"patching_rect" : [ 515.0, 197.0, 24.0, 24.0 ]
+					"patching_rect" : [ 441.0, 197.0, 24.0, 24.0 ]
 				}
 
 			}
@@ -117,7 +207,7 @@
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 515.0, 239.0, 73.0, 22.0 ],
+					"patching_rect" : [ 441.0, 239.0, 73.0, 22.0 ],
 					"text" : "/xeno/p2 $1"
 				}
 
@@ -130,7 +220,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "int" ],
 					"parameter_enable" : 0,
-					"patching_rect" : [ 433.0, 197.0, 24.0, 24.0 ]
+					"patching_rect" : [ 351.0, 197.0, 24.0, 24.0 ]
 				}
 
 			}
@@ -141,7 +231,7 @@
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 433.0, 239.0, 73.0, 22.0 ],
+					"patching_rect" : [ 351.0, 239.0, 73.0, 22.0 ],
 					"text" : "/xeno/p1 $1"
 				}
 
@@ -154,7 +244,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "int" ],
 					"parameter_enable" : 0,
-					"patching_rect" : [ 348.0, 197.0, 24.0, 24.0 ]
+					"patching_rect" : [ 519.0, 197.0, 24.0, 24.0 ]
 				}
 
 			}
@@ -165,7 +255,7 @@
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 348.0, 239.0, 73.0, 22.0 ],
+					"patching_rect" : [ 519.0, 239.0, 73.0, 22.0 ],
 					"text" : "/xeno/v2 $1"
 				}
 
@@ -226,7 +316,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 278.0, 59.0, 287.0, 22.0 ],
-					"text" : "/xeno/servo 0."
+					"text" : "/debug \"Starting complete shake cycle\""
 				}
 
 			}
@@ -289,8 +379,8 @@
 					"maxclass" : "newobj",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 27.0, 499.0, 171.0, 22.0 ],
-					"text" : "udpsend 192.168.1.124 54321"
+					"patching_rect" : [ 27.0, 499.0, 173.0, 22.0 ],
+					"text" : "udpsend 192.168.0.255 54321"
 				}
 
 			}
@@ -351,14 +441,23 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-1", 0 ],
-					"midpoints" : [ 357.5, 425.0, 36.5, 425.0 ],
+					"midpoints" : [ 528.5, 425.0, 36.5, 425.0 ],
 					"source" : [ "obj-20", 0 ]
 				}
 
 			}
 , 			{
 				"patchline" : 				{
+					"destination" : [ "obj-30", 0 ],
+					"order" : 0,
+					"source" : [ "obj-21", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
 					"destination" : [ "obj-8", 1 ],
+					"order" : 1,
 					"source" : [ "obj-21", 0 ]
 				}
 
@@ -373,7 +472,7 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-1", 0 ],
-					"midpoints" : [ 524.5, 425.0, 36.5, 425.0 ],
+					"midpoints" : [ 450.5, 425.0, 36.5, 425.0 ],
 					"source" : [ "obj-23", 0 ]
 				}
 
@@ -388,7 +487,7 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-1", 0 ],
-					"midpoints" : [ 442.5, 424.0, 36.5, 424.0 ],
+					"midpoints" : [ 360.5, 424.0, 36.5, 424.0 ],
 					"source" : [ "obj-25", 0 ]
 				}
 
@@ -396,7 +495,7 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-1", 0 ],
-					"midpoints" : [ 569.5, 400.5, 36.5, 400.5 ],
+					"midpoints" : [ 551.5, 400.5, 36.5, 400.5 ],
 					"source" : [ "obj-26", 0 ]
 				}
 
@@ -428,6 +527,22 @@
 				"patchline" : 				{
 					"destination" : [ "obj-1", 0 ],
 					"source" : [ "obj-3", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-33", 1 ],
+					"order" : 1,
+					"source" : [ "obj-30", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-36", 0 ],
+					"order" : 0,
+					"source" : [ "obj-30", 0 ]
 				}
 
 			}

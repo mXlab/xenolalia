@@ -88,6 +88,8 @@ int P2pin = 21; //pin to interface with the pump 1
 int P1pin = 22; // pin to interface with the pump 2
 
 int pumpTestFlag = 1; // flag used during the pump test
+char buff[64];
+
 
 #include "LED_HELPERS.h"
 #include "HELPERS.h"
