@@ -270,3 +270,12 @@ void setupPins()
   
 }
 ////////////////////////////////////
+
+void valveTest()
+{   
+    digitalWrite(V1pin,HIGH);
+    digitalWrite(V2pin,HIGH);
+    delay(250);
+    digitalWrite(V1pin,LOW);
+    digitalWrite(V2pin,LOW);   
+}

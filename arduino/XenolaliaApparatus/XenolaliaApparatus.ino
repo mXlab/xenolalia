@@ -110,13 +110,19 @@ void setup()
   servo1.attach(servoPin);  // start the library 
 
   delay(1000);
+
   
   WiFiConnect(); // connect to Wifi
 //  APConnect(); // create Access Point
+  
   Udp.begin(rxport); // start UDP socket
 
+  
   StripTest();
   ServoTest();
+  valveTest();
+  delay(1000);
+  valveTest();
 
 }
 

@@ -402,20 +402,20 @@ void on_v1(OSCMessage &msg, int addrOffset)
     }
     else
     {
-      int CL = check_liquid();  // check liquid level sensor 
-      if(CL <= liquidThreshold)
-      { 
+     // int CL = check_liquid();  // check liquid level sensor 
+     // if(CL <= liquidThreshold)
+     // { 
         digitalWrite(V1pin,HIGH);
         strip_blue();
         reply.add("Turning V1 ON");
       }
-      else
-      {  
-        digitalWrite(V1pin,LOW);
-        strip_yellow(); 
+      //else
+      //{  
+       // digitalWrite(V1pin,LOW);
+       // strip_yellow(); 
         
-      }     
-    }
+      //}     
+    //}
     Serial.print("v1: ");
     Serial.println(valvestatus); 
     Udp.beginPacket(dest, rxport);
