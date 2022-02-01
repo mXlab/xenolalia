@@ -89,6 +89,7 @@ def simplify(image):
 
     return img
 
+# Resize to square image using Lanczos algorithm (which is better for reducing image size).
 def resize(image, image_side):
     return image.resize((image_side, image_side), resample=Image.LANCZOS)
 

@@ -22,7 +22,10 @@ int check_liquid()
     This function verify the amount of liquid in the petridish and return an integer value representing how full it is. 
     If the liquid level is below the threshold is flashed the pixel ring green. If it is over it sets it to red
   */
+
   
+  OSCMessage reply("/debug");
+    
   int myLevel=0;
   for(int i=1; i<=20; ++i)
   {
@@ -36,8 +39,17 @@ int check_liquid()
   Serial.print("liquid level: ");
   Serial.println(liquidLevel);
 
+  sprintf(buff, "dishlevel : %d | liquid Treshold : %d " ,liquidLevel , liquidThreshold);
+  reply.add( buff );
+  Udp.beginPacket(dest, rxport);
+  reply.send(Udp);
+  Udp.endPacket();
+  reply.empty();
+ 
   if(liquidLevel < liquidThreshold)
   {
+
+    
     strip_green();
     delay(100);
     strip_black();
@@ -59,19 +71,45 @@ void pumpin()
     until the liquid sensor sends a signal that it's full
   */
 
+    OSCMessage reply("/debug");
     int dishlevel = 1;
-    while(dishlevel <= liquidThreshold)
+    const int numPump{8};
+    bool petriFull{false};
+   
+    while(petriFull == false)
     {
-      dishlevel = check_liquid();
-      digitalWrite(P1pin,HIGH);
-      digitalWrite(V1pin,HIGH);
-      delay(250);
-      digitalWrite(P1pin,LOW);
-      digitalWrite(V1pin,LOW);  
-      Serial.println("dishlevel: ");
-      Serial.println(dishlevel);
+      
+     
+      for( int i{0} ; i < numPump ; i++)
+      {
+        dishlevel = check_liquid();
+        if(dishlevel >= liquidThreshold)
+        {
+          petriFull = true;
+          break;
+        }
+        digitalWrite(P1pin,HIGH);
+        digitalWrite(V1pin,HIGH);
+        delay(250);
+        digitalWrite(P1pin,LOW);
+        digitalWrite(V1pin,LOW);  
+        Serial.println("dishlevel: ");
+        Serial.println(dishlevel);
+      }
+      petriFull = true;
+    reply.add( "Exceded max pump count" );
+    Udp.beginPacket(dest, rxport);
+    reply.send(Udp);
+    Udp.endPacket();
+    reply.empty();
+      
     }
     delay(500);
+    reply.add( "Petridish is full" );
+    Udp.beginPacket(dest, rxport);
+    reply.send(Udp);
+    Udp.endPacket();
+    reply.empty();
     strip_black();
 }
 ///////////////////////////////
@@ -232,3 +270,12 @@ void setupPins()
   
 }
 ////////////////////////////////////
+
+void valveTest()
+{   
+    digitalWrite(V1pin,HIGH);
+    digitalWrite(V2pin,HIGH);
+    delay(250);
+    digitalWrite(V1pin,LOW);
+    digitalWrite(V2pin,LOW);   
+}

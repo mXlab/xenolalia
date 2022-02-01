@@ -33,8 +33,14 @@ void on_pix(OSCMessage &msg, int addrOffset)
     It fetches the passed  pixel id and RGB values passed in the osc message and 
     turn the specified pixel on calling the pix(pixnum, rr,gg,bb) function. 
     */
+    OSCMessage reply("/debug");
     Serial.println("on_pixel");
-      
+    reply.add("on_pixel");
+    Udp.beginPacket(dest, rxport);
+    reply.send(Udp);
+    Udp.endPacket();
+    reply.empty();
+    
     int pixnum, rr, gg, bb;
     if(msg.isInt(0))
     {
@@ -65,7 +71,13 @@ void on_strip(OSCMessage &msg, int addrOffset)
     It fetches the passed RGB values passed in the osc message and turn the whole pixel ring
      on calling the stripix(rr,gg,bb) function. 
     */
+    OSCMessage reply("/debug");
     Serial.println("on_strip");
+    reply.add("on_strip");
+    Udp.beginPacket(dest, rxport);
+    reply.send(Udp);
+    Udp.endPacket();
+    reply.empty();
       
     int rr, gg, bb;
     if(msg.isInt(0))
@@ -93,9 +105,15 @@ void on_pumptest(OSCMessage &msg, int addrOffset)
     It fetches the passed On/Off value in the osc message and start/stop a pump cycle test
     calling the pumpin() and pumpout() functions.
     */
+    OSCMessage reply("/debug");
 
     Serial.println("on_pumptest");
-      
+    reply.add("on_pumptest");
+    Udp.beginPacket(dest, rxport);
+    reply.send(Udp);
+    Udp.endPacket();
+    reply.empty();
+    
     int var;
     if(msg.isFloat(0))
     {
@@ -106,7 +124,20 @@ void on_pumptest(OSCMessage &msg, int addrOffset)
       var = msg.getInt(0);
     }
 
-    
+    if(var == 0 ) 
+    {
+      reply.add("Stopping pumptest");
+      Udp.beginPacket(dest, rxport);
+      reply.send(Udp);
+      Udp.endPacket();
+      reply.empty();
+    }else{
+      reply.add("Starting pumptest");
+      Udp.beginPacket(dest, rxport);
+      reply.send(Udp);
+      Udp.endPacket();
+      reply.empty();
+    }
     Serial.println("var: ");
     Serial.println(var);
       
@@ -142,8 +173,14 @@ void on_refresh(OSCMessage &msg, int addrOffset)
     It fetches the passed On/Off value in the osc message and start a refresh cycle calling
     the reFresh() function.
   */
+  OSCMessage reply ("/debug");
   
-  Serial.println("on_refresh");    
+  Serial.println("on_refresh");  
+  reply.add("on_refresh");
+  Udp.beginPacket(dest, rxport);
+  reply.send(Udp);
+  Udp.endPacket();
+  reply.empty(); 
   float var;
   if(msg.isFloat(0))
   {
@@ -168,8 +205,15 @@ void on_pumpin(OSCMessage &msg, int addrOffset)
     If the value 1.0 is received in the message it starts a pumpin cycle calling
     the pumpin() function.
   */
-  
+    OSCMessage reply ("/debug");
+
     Serial.println("on_pumpin");
+    reply.add("on_pumpin");
+    Udp.beginPacket(dest, rxport);
+    reply.send(Udp);
+    Udp.endPacket();
+    reply.empty();
+    
     float var;
     if(msg.isFloat(0))
     {
@@ -187,7 +231,16 @@ void on_pumpout(OSCMessage &msg, int addrOffset)
     If the value 1.0 is received in the message it starts a pumpout cycle calling
     the pumpout() function.
   */
+    OSCMessage reply ("/debug");
+    
+
     Serial.println("on_pumpout"); 
+    reply.add("on_pumpout");
+    Udp.beginPacket(dest, rxport);
+    reply.send(Udp);
+    Udp.endPacket();
+    reply.empty();
+    
     float var;
     if(msg.isFloat(0))
     {
@@ -204,7 +257,18 @@ void on_servo(OSCMessage &msg, int addrOffset)
     It fetches the angle value for the servomotor passed in the osc message and move the 
     motor to the passed angle.
   */
+
+    
+    
+    OSCMessage reply ("/debug");
+
     Serial.println("on_servo");
+    reply.add("on_servo");
+    Udp.beginPacket(dest, rxport);
+    reply.send(Udp);
+    Udp.endPacket();
+    reply.empty();
+    
     float var;
     if(msg.isFloat(0))
     {
@@ -212,8 +276,15 @@ void on_servo(OSCMessage &msg, int addrOffset)
       Serial.println("var: ");
       Serial.println(var);
     }
+    
     int servoangle = int(var);
     servo1.write(servoangle);
+    sprintf(buff ,"Moving servo to %d degree",servoangle);
+    reply.add(buff);
+    Udp.beginPacket(dest, rxport);
+    reply.send(Udp);
+    Udp.endPacket();
+    reply.empty();
     Serial.println("servoangle: ");
     Serial.println(servoangle);
     delay(zpeed);   
@@ -226,7 +297,10 @@ void on_servotest(OSCMessage &msg, int addrOffset)
     This function is a callback for when the osc adress /xeno/servotest is received.
     If 1.0 is passed in the OSC message it starts a servo test cycle calling 
     the servo_test() function.
-  */    
+  */ 
+
+    OSCMessage reply ("/debug");
+
     float var;
     if(msg.isFloat(0))
     {
@@ -234,6 +308,12 @@ void on_servotest(OSCMessage &msg, int addrOffset)
     }
 
     int rep = int(var);
+    sprintf(buff , "Starting servo test of  %d rep" , rep); 
+    reply.add(buff);
+    Udp.beginPacket(dest, rxport);
+    reply.send(Udp);
+    Udp.endPacket();
+    reply.empty();
     Serial.print("on_servotest: ");
     Serial.println(rep);
     for(int i=1; i<=rep; i++)
@@ -250,6 +330,12 @@ void on_shake(OSCMessage &msg, int addrOffset)
     When a message is received at this adress it starts a complete shake cycle
     calling the ServoShake() function the number of time specified in the global variables
   */ 
+    OSCMessage reply("/debug");
+    reply.add("Starting complete shake cycle");
+    Udp.beginPacket(dest, rxport);
+    reply.send(Udp);
+    Udp.endPacket();
+    reply.empty();
     float var;
     if(msg.isFloat(0))
     {
@@ -271,6 +357,12 @@ void on_checkLevel(OSCMessage &msg, int addrOffset)
     When a message is received at this adress it check the liquid level in the petridish
     calling the check_liquid() function.
   */
+    OSCMessage reply("/debug");
+    reply.add("on_checkLevel");
+    Udp.beginPacket(dest, rxport);
+    reply.send(Udp);
+    Udp.endPacket();
+    reply.empty();
     float var;
     if(msg.isFloat(0))
     {
@@ -288,7 +380,8 @@ void on_v1(OSCMessage &msg, int addrOffset)
     It turns the vavle 1 On/Off when the OSC message receives 0.0/1.0 by setting the 
     valve pin HIGH or LOW and set the pixel ring to the corresponding color for visual 
     feedback
-  */    
+  */ 
+    OSCMessage reply ("/debug");   
     float var;
     int valvestatus = 0;
     if(msg.isFloat(0))
@@ -305,23 +398,30 @@ void on_v1(OSCMessage &msg, int addrOffset)
     {
       digitalWrite(V1pin,LOW);
       strip_black();
+      reply.add("Turning V1 OFF");
     }
     else
     {
-      int CL = check_liquid();  // check liquid level sensor 
-      if(CL <= liquidThreshold)
-      { 
+     // int CL = check_liquid();  // check liquid level sensor 
+     // if(CL <= liquidThreshold)
+     // { 
         digitalWrite(V1pin,HIGH);
         strip_blue();
+        reply.add("Turning V1 ON");
       }
-      else
-      {  
-        digitalWrite(V1pin,LOW);
-        strip_yellow(); 
-      }     
-    }
+      //else
+      //{  
+       // digitalWrite(V1pin,LOW);
+       // strip_yellow(); 
+        
+      //}     
+    //}
     Serial.print("v1: ");
-    Serial.println(valvestatus);    
+    Serial.println(valvestatus); 
+    Udp.beginPacket(dest, rxport);
+    reply.send(Udp);
+    Udp.endPacket();
+    reply.empty();   
 }
 ///////////////////////////////
 
@@ -333,6 +433,7 @@ void on_p1(OSCMessage &msg, int addrOffset)
     It turns the pump 1 On/Off when the OSC message receives 0.0/1.0 by setting the 
     pump pin HIGH or LOW 
   */
+    OSCMessage reply ("/debug");
     float var;
     int pumpstatus = 0;
     if(msg.isFloat(0))
@@ -347,13 +448,21 @@ void on_p1(OSCMessage &msg, int addrOffset)
     if(pumpstatus == 0)
     {
       digitalWrite(P1pin,LOW);
+      reply.add("Turning P1 OFF");
+
     }
     else
     {
       digitalWrite(P1pin,HIGH);
+      reply.add("Turning P1 ON");
+
     }
     Serial.print("p1: ");
     Serial.println(pumpstatus);
+    Udp.beginPacket(dest, rxport);
+    reply.send(Udp);
+    Udp.endPacket();
+    reply.empty();
 }
 ///////////////////////////////
 
@@ -364,6 +473,8 @@ void on_p2(OSCMessage &msg, int addrOffset)
     It turns the pump 2 On/Off when the OSC message receives 0.0/1.0 by setting the 
     pump pin HIGH or LOW 
   */
+    OSCMessage reply ("/debug");
+
     float var;
     int pumpstatus = 0;
     if(msg.isFloat(0))
@@ -378,13 +489,19 @@ void on_p2(OSCMessage &msg, int addrOffset)
     if(pumpstatus == 0)
     {
       digitalWrite(P2pin,LOW);
+      reply.add("Turning P2 OFF");
     }
     else
     {
       digitalWrite(P2pin,HIGH);
+      reply.add("Turning P2 ON");
     }
     Serial.print("p2: ");
-    Serial.println(pumpstatus);    
+    Serial.println(pumpstatus);
+    Udp.beginPacket(dest, rxport);
+    reply.send(Udp);
+    Udp.endPacket();
+    reply.empty();      
 }
 ///////////////////////////////
 
@@ -396,6 +513,9 @@ void on_v2(OSCMessage &msg, int addrOffset)
     valve pin HIGH or LOW and set the pixel ring to the corresponding color for visual 
     feedback
   */
+    
+    OSCMessage reply ("/debug");
+
     float var;
     int valvestatus = 0;
     if(msg.isFloat(0))
@@ -411,14 +531,21 @@ void on_v2(OSCMessage &msg, int addrOffset)
     {
       digitalWrite(V2pin,LOW);
       strip_black();
+      reply.add("Turning V2 OFF");
     }
     else
     {
       digitalWrite(V2pin,HIGH);
       strip_blue();
+      reply.add("Turning V2 ON");
     }
+    
     Serial.print("v2: ");
-    Serial.println(valvestatus);    
+    Serial.println(valvestatus);  
+    Udp.beginPacket(dest, rxport);
+    reply.send(Udp);
+    Udp.endPacket();
+    reply.empty();  
 }
 ///////////////////////////////////
 
