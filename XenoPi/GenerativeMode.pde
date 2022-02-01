@@ -1,3 +1,12 @@
+// Capture FSM state enum.
+enum State {
+  INIT, 
+  NEW, 
+  MAIN, 
+  FLASH, 
+  SNAPSHOT, 
+  WAIT_FOR_GLYPH
+}
 
 // This mode runs the generative process through interoperability
 // with python script.
@@ -20,166 +29,227 @@ class GenerativeMode extends AbstractMode {
   final color PROJECTION_COLOR = color(#ff00ff); // magenta
   final color PROJECTION_BACKGROUND_COLOR = color(0);
 
-  // Capture FSM state enum.
-  final int CAPTURE_FLASH = 0;
-  final int CAPTURE_FLASH_WAIT  = 1;
-  final int CAPTURE_SNAPSHOT = 2;
-  final int CAPTURE_SNAPSHOT_WAIT = 3;
-  final int CAPTURE_DONE = 4;
-
   // Snapshot-related.
-  boolean snapshotRequested;
   Timer exposureTimer;
-  Timer captureTimer;
+  Timer stateTimer;
 
-  // Used during capture to go through different phases.
-  int capturePhase;
+  final int FLASH_TIME = 6000;
+
+  State state;
 
   // Experiment manager.
-  Experiment experiment;
+  Experiment experiment; // current experiment
   int nExperiments;
 
+  // Current base image.
   PImage baseImage;
 
   boolean neuronsReady;
-  boolean baseImageRecorded;
-  
+  boolean newExperimentStarted;
+  boolean snapshotRequested;
+  boolean newExperimentRequested;
+  boolean nextGlyphReceived;
+
+  boolean newState; // true when entering a new state
+
   void setup() {
-    neuronsReady = false;
-    baseImageRecorded = false;
-    nExperiments = -1;
-    
-    // For first flash: record base image.
-    background(FLASH_COLOR);
-    requestSnapshot();
+    transitionTo(State.INIT);
   }
 
   void draw() {
     // Remove annoying cursor.
     noCursor();
-    
-    // Record base image.
-    if (!baseImageRecorded) {
-      background(FLASH_COLOR);
-      while (cam.available())
-        cam.read();
-        
-      if (capturePhase != CAPTURE_DONE)
-        captureLoop();
-      else {
-        snapshot(true);
-        baseImageRecorded = true;
-      }
-    }
 
-    // Not ready.
-    else if (!neuronsReady) {
-      background(0);
-      fill(255);
-      textSize(32);
-      text("Waiting for xeno_osc.py response", 10, height-10);
+    // State machine.
+
+    // INIT : Initialize everything upon entering generative mode and wait for xeno_osc.py to be ready.
+    if (state == State.INIT) {
+      background(255, 0, 0);
       
-      // Send handshake.
-      OscMessage msg = new OscMessage("/xeno/euglenas/handshake");
-      oscP5.send(msg, remoteLocation);
-      delay(100);
-    }
+      // Initialize everything.
+      if (enteredState()) {
+        neuronsReady = false;
+        newExperimentStarted = false;
 
-    else {
-      // Capture video.
-      if (cam.available()) {
-        // Update video frame.
-        cam.read();
+        nExperiments = -1;
+
+        // Send first handshake.
+        oscP5.send(new OscMessage("/xeno/euglenas/handshake"), remoteLocation);
+
+        stateTimer = new Timer(100);
+        stateTimer.start();
+
+        exposureTimer = new Timer(settings.exposureTimeMs());
+
+        newState = false;
       }
-  
-      // Snapshot request.
-      if (snapshotRequested || capturePhase != CAPTURE_DONE) {
-        //processImage();
-        captureLoop();
-      }
-  
-      // Project current iteration.
-      else {
-  
-        // In auto-mode: collect snapshots at a regular pace.
-        if (autoMode && exposureTimer.isFinished()) {
-          requestSnapshot();
-          exposureTimer.start();
-        }
-  
-        // Display background or projected image depending on flash status.
-        if (flash) { // flash!
-          background(FLASH_COLOR);
-        } else { // projected image
-          background(PROJECTION_BACKGROUND_COLOR);
-          tint(PROJECTION_COLOR); // tint
-          drawScaledImage(glyph);
-        }
-  
-        // Camera view in the top-left corner.
-        if (camView) {
-          noTint();
-          imageMode(CORNER);
-          image(cam.getImage(), 0, 0, CAM_VIEW_WIDTH, CAM_VIEW_HEIGHT);
-        }
-  
-        // Display help text.
+
+      // Send handshakes and wait for response.
+      if (!neuronsReady) {
         fill(255);
         textSize(32);
-        String status = "exp # " + nExperiments + "  ";
-        if (autoMode)
-          status += "auto mode: " + nf(exposureTimer.countdownTime()/1000.0f, 3, 1) + " s";
-        else
-          status += "manual mode";
-        text(status, 10, height-10);
+        text("Waiting for xeno_osc.py response", 10, height-10);
+
+        // Send handshake message regularly.
+        if (stateTimer.isFinished()) {
+          // Send handshake.
+          oscP5.send(new OscMessage("/xeno/euglenas/handshake"), remoteLocation);
+          stateTimer.start();
+        }
       }
-    }
-  }
-
-  void startCaptureLoop() {
-    capturePhase = CAPTURE_FLASH;
-    captureTimer = new Timer(3000);
-    captureTimer.start();
-  }
-
-
-  // Capture image loop (FSM).
-  void captureLoop() {
-    if (capturePhase == CAPTURE_FLASH)
-    {
-      background(FLASH_COLOR);
-//      background(lerpColor(PROJECTION_BACKGROUND_COLOR, FLASH_COLOR, captureTimer.progress()));
-      delay(10);
-      if (cam.available()) {
-        cam.read();
-        capturePhase = CAPTURE_FLASH_WAIT;
-        //captureTimer = new Timer(1000);
-        captureTimer.start();
-      }
-    }
-    else if (capturePhase == CAPTURE_FLASH_WAIT) {
-      background(FLASH_COLOR);
-      if (captureTimer.isFinished())
-        capturePhase = CAPTURE_SNAPSHOT;
-    }
-    else if (capturePhase == CAPTURE_SNAPSHOT) {
-      background(FLASH_COLOR);
-      snapshot(!baseImageRecorded);
-      capturePhase = CAPTURE_SNAPSHOT_WAIT; // will wait for response
-//      captureTimer = new Timer(1000);
-      captureTimer.start();
-    }
-    else { // CAPTURE_SNAPSHOT_WAIT
-      if (!captureTimer.isFinished())
-        background(FLASH_COLOR);
-//        background(lerpColor(FLASH_COLOR, PROJECTION_BACKGROUND_COLOR, captureTimer.progress()));
+      
+      // Neurons are ready: start new experiment!
       else {
-        background(PROJECTION_BACKGROUND_COLOR);
-        capturePhase = CAPTURE_DONE;
-        // Stop request.
-        snapshotRequested = false;
+        transitionTo(State.NEW);
       }
     }
+
+    // NEW experiment : Create new experiment and run a first capture loop to get base image.
+    else if (state == State.NEW) {
+      background(0, 255, 0);
+      // Reset experiment.
+      experiment = new Experiment();
+      nExperiments++;
+
+      // First snapshot will be base image.
+      newExperimentStarted = false;
+
+      // Flash.
+      transitionTo(State.FLASH);
+    }
+
+    // FLASH : Set white background 
+    else if (state == State.FLASH) {
+     
+      if (enteredState()) {
+        // Start timer.
+        stateTimer = new Timer(FLASH_TIME);
+        stateTimer.start();
+      }
+      
+      // Set color to flash.
+      background(FLASH_COLOR);
+
+      // Keep on emptying camera buffer.
+      if (cam.available())
+        cam.read();
+
+      // When finished: transit to snapshot mode.
+      if (stateTimer.isFinished()) {
+        transitionTo(State.SNAPSHOT);
+      }
+    }
+
+    // SNAPSHOT : Take a picture.
+    else if (state == State.SNAPSHOT) {
+      // Wait until a new image is available before taking accepting the snapshot.
+      if (cam.available()) {
+        cam.read(); // this image should be ok
+
+        if (newExperimentStarted) {
+          // Reset next glyph received flag.
+          nextGlyphReceived = false;
+          
+          // Take a snapshot.
+          snapshot(false);
+
+          // Wait for glyph.
+          transitionTo(State.WAIT_FOR_GLYPH);
+        }
+        
+        else {
+          // Take shot of base image.
+          snapshot(true);
+          
+          // Go directly to MAIN.
+          transitionTo(State.MAIN);
+        }
+      }
+    }
+
+    // WAIT_FOR_GLYPH : Wait for response from server to get glyph.
+    else if (state == State.WAIT_FOR_GLYPH) {
+      if (nextGlyphReceived)
+        transitionTo(State.MAIN);
+    }
+
+    // MAIN loop : Display glyph and oher shit.
+    else if (state == State.MAIN) {
+      if (enteredState()) {
+        // If we got here right after a new experiment was done, we can now start the experiment since we have the base image.
+        if (!newExperimentStarted) {
+          println("Start new experiment");
+          experiment.start(baseImage);
+          newExperimentStarted = true;
+          transitionTo(State.FLASH);
+          return; // exit
+        }
+
+        // Start exposure timer.
+        exposureTimer.start();
+      }
+
+      // Capture video.
+      if (cam.available())
+        cam.read();
+
+      // Display background or projected image depending on flash status.
+      if (flash) { // flash!
+        background(FLASH_COLOR);
+      } else { // projected image
+        println("Project image");
+        background(PROJECTION_BACKGROUND_COLOR);
+        tint(PROJECTION_COLOR); // tint
+        drawScaledImage(glyph);
+      }
+
+      // Camera view in the top-left corner.
+      if (camView) {
+        noTint();
+        imageMode(CORNER);
+        image(cam.getImage(), 0, 0, CAM_VIEW_WIDTH, CAM_VIEW_HEIGHT);
+      }
+
+      // Display help text.
+      fill(255);
+      textSize(32);
+      String status = "exp # " + nExperiments + "  ";
+      if (autoMode)
+        status += "auto mode: " + nf(exposureTimer.countdownTime()/1000.0f, 3, 1) + " s";
+      else
+        status += "manual mode";
+      text(status, 10, height-10);
+
+      // In auto-mode: collect snapshots at a regular pace.
+      if (autoMode && exposureTimer.isFinished()) {
+        println("Auto trigger");
+        requestSnapshot();
+      }
+      
+      if (newExperimentRequested) {
+        transitionTo(State.NEW);
+        newExperimentRequested = false;
+      }
+      else if (snapshotRequested) {
+        println("Snap req.");
+        transitionTo(State.FLASH);
+      }
+    }
+  }
+
+  void transitionTo(State nextState) {
+    state = nextState;
+    newState = true;
+    println("Switching to state: " + nextState);
+    println("   t = " + millis());
+    if (stateTimer != null)
+      println("   timer = " + stateTimer.passedTime());
+  }
+
+  boolean enteredState() {
+    boolean isEntering = newState;
+    newState = false;
+    return isEntering;
   }
 
   void keyPressed() {
@@ -199,65 +269,44 @@ class GenerativeMode extends AbstractMode {
     else if (key == 'a') {
       autoMode = !autoMode;
     }
-    
+
     // Launch new experiment.
     else if (key == 'n') {
-      newExperiment();
+      requestNewExperiment();
     }
   }
 
-  // Launch new experiment.
-  void newExperiment() {
-    // Reset experiment.
-    experiment = new Experiment();
-    experiment.start(baseImage);
-    
-    // Take a first snapshot.
-    exposureTimer = new Timer(settings.exposureTimeMs());
-    requestSnapshot();
-    exposureTimer.start();
-    
-    nExperiments++;
+  void requestNewExperiment() {
+    newExperimentRequested = true;
   }
 
   // Take a snapshot of reference image with the camera.
   void requestSnapshot() {
-    println("Snapshot requested");
     snapshotRequested = true;
-//    snapshotTimer.start();
-    startCaptureLoop();
   }
 
   // Called when receiving OSC message.
   void nextImage(String imagePath) {
+    println("Received image: " + imagePath, nextGlyphReceived);
     glyph = loadImage(imagePath);
     snapshotRequested = false;
-  }
-  
-  // Called when generative script has responded to handshake.
-  void ready() {
-    if (!neuronsReady) {
-      // Launch new experiment.
-      newExperiment();
-      nExperiments = 0;
-      neuronsReady = true;
-    }
+    nextGlyphReceived = true;
   }
 
   // Saves snapshot to disk and sends OSC message to announce
   // creation of new image.
   void snapshot(boolean baseImageSnapshot) {
-    background(FLASH_COLOR);
-    while (cam.available())
-      cam.read();
-    
     if (baseImageSnapshot) {
       // Record snapshot.
       baseImage = cam.getImage();
       baseImage.save(savePath("test_base_image.png"));
     }
-    else {
+    else
       experiment.recordSnapshot(cam.getImage());
-    }
+  }
+
+  // Called when generative script has responded to handshake.
+  void ready() {
+    neuronsReady = true;
   }
 }
