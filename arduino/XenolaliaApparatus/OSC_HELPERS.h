@@ -36,7 +36,7 @@ void on_pix(OSCMessage &msg, int addrOffset)
     OSCMessage reply("/debug");
     Serial.println("on_pixel");
     reply.add("on_pixel");
-    Udp.beginPacket(dest, rxport);
+    Udp.beginPacket(dest, txport);
     reply.send(Udp);
     Udp.endPacket();
     reply.empty();
@@ -74,7 +74,7 @@ void on_strip(OSCMessage &msg, int addrOffset)
     OSCMessage reply("/debug");
     Serial.println("on_strip");
     reply.add("on_strip");
-    Udp.beginPacket(dest, rxport);
+    Udp.beginPacket(dest, txport);
     reply.send(Udp);
     Udp.endPacket();
     reply.empty();
@@ -109,7 +109,7 @@ void on_pumptest(OSCMessage &msg, int addrOffset)
 
     Serial.println("on_pumptest");
     reply.add("on_pumptest");
-    Udp.beginPacket(dest, rxport);
+    Udp.beginPacket(dest, txport);
     reply.send(Udp);
     Udp.endPacket();
     reply.empty();
@@ -127,13 +127,13 @@ void on_pumptest(OSCMessage &msg, int addrOffset)
     if(var == 0 ) 
     {
       reply.add("Stopping pumptest");
-      Udp.beginPacket(dest, rxport);
+      Udp.beginPacket(dest, txport);
       reply.send(Udp);
       Udp.endPacket();
       reply.empty();
     }else{
       reply.add("Starting pumptest");
-      Udp.beginPacket(dest, rxport);
+      Udp.beginPacket(dest, txport);
       reply.send(Udp);
       Udp.endPacket();
       reply.empty();
@@ -173,14 +173,15 @@ void on_refresh(OSCMessage &msg, int addrOffset)
     It fetches the passed On/Off value in the osc message and start a refresh cycle calling
     the reFresh() function.
   */
-  OSCMessage reply ("/debug");
+  OSCMessage reply("/xeno/apparatus/refreshed");
+  OSCMessage debug ("/debug");
   
   Serial.println("on_refresh");  
-  reply.add("on_refresh");
-  Udp.beginPacket(dest, rxport);
-  reply.send(Udp);
+  debug.add("on_refresh");
+  Udp.beginPacket(dest, txport);
+  debug.send(Udp);
   Udp.endPacket();
-  reply.empty(); 
+  debug.empty(); 
   float var;
   if(msg.isFloat(0))
   {
@@ -194,6 +195,12 @@ void on_refresh(OSCMessage &msg, int addrOffset)
   {
     reFresh();
   }
+
+    delay(1000);
+    Udp.beginPacket(dest, txport);
+    reply.send(Udp);
+    Udp.endPacket();
+    reply.empty();
     
 }
 ///////////////////////////////
@@ -209,7 +216,7 @@ void on_pumpin(OSCMessage &msg, int addrOffset)
 
     Serial.println("on_pumpin");
     reply.add("on_pumpin");
-    Udp.beginPacket(dest, rxport);
+    Udp.beginPacket(dest, txport);
     reply.send(Udp);
     Udp.endPacket();
     reply.empty();
@@ -236,7 +243,7 @@ void on_pumpout(OSCMessage &msg, int addrOffset)
 
     Serial.println("on_pumpout"); 
     reply.add("on_pumpout");
-    Udp.beginPacket(dest, rxport);
+    Udp.beginPacket(dest, txport);
     reply.send(Udp);
     Udp.endPacket();
     reply.empty();
@@ -264,7 +271,7 @@ void on_servo(OSCMessage &msg, int addrOffset)
 
     Serial.println("on_servo");
     reply.add("on_servo");
-    Udp.beginPacket(dest, rxport);
+    Udp.beginPacket(dest, txport);
     reply.send(Udp);
     Udp.endPacket();
     reply.empty();
@@ -281,7 +288,7 @@ void on_servo(OSCMessage &msg, int addrOffset)
     servo1.write(servoangle);
     sprintf(buff ,"Moving servo to %d degree",servoangle);
     reply.add(buff);
-    Udp.beginPacket(dest, rxport);
+    Udp.beginPacket(dest, txport);
     reply.send(Udp);
     Udp.endPacket();
     reply.empty();
@@ -310,7 +317,7 @@ void on_servotest(OSCMessage &msg, int addrOffset)
     int rep = int(var);
     sprintf(buff , "Starting servo test of  %d rep" , rep); 
     reply.add(buff);
-    Udp.beginPacket(dest, rxport);
+    Udp.beginPacket(dest, txport);
     reply.send(Udp);
     Udp.endPacket();
     reply.empty();
@@ -330,12 +337,17 @@ void on_shake(OSCMessage &msg, int addrOffset)
     When a message is received at this adress it starts a complete shake cycle
     calling the ServoShake() function the number of time specified in the global variables
   */ 
-    OSCMessage reply("/debug");
-    reply.add("Starting complete shake cycle");
-    Udp.beginPacket(dest, rxport);
-    reply.send(Udp);
+  
+    OSCMessage debug("/debug");
+    debug.add("Starting complete shake cycle");
+
+
+    Udp.beginPacket(dest, txport);
+    debug.send(Udp);
     Udp.endPacket();
-    reply.empty();
+    debug.empty();
+   
+    
     float var;
     if(msg.isFloat(0))
     {
@@ -347,6 +359,8 @@ void on_shake(OSCMessage &msg, int addrOffset)
       //ServoTest();
       ServoShake();
     }  
+
+
 }
 ///////////////////////////////
 
@@ -359,7 +373,7 @@ void on_checkLevel(OSCMessage &msg, int addrOffset)
   */
     OSCMessage reply("/debug");
     reply.add("on_checkLevel");
-    Udp.beginPacket(dest, rxport);
+    Udp.beginPacket(dest, txport);
     reply.send(Udp);
     Udp.endPacket();
     reply.empty();
@@ -418,7 +432,7 @@ void on_v1(OSCMessage &msg, int addrOffset)
     //}
     Serial.print("v1: ");
     Serial.println(valvestatus); 
-    Udp.beginPacket(dest, rxport);
+    Udp.beginPacket(dest, txport);
     reply.send(Udp);
     Udp.endPacket();
     reply.empty();   
@@ -459,7 +473,7 @@ void on_p1(OSCMessage &msg, int addrOffset)
     }
     Serial.print("p1: ");
     Serial.println(pumpstatus);
-    Udp.beginPacket(dest, rxport);
+    Udp.beginPacket(dest, txport);
     reply.send(Udp);
     Udp.endPacket();
     reply.empty();
@@ -498,7 +512,7 @@ void on_p2(OSCMessage &msg, int addrOffset)
     }
     Serial.print("p2: ");
     Serial.println(pumpstatus);
-    Udp.beginPacket(dest, rxport);
+    Udp.beginPacket(dest, txport);
     reply.send(Udp);
     Udp.endPacket();
     reply.empty();      
@@ -542,7 +556,7 @@ void on_v2(OSCMessage &msg, int addrOffset)
     
     Serial.print("v2: ");
     Serial.println(valvestatus);  
-    Udp.beginPacket(dest, rxport);
+    Udp.beginPacket(dest, txport);
     reply.send(Udp);
     Udp.endPacket();
     reply.empty();  
