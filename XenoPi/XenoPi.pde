@@ -39,6 +39,7 @@ import netP5.*;
 
 OscP5 oscP5;
 NetAddress remoteLocation;
+NetAddress remoteLocationApparatus;
 
 AbstractCam cam;
 AbstractMode mode;
@@ -104,11 +105,15 @@ void setup() {
   // Setup OSC.
   oscP5 = new OscP5(this, settings.oscReceivePort());
   remoteLocation = new NetAddress(settings.oscRemoteIp(), settings.oscSendPort());
-
+  remoteLocationApparatus = new NetAddress(settings.oscApparatusRemoteIp(), settings.oscApparatusSendPort());
+  
   oscP5.plug(this, "nextImage", "/xeno/neurons/step");
   oscP5.plug(this, "ready", "/xeno/neurons/handshake");
   oscP5.plug(this, "ready", "/xeno/neurons/begin");
-  oscP5.plug(this, "testCamera", "/xeno/neurons/test-camera");
+  oscP5.plug(this, "testCamera", "/xeno/neurons/test-camera");  
+  
+  oscP5.plug(this, "refreshed", "/xeno/apparatus/refreshed");
+
 }
 
 void nextImage(String imagePath) {
@@ -121,6 +126,10 @@ void testCamera(String imagePath) {
 
 void ready() {
   mode.ready();
+}
+
+void refreshed() {
+  mode.refreshed();
 }
 
 void draw() {

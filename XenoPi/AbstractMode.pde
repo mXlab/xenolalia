@@ -5,6 +5,7 @@ abstract class AbstractMode {
   abstract void draw();
   
   void ready() {}
+  void refreshed() {}
   void nextImage(String imagePath) {}
   void testImage(String imagePath) {}
   
