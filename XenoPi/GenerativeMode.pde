@@ -34,6 +34,8 @@ class GenerativeMode extends AbstractMode {
   Timer stateTimer;
 
   final int FLASH_TIME = 6000;
+  final int CAM_FILTER_INTER_SNAPSHOT_TIME = 500;
+  final int CAM_FILTER_N_SNAPSHOTS = 10;
 
   State state;
 
@@ -44,6 +46,8 @@ class GenerativeMode extends AbstractMode {
   // Current base image.
   PImage baseImage;
 
+  ImageFilter camFilter;
+
   boolean neuronsReady;
   boolean newExperimentStarted;
   boolean snapshotRequested;
@@ -52,6 +56,7 @@ class GenerativeMode extends AbstractMode {
 
   boolean newState; // true when entering a new state
 
+  
   void setup() {
     transitionTo(State.INIT);
   }
@@ -80,6 +85,8 @@ class GenerativeMode extends AbstractMode {
         stateTimer.start();
 
         exposureTimer = new Timer(settings.exposureTimeMs());
+        
+        camFilter = new ImageFilter();
 
         newState = false;
       }
@@ -143,9 +150,21 @@ class GenerativeMode extends AbstractMode {
     // SNAPSHOT : Take a picture.
     else if (state == State.SNAPSHOT) {
       // Wait until a new image is available before taking accepting the snapshot.
+      if (enteredState()) {
+        camFilter.reset();
+        stateTimer = new Timer(CAM_FILTER_INTER_SNAPSHOT_TIME);
+        stateTimer.start();
+      }
+      
       if (cam.available()) {
-        cam.read(); // this image should be ok
-
+        cam.read();
+        if (stateTimer.isFinished()) {
+          camFilter.addImage(cam.getImage());
+          stateTimer.start();
+        }
+      }
+      
+      if (camFilter.nImages() >= CAM_FILTER_N_SNAPSHOTS) {
         if (newExperimentStarted) {
           // Reset next glyph received flag.
           nextGlyphReceived = false;
@@ -298,11 +317,11 @@ class GenerativeMode extends AbstractMode {
   void snapshot(boolean baseImageSnapshot) {
     if (baseImageSnapshot) {
       // Record snapshot.
-      baseImage = cam.getImage();
+      baseImage = camFilter.getImage();
       baseImage.save(savePath("test_base_image.png"));
     }
     else
-      experiment.recordSnapshot(cam.getImage());
+      experiment.recordSnapshot(camFilter.getImage());
   }
 
   // Called when generative script has responded to handshake.
