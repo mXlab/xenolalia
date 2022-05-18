@@ -36,6 +36,7 @@ class GenerativeMode extends AbstractMode {
   Timer stateTimer;
 
   final int FLASH_TIME = 6000;
+  final int HANDSHAKE_TIMEOUT = 5000;
   final int CAM_FILTER_INTER_SNAPSHOT_TIME = 500;
   final int CAM_FILTER_N_SNAPSHOTS = 10;
 
@@ -132,14 +133,24 @@ class GenerativeMode extends AbstractMode {
     else if (state == State.REFRESH) {
       background(255, 0, 255);
       if (enteredState()) {
+        // Start timer.
+        stateTimer = new Timer(HANDSHAKE_TIMEOUT);
+        stateTimer.start();
+
         apparatusRefreshed = false;
-        
+
         // Ask apparatus to shake.
-        OscMessage msg = new OscMessage("/xeno/refresh");
-        msg.add(1);
-        oscP5.send(msg, remoteLocationApparatus);
+        refresh();
       }
-      
+
+      if (!apparatusMessageReceived && stateTimer.isFinished()) {
+        background(50);
+        // Ask apparatus to shake again.
+        log("Try to refresh again");
+        //refresh();
+        stateTimer.start();
+      }
+
       if (apparatusRefreshed) {
         // Flash.
         transitionTo(State.FLASH);
@@ -355,8 +366,19 @@ class GenerativeMode extends AbstractMode {
   void ready() {
     neuronsReady = true;
   }
-  
+
   void refreshed() {
     apparatusRefreshed = true;
+  }
+
+  void refresh() {
+    apparatusMessageReceived = false;
+
+    // Ask apparatus to shake.
+    OscMessage msg = new OscMessage("/xeno/refresh");
+    msg.add(1);
+    oscP5.send(msg, remoteLocationApparatus);
+    
+    log("Sent call for refreshing");
   }
 }

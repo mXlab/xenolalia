@@ -136,7 +136,15 @@ void ready() {
 }
 
 void refreshed() {
+  log("Refreshed!");
   mode.refreshed();
+}
+
+boolean apparatusMessageReceived = false;
+
+void apparatusHandshake() {
+  apparatusMessageReceived = true;
+  log("Received apparatusHandshake().");
 }
 
 void draw() {
