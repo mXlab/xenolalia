@@ -120,8 +120,11 @@ class GenerativeMode extends AbstractMode {
       // First snapshot will be base image.
       newExperimentStarted = false;
 
-      // Flash.
-      transitionTo(State.REFRESH);
+      // Flash or refresh.
+      if (settings.useApparatus())
+        transitionTo(State.REFRESH);
+      else
+        transitionTo(State.FLASH);
     }
 
     // SHAKE: Shake the liquid in apparatus.
