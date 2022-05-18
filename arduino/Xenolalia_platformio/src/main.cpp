@@ -4,7 +4,6 @@
 /*
     This code controls the hardware contained in the Xenolalia box
       - Pump 1 & 2 
-      - Valve 1 & 2 
       - Servo Motor
       - liquid level sensor 
       - Neopixel Ring
@@ -42,9 +41,10 @@
 //--------------------------------------------
 
 
-#include "Arduino.h"
+#include <Arduino.h>
 #include "xenolalia.h"
 #include "osc.hpp"
+#include "ota.hpp"
 
 
 void setup() 
@@ -52,17 +52,17 @@ void setup()
 
   Serial.begin(9600);
   delay(2000);
-
   xenolalia::init();
-  osc::connectToWiFi(osc::ssid,osc::pass);
-  osc::initUDP(); 
-
+  osc::connect_to_wifi(osc::ssid,osc::pass);
+  osc::init_udp(); 
+  ota::init(osc::local_IP[3]);
   Serial.println("Xenolalia");
 
 }
 
 void loop()
 {
-  osc::WiFiCheckConnection();
+  ota::update();
+  osc::wifi_check_connection();
   osc::update();
 }

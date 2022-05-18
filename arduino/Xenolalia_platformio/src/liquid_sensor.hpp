@@ -2,7 +2,7 @@
 
 class Liquid_level_sensor{
 
-    int mPin;
+    int _pin;
     int level{0};
 
     public:

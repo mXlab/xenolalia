@@ -1,6 +1,9 @@
 #pragma once 
 #include <WiFiUdp.h>
 
+/** @brief declaration file of wifi connection and osc protocol
+ */
+
 //forward delcarations
 class IPAddress;
 class WiFiUDP;
@@ -28,12 +31,12 @@ namespace osc{
      * @param ssid network name to connect to
      * @param pwd  password of the network
      */
-    void connectToWiFi(const char * ssid, const char * pwd);
+    void connect_to_wifi(const char * ssid, const char * pwd);
     
 
     /** @brief initialize udp connection 
      */
-    void initUDP();
+    void init_udp();
 
     /** @brief OSC protocol update loop. Verify if there's an incoming message add points to the right callback  
     */
@@ -41,15 +44,33 @@ namespace osc{
 
     /** @brief Verify if mcu is still connected to wifi. Reboot if connection is lost
      */
-    void WiFiCheckConnection();
+    void wifi_check_connection();
 
     /** @brief return true if mcu is connected to wifi
      */
-    boolean WifiConnected();
+    boolean is_wifi_connected();
 
 
+    /**
+     * @brief send and osc message to host
+     * @param adress osc adress
+     * @param val char*
+     */
     void send( const char* adress, const char* val );
+
+    /**
+     * @brief send and osc message to host
+     * @param adress osc adress
+     * @param val bool
+     */
     void send( const char* adress, const bool val );
+
+    /**
+     * @brief send and osc message to host
+     * @param adress osc adress
+     * @param val int
+     */
     void send( const char* adress, const int val );
 
+    void send( const char* adress );
 }//namespace osc

@@ -2,14 +2,14 @@
 #include <Arduino.h>
 
 
-Liquid_level_sensor::Liquid_level_sensor(const int& pin):mPin{pin}
+Liquid_level_sensor::Liquid_level_sensor(const int& pin):_pin{pin}
 {}
 
 void Liquid_level_sensor::init(){
-    pinMode(mPin, INPUT);
+    pinMode(_pin, INPUT);
 }
 
 int Liquid_level_sensor::get_level(){
-    level = analogRead(mPin);
+    level = analogRead(_pin);
     return level;
 }

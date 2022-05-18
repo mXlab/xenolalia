@@ -1,32 +1,27 @@
-#include <osc.hpp>
-
-#include<pins.h>
+#include "osc.hpp"
+#include "pins.h.
 #include <WiFi.h>
 #include <OSCMessage.h>
+#include "xenolalia.h"
 
-#include <xenolalia.h> 
+/** @brief implementation file of wifi connection and osc protocol
+ */
 
-void host_handshake(OSCMessage &msg){
-  
-  if(msg.isInt(0) == 1){
-   
-    Serial.println("Host asking for shake");
-    osc::send("/handshake", true);
-    osc::hand_shaked = true;
+/*
+  OSC ADRESS YOU CAN USE
+       "/xeno/test_hardware" -> test_hardware();
+       "/xeno/refresh" -> start_cycle();
+       "/xeno/drain" -> drain();
+       "/xeno/fill" -> fill();
+*/
 
-  }
-}
+//OSC CALLBACKS
 
-void reply_heartbeat(OSCMessage &msg){
-  
-  if(msg.isInt(0) && msg.getInt(0)){
-
-    Serial.println("received heartbeat");
-    osc::send("/heartbeat",1);
-
-  }
-}
-
+/**
+ * @brief verify if the passed message contains int or float
+ * @param msg osc message to inspect
+ * @return true if the int or float is not zero
+ */
 bool is_float_or_int(OSCMessage &msg){
   
 
@@ -47,37 +42,38 @@ bool is_float_or_int(OSCMessage &msg){
 
 void start_cycle(OSCMessage &msg){
 
-
-  osc::send("/xeno/apparatus/refreshed" ," ");
+  osc::send("/xeno/handshake");
   
   if (is_float_or_int(msg))
   {
+    osc::send("/debug", "Started refresh cycle");
     xenolalia::cycle();
-    osc::send("debug", "Started refresh cycle");
+    osc::send("/xeno/apparatus/refreshed");
   }
  
 }
 
 void test_hardware(OSCMessage &msg){
-
+  
+  osc::send("/xeno/handshake");
   if (is_float_or_int(msg))
   {
-    osc::send("debug", "Testing all the hardware");
+    osc::send("/debug", "Testing all the hardware");
     xenolalia::test();
   }
 }
 
 void drain(OSCMessage &msg){
  
-  osc::send("debug", "Draining tube");
-
+  osc::send("/xeno/handshake");
+  osc::send("/debug", "Draining tube");
   xenolalia::drain();
 }
 
 void fill(OSCMessage &msg){
- 
-  osc::send("debug", "Filling tube");
 
+  osc::send("/xeno/handshake");
+  osc::send("/debug", "Filling tube");
   xenolalia::fill();
 }
 
@@ -99,30 +95,30 @@ namespace osc
   WiFiUDP udp{};
 
 
-  void connectToWiFi(const char * ssid, const char * pwd){
+  void connect_to_wifi(const char * ssid, const char * pwd)
+  {
 
-  // delete old config
-  WiFi.disconnect(true);
+    WiFi.disconnect(true);
 
-    // Configures static IP address
-    if (!WiFi.config(local_IP, gateway, subnet)) {
-        
-        Serial.println("STA Failed to configure");    
-    }
+      // Configures static IP address
+      if (!WiFi.config(local_IP, gateway, subnet)) {
+          
+          Serial.println("STA Failed to configure");    
+      }
 
-    WiFi.begin(ssid, pwd);
+      WiFi.begin(ssid, pwd);
 
-    
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
-    }
-    
-    Serial.println("");
-    Serial.println("WiFi connected");
+      
+      while (WiFi.status() != WL_CONNECTED) {
+          delay(500);
+          Serial.print(".");
+      }
+      
+      Serial.println("");
+      Serial.println("WiFi connected");
 }
 
-  void initUDP(){
+  void init_udp(){
     
     Serial.println("Starting UDP");    
     udp.begin(incoming_port);
@@ -135,6 +131,15 @@ namespace osc
     OSCMessage mess(adress);
     mess.add(val);
 
+    udp.beginPacket(udp.remoteIP(), osc::reply_port);
+    mess.send(udp);
+    udp.endPacket();
+    mess.empty();
+  }
+
+void send( const char* adress ){
+    OSCMessage mess(adress);
+    
     udp.beginPacket(udp.remoteIP(), osc::reply_port);
     mess.send(udp);
     udp.endPacket();
@@ -169,20 +174,22 @@ namespace osc
     int size = udp.parsePacket();
      
     if (size > 0) {
+
       Serial.println("Message received");
+      
       while (size--) {
         msg.fill(udp.read());
       }
+
       if (!msg.hasError()) {
        
-        msg.dispatch("/handshake", host_handshake);
-        msg.dispatch("/heartbeat_reply", reply_heartbeat);
         msg.dispatch("/xeno/test_hardware", test_hardware);
         msg.dispatch("/xeno/refresh",start_cycle);
         msg.dispatch("/xeno/drain", drain);
         msg.dispatch("/xeno/fill", fill);
       }
-      else{
+      else
+      {
         switch(msg.getError()){
           case BUFFER_FULL:
           Serial.println("OSC MESSAGE ERROR : BUFFER_FULL");
@@ -210,13 +217,13 @@ namespace osc
     }
   }
 
-  boolean WifiConnected() {
+  boolean is_wifi_connected() {
   return WiFi.status() == WL_CONNECTED;
 }
 
-  void WiFiCheckConnection() 
+  void wifi_check_connection() 
   {
-    if (!WifiConnected()) {
+    if (!is_wifi_connected()) {
       // First try to disconnect and reconnect.
       Serial.println("Disconnected");
       WiFi.disconnect();
@@ -224,7 +231,7 @@ namespace osc
       delay(8000);
 
       // If still disconnected: reboot.
-      if (!WifiConnected()) {
+      if (!is_wifi_connected()) {
       Serial.println("Reboot");
         ESP.restart();
       }

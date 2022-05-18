@@ -1,18 +1,18 @@
 #include "pump.hpp"
 #include <Arduino.h>
 
-Pump::Pump(const int& pin): mPin{pin}
+Pump::Pump(const int& pin): _pin{pin}
 {}
 
 void Pump::init(){
-    pinMode(mPin,OUTPUT);
+    pinMode(_pin,OUTPUT);
     stop();
     
 }
 
 
 void Pump::start(){
-    digitalWrite(mPin,HIGH);
+    digitalWrite(_pin,HIGH);
     running = true;
 }
 
@@ -24,7 +24,7 @@ void Pump::start(int timeout){
 
 
 void Pump::stop(){
-    digitalWrite(mPin,LOW);
+    digitalWrite(_pin,LOW);
     running = false;
 }
 

@@ -1,6 +1,8 @@
 #include "pixel_ring.hpp"
-#include <pins.h>
+#include "pins.h"
 
+/** @brief This file handles basic interaction with the pixel ring
+ */
 
 namespace pixel_ring{
 

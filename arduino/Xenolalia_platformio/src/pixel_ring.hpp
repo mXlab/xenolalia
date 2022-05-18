@@ -1,6 +1,8 @@
 #pragma once
 #include <NeoPixelBus.h>
 
+/** @brief This file handles basic interaction with the pixel ring
+ */
 
 namespace pixel_ring{
 

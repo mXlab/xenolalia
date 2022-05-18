@@ -1,9 +1,12 @@
 #pragma once 
 #include<string>    
 
+/**@brief Basic class to interface with pump
+ */
+
 class Pump{
 
-    int mPin;
+    int _pin;
     bool running{false};
     
     public :

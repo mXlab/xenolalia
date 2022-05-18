@@ -1,6 +1,6 @@
 #include "mixer.hpp"
 #include <ESP32Servo.h>
-#include <pins.h>
+#include "pins.h"
 #include "pixel_ring.hpp"
 
 namespace euglena_mixer{
