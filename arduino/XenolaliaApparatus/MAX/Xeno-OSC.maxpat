@@ -10,7 +10,7 @@
 		}
 ,
 		"classnamespace" : "box",
-		"rect" : [ 34.0, 77.0, 987.0, 916.0 ],
+		"rect" : [ 34.0, 76.0, 1213.0, 651.0 ],
 		"bglocked" : 0,
 		"openinpresentation" : 0,
 		"default_fontsize" : 12.0,
@@ -40,6 +40,17 @@
 		"assistshowspatchername" : 0,
 		"boxes" : [ 			{
 				"box" : 				{
+					"id" : "obj-2",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 272.0, 552.0, 100.0, 22.0 ]
+				}
+
+			}
+, 			{
+				"box" : 				{
 					"id" : "obj-36",
 					"maxclass" : "newobj",
 					"numinlets" : 1,
@@ -57,7 +68,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 623.0, 150.0, 189.0, 22.0 ],
-					"text" : "\"Starting complete shake cycle\""
+					"text" : "\"Turning P2 OFF\""
 				}
 
 			}
@@ -316,7 +327,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 278.0, 59.0, 287.0, 22.0 ],
-					"text" : "/debug \"Starting complete shake cycle\""
+					"text" : "/debug \"Turning P2 OFF\""
 				}
 
 			}
@@ -327,8 +338,8 @@
 					"numinlets" : 1,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 262.0, 21.0, 106.0, 22.0 ],
-					"text" : "udpreceive 54321"
+					"patching_rect" : [ 262.0, 21.0, 97.0, 22.0 ],
+					"text" : "udpreceive 7001"
 				}
 
 			}
@@ -379,8 +390,8 @@
 					"maxclass" : "newobj",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 27.0, 499.0, 173.0, 22.0 ],
-					"text" : "udpsend 192.168.0.255 54321"
+					"patching_rect" : [ 27.0, 499.0, 165.0, 22.0 ],
+					"text" : "udpsend 192.168.0.102 7000"
 				}
 
 			}
