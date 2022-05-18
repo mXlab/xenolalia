@@ -58,6 +58,14 @@ void WiFiConnect()
     This function takes the necessary steps to connect the micro controller to the wifi network
   */
       // CONNECT TO WIFI NETWORK
+  // delete old config
+  WiFi.disconnect(true);
+
+  // Configures static IP address
+  if (!WiFi.config(local_IP, gateway, subnet)) {
+    Serial.println("STA Failed to configure");
+  }
+  
   WiFi.begin(ssid, pass); 
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -66,8 +74,7 @@ void WiFiConnect()
   Serial.println("");
   Serial.println("WiFi connected");  
   Serial.println("IP address: ");
-  thisip = WiFi.localIP();
-  Serial.println( thisip );
+  Serial.println( WiFi.localIP() );
 
   Udp.begin(rxport);
 boolean WifiConnected() {
