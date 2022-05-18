@@ -119,15 +119,11 @@ void setup()
 
   
   StripTest();
-  ServoTest();
-  valveTest();
-  delay(1000);
-  valveTest();
-
 }
 
 ///////////////////////////////////
 void loop() {
+  WiFiCheckConnection();
   
   oscUpdate(); // check for OSC messages
 

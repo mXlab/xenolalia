@@ -69,6 +69,24 @@ void WiFiConnect()
   Serial.println( thisip );
 
   Udp.begin(rxport);
+boolean WifiConnected() {
+  return WiFi.status() == WL_CONNECTED;
+}
+
+void WiFiCheckConnection() {
+  if (!WifiConnected()) {
+    // First try to disconnect and reconnect.
+    Serial.println("Disconnected");
+    WiFi.disconnect();
+    WiFi.reconnect();
+    delay(8000);
+
+    // If still disconnected: reboot.
+    if (!WifiConnected()) {
+    Serial.println("Reboot");
+      ESP.restart();
+    }
+  }
 }
 
 // END
