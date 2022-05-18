@@ -26,7 +26,6 @@ const IPAddress dest(192, 168, 0, 101);  //pi ip adress
 const unsigned int rxport = 7000;          // remote port to receive OSC
 const unsigned int txport = 7001;        // local port to listen for OSC packets (actually not used for sending)
 
-
 int WID = 1; // ID# OF THIS BOARD
 
 ////////////////////////////////
@@ -52,7 +51,7 @@ void APConnect(){ //NOT USED IN THE CODE
 }
 
 ////////////////////////////////
-void WiFiConnect()
+IPAddress WiFiConnect()
 {
   /*
     This function takes the necessary steps to connect the micro controller to the wifi network
@@ -74,9 +73,14 @@ void WiFiConnect()
   Serial.println("");
   Serial.println("WiFi connected");  
   Serial.println("IP address: ");
-  Serial.println( WiFi.localIP() );
+  IPAddress thisip = WiFi.localIP();
+  Serial.println( thisip );
 
   Udp.begin(rxport);
+
+  return thisip;
+}
+
 boolean WifiConnected() {
   return WiFi.status() == WL_CONNECTED;
 }
@@ -96,5 +100,6 @@ void WiFiCheckConnection() {
     }
   }
 }
+
 
 // END

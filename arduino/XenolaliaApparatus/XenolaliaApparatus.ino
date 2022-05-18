@@ -94,38 +94,50 @@ char buff[64];
 #include "LED_HELPERS.h"
 #include "HELPERS.h"
 #include "OSC_HELPERS.h"
-
+#include "OTA.h"
 
 
 void setup() 
 {
-
-  setupPins();
+  // Serial.
   Serial.begin(115200);
 
-  // this resets all the neopixels to an off state
+  // Pins.
+  setupPins();
+
+  // Reset all the neopixels to an off state.
   strip.Begin();
   strip.Show();
 
+  // Servomotor.
   servo1.attach(servoPin);  // start the library 
 
-  delay(1000);
-
-  
-  WiFiConnect(); // connect to Wifi
+  // Start wifi.
+  IPAddress ip = WiFiConnect(); // connect to Wifi
 //  APConnect(); // create Access Point
   
   Udp.begin(rxport); // start UDP socket
 
-  
+  // Initialize Over-The-Air programming comm.
+  initOTA(ip[3]);
+
+  // Run LED strip test to show the program is started.
   StripTest();
+
+  // Wait a little.
+  delay(1000);
 }
 
 ///////////////////////////////////
 void loop() {
+  // Call Over-The-Air update.
+  updateOTA();
+
+  // Make sure connection is still on (and troubleshoot it if not).
   WiFiCheckConnection();
-  
-  oscUpdate(); // check for OSC messages
+
+  // Check for OSC messages
+  oscUpdate();
 
 //  int CL = check_liquid();  // check liquid level sensor 
 //  Serial.print("liquid level: ");
