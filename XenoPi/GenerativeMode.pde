@@ -70,7 +70,6 @@ class GenerativeMode extends AbstractMode {
       if (enteredState()) {
         neuronsReady = false;
         newExperimentStarted = false;
-
         nExperiments = -1;
 
         // Send first handshake.
@@ -80,12 +79,11 @@ class GenerativeMode extends AbstractMode {
         stateTimer.start();
 
         exposureTimer = new Timer(settings.exposureTimeMs());
-
-        newState = false;
       }
 
       // Send handshakes and wait for response.
       if (!neuronsReady) {
+        background(0);
         fill(255);
         textSize(32);
         text("Waiting for xeno_osc.py response", 10, height-10);
