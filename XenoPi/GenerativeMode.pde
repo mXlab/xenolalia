@@ -281,10 +281,10 @@ class GenerativeMode extends AbstractMode {
   void transitionTo(State nextState) {
     state = nextState;
     newState = true;
-    println("Switching to state: " + nextState);
-    println("   t = " + millis());
+    log("Switching to state: " + nextState);
+    log("   t = " + millis());
     if (stateTimer != null)
-      println("   timer = " + stateTimer.passedTime());
+      log("   timer = " + stateTimer.passedTime());
   }
 
   boolean enteredState() {
