@@ -32,8 +32,7 @@ class Experiment {
     baseImage.save(baseImageFilename);
 
     // Send message that a new experiment has started.
-    OscMessage msg = new OscMessage("/xeno/euglenas/new");
-    oscP5.send(msg, remoteLocation);
+    oscP5.send(new OscMessage("/xeno/euglenas/new"), remoteLocation);
   }
   
   ExperimentInfo getInfo() {

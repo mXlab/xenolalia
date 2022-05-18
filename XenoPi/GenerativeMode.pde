@@ -2,6 +2,7 @@
 enum State {
   INIT, 
   NEW, 
+  REFRESH,
   MAIN, 
   FLASH, 
   SNAPSHOT, 
@@ -49,6 +50,7 @@ class GenerativeMode extends AbstractMode {
   ImageFilter camFilter;
 
   boolean neuronsReady;
+  boolean apparatusRefreshed;
   boolean newExperimentStarted;
   boolean snapshotRequested;
   boolean newExperimentRequested;
@@ -56,6 +58,7 @@ class GenerativeMode extends AbstractMode {
 
   boolean newState; // true when entering a new state
 
+  
   void setup() {
     transitionTo(State.INIT);
   }
@@ -73,6 +76,7 @@ class GenerativeMode extends AbstractMode {
       // Initialize everything.
       if (enteredState()) {
         neuronsReady = false;
+        apparatusRefreshed = false;
         newExperimentStarted = false;
         nExperiments = -1;
 
@@ -100,13 +104,12 @@ class GenerativeMode extends AbstractMode {
           stateTimer.start();
         }
       }
-      
       // Neurons are ready: start new experiment!
       else {
         transitionTo(State.NEW);
       }
     }
-
+    
     // NEW experiment : Create new experiment and run a first capture loop to get base image.
     else if (state == State.NEW) {
       background(0, 255, 0);
@@ -118,7 +121,25 @@ class GenerativeMode extends AbstractMode {
       newExperimentStarted = false;
 
       // Flash.
-      transitionTo(State.FLASH);
+      transitionTo(State.REFRESH);
+    }
+
+    // SHAKE: Shake the liquid in apparatus.
+    else if (state == State.REFRESH) {
+      background(255, 0, 255);
+      if (enteredState()) {
+        apparatusRefreshed = false;
+        
+        // Ask apparatus to shake.
+        OscMessage msg = new OscMessage("/xeno/refresh");
+        msg.add(1);
+        oscP5.send(msg, remoteLocationApparatus);
+      }
+      
+      if (apparatusRefreshed) {
+        // Flash.
+        transitionTo(State.FLASH);
+      }
     }
 
     // FLASH : Set white background 
@@ -323,5 +344,9 @@ class GenerativeMode extends AbstractMode {
   // Called when generative script has responded to handshake.
   void ready() {
     neuronsReady = true;
+  }
+  
+  void refreshed() {
+    apparatusRefreshed = true;
   }
 }

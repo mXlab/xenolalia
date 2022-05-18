@@ -12,9 +12,11 @@ class Settings {
   String sessionName;
   
   // OSC.
-  int oscSendPort;
   int oscReceivePort;
   String oscRemoteIp;
+  int oscSendPort;
+  String oscApparatusRemoteIp;
+  int oscApparatusSendPort;
 
   // Camera.
   int cameraId;
@@ -47,9 +49,13 @@ class Settings {
   String nodeName() { return nodeName; }
   String sessionName() { return sessionName; }
 
-  int oscSendPort() { return oscSendPort; }
   int oscReceivePort()  { return oscReceivePort;}
+
   String oscRemoteIp() { return oscRemoteIp; }
+  int oscSendPort() { return oscSendPort; }
+  
+  String oscApparatusRemoteIp() { return oscApparatusRemoteIp; }
+  int oscApparatusSendPort() { return oscApparatusSendPort; }
   
   int cameraId() { return cameraId; }
   int cameraWidth() { return cameraWidth; }
@@ -78,10 +84,11 @@ class Settings {
       settings.setString("node_name", nodeName);
       settings.setString("session_name", sessionName);
       
-      settings.setInt("osc_send_port", oscSendPort);
       settings.setInt("osc_receive_port", oscReceivePort);
       settings.setString("osc_remote_ip", oscRemoteIp);
-      
+      settings.setInt("osc_send_port", oscSendPort);
+      settings.setString("osc_apparatus_remote_ip", oscApparatusRemoteIp);
+      settings.setInt("osc_apparatus_send_port", oscApparatusSendPort);
       
       settings.setInt("camera_id", cameraId);
       settings.setInt("camera_width", cameraWidth);
@@ -116,10 +123,14 @@ class Settings {
       nodeName = settings.getString("node_name");
       sessionName = settings.getString("session_name");
       
-      oscSendPort = settings.getInt("osc_send_port");
       oscReceivePort = settings.getInt("osc_receive_port");
+
       oscRemoteIp = settings.getString("osc_remote_ip");
-      
+      oscSendPort = settings.getInt("osc_send_port");
+
+      oscApparatusRemoteIp = settings.getString("osc_apparatus_remote_ip");
+      oscApparatusSendPort = settings.getInt("osc_apparatus_send_port");
+
       cameraId = settings.getInt("camera_id");
       cameraWidth = settings.getInt("camera_width");
       cameraHeight = settings.getInt("camera_height");
@@ -150,9 +161,14 @@ class Settings {
     imageRectPoints[0] = new PVector(0.25*width, 0.25*height);
     imageRectPoints[1] = new PVector(0.75*width, 0.75*height);
     // Default values for parameters.
+    oscReceivePort = 7001;
+
     oscRemoteIp = "127.0.0.1";
     oscSendPort = 7000;
-    oscReceivePort = 7001;
+
+    oscApparatusRemoteIp = "192.168.0.255";
+    oscApparatusSendPort = 7000;
+
     cameraId = 0;
     exposureTime = 60.0f;
   }
