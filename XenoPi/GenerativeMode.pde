@@ -20,6 +20,7 @@ class GenerativeMode extends AbstractMode {
   boolean flash = false;
   boolean camView = false;
   boolean autoMode = true;
+  boolean displayHelp = false;
 
   // Corner cam dimensions.
   final int CAM_VIEW_WIDTH = 200;
@@ -249,27 +250,28 @@ class GenerativeMode extends AbstractMode {
         image(cam.getImage(), 0, 0, CAM_VIEW_WIDTH, CAM_VIEW_HEIGHT);
       }
 
-      // Display help text.
-      fill(255);
-      textSize(32);
-      String status = "exp # " + nExperiments + "  ";
-      if (autoMode)
-        status += "auto mode: " + nf(exposureTimer.countdownTime()/1000.0f, 3, 1) + " s";
-      else
-        status += "manual mode";
-      text(status, 10, height-10);
+      if (displayHelp) {
+        // Display help text.
+        fill(255);
+        textSize(32);
+        String status = "exp # " + nExperiments + "  ";
+        if (autoMode)
+          status += "auto mode: " + nf(exposureTimer.countdownTime()/1000.0f, 3, 1) + " s";
+        else
+          status += "manual mode";
+        text(status, 10, height-10);
+      }
 
       // In auto-mode: collect snapshots at a regular pace.
       if (autoMode && exposureTimer.isFinished()) {
         println("Auto trigger");
         requestSnapshot();
       }
-      
+
       if (newExperimentRequested) {
         transitionTo(State.NEW);
         newExperimentRequested = false;
-      }
-      else if (snapshotRequested) {
+      } else if (snapshotRequested) {
         println("Snap req.");
         transitionTo(State.FLASH);
       }
@@ -307,6 +309,11 @@ class GenerativeMode extends AbstractMode {
     // Toggle auto-mode.
     else if (key == 'a') {
       autoMode = !autoMode;
+    }
+    
+    // Toggle display help.
+    else if (key == 'h') {
+      displayHelp = !displayHelp;
     }
 
     // Launch new experiment.
