@@ -40,10 +40,14 @@ import netP5.*;
 OscP5 oscP5;
 NetAddress remoteLocation;
 NetAddress remoteLocationApparatus;
+NetAddress remoteLocationLogging;
 
 AbstractCam cam;
 AbstractMode mode;
 Settings settings;
+
+final String LOGGING_IP = "192.168.0.188";
+final int    LOGGING_PORT  = 8000;
 
 // Constants.
 final String SETTINGS_FILE_NAME = "settings.json";
@@ -106,6 +110,7 @@ void setup() {
   oscP5 = new OscP5(this, settings.oscReceivePort());
   remoteLocation = new NetAddress(settings.oscRemoteIp(), settings.oscSendPort());
   remoteLocationApparatus = new NetAddress(settings.oscApparatusRemoteIp(), settings.oscApparatusSendPort());
+  remoteLocationLogging = new NetAddress(LOGGING_IP, LOGGING_PORT);
   
   oscP5.plug(this, "nextImage", "/xeno/neurons/step");
   oscP5.plug(this, "ready", "/xeno/neurons/handshake");
@@ -113,7 +118,9 @@ void setup() {
   oscP5.plug(this, "testCamera", "/xeno/neurons/test-camera");  
   
   oscP5.plug(this, "refreshed", "/xeno/apparatus/refreshed");
-
+  oscP5.plug(this, "apparatusHandshake", "/xeno/handshake");
+  
+  log("XenoPi started");
 }
 
 void nextImage(String imagePath) {
@@ -129,7 +136,15 @@ void ready() {
 }
 
 void refreshed() {
+  log("Refreshed!");
   mode.refreshed();
+}
+
+boolean apparatusMessageReceived = false;
+
+void apparatusHandshake() {
+  apparatusMessageReceived = true;
+  log("Received apparatusHandshake().");
 }
 
 void draw() {
@@ -175,6 +190,12 @@ void drawScaledImage(PImage img) {
   }
 }
 
+void log(String message) {
+  OscMessage msg = new OscMessage("/log");
+  msg.add(message);
+  oscP5.send(msg, remoteLocationLogging);
+}
+
 /* incoming osc message are forwarded to the oscEvent method. */
 void oscEvent(OscMessage theOscMessage) {
   /* with theOscMessage.isPlugged() you check if the osc message has already been
@@ -184,8 +205,8 @@ void oscEvent(OscMessage theOscMessage) {
   */
   if(theOscMessage.isPlugged()==false) {
   /* print the address pattern and the typetag of the received OscMessage */
-  println("### received an osc message.");
-  println("### addrpattern\t"+theOscMessage.addrPattern());
-  println("### typetag\t"+theOscMessage.typetag());
+  log("### received an osc message.");
+  log("### addrpattern\t"+theOscMessage.addrPattern());
+  log("### typetag\t"+theOscMessage.typetag());
   }
 }

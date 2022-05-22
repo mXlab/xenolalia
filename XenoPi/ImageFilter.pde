@@ -37,28 +37,31 @@ class ImageFilter {
   // Returns median image (geometric median).
   // Based on: https://github.com/ialhashim/geometric-median/blob/master/geometric-median.h
   PImage getMedian() {
-    if (nImages() < 2)
-      return null;
+    if (nImages() < 3)
+      return getAverage();
 
     // Initialize.
     PImage firstImage = images.get(0);
     PImage secondImage = images.get(1);
     PImage medianImg = createImage(firstImage.width, firstImage.height, RGB);
+    // Preload pixels in all images.
     medianImg.loadPixels();
     for (PImage img : images)
       img.loadPixels();
 
-
-    int nPixels = medianImg.pixels.length;
     // Iterate over pixels.
+    int nPixels = medianImg.pixels.length;
     for (int p = 0; p < nPixels; p++) {
       color pix1 = firstImage.pixels[p];
       color pix2 = secondImage.pixels[p];
 
       // Initial guess.
       color pixMix = lerpColor(pix1, pix2, 0.5);
-      double[][] A = { { red(pixMix), green(pixMix), blue(pixMix) }, 
-                       { red(pixMix), green(pixMix), blue(pixMix) } };
+      double rA = red(pixMix);
+      double gA = green(pixMix);
+      double bA = blue(pixMix);
+      double[][] A = { { rA, gA, bA }, 
+                       { rA, gA, bA } };
 
       // Geometric median approximation algorithm.
       for (int it=0; it<MEDIAN_N_ITERATIONS; it++) {
@@ -76,7 +79,7 @@ class ImageFilter {
             numerator[0] += red(pix)   / dist;
             numerator[1] += green(pix) / dist;
             numerator[2] += blue(pix)  / dist;
-            denominator += 1.0 / dist;
+            denominator  += 1.0        / dist;
           }
         }
         
@@ -105,6 +108,7 @@ class ImageFilter {
     // Initialize.
     PImage firstImage = images.get(0);
     PImage averageImg = createImage(firstImage.width, firstImage.height, RGB);
+    // Preload pixels in all images.
     averageImg.loadPixels();
     for (PImage img : images)
       img.loadPixels();

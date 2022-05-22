@@ -20,6 +20,7 @@ class GenerativeMode extends AbstractMode {
   boolean flash = false;
   boolean camView = false;
   boolean autoMode = true;
+  boolean displayHelp = false;
 
   // Corner cam dimensions.
   final int CAM_VIEW_WIDTH = 200;
@@ -35,6 +36,7 @@ class GenerativeMode extends AbstractMode {
   Timer stateTimer;
 
   final int FLASH_TIME = 6000;
+  final int HANDSHAKE_TIMEOUT = 5000;
   final int CAM_FILTER_INTER_SNAPSHOT_TIME = 500;
   final int CAM_FILTER_N_SNAPSHOTS = 10;
 
@@ -120,22 +122,35 @@ class GenerativeMode extends AbstractMode {
       // First snapshot will be base image.
       newExperimentStarted = false;
 
-      // Flash.
-      transitionTo(State.REFRESH);
+      // Flash or refresh.
+      if (settings.useApparatus())
+        transitionTo(State.REFRESH);
+      else
+        transitionTo(State.FLASH);
     }
 
     // SHAKE: Shake the liquid in apparatus.
     else if (state == State.REFRESH) {
       background(255, 0, 255);
       if (enteredState()) {
+        // Start timer.
+        stateTimer = new Timer(HANDSHAKE_TIMEOUT);
+        stateTimer.start();
+
         apparatusRefreshed = false;
-        
+
         // Ask apparatus to shake.
-        OscMessage msg = new OscMessage("/xeno/refresh");
-        msg.add(1);
-        oscP5.send(msg, remoteLocationApparatus);
+        refresh();
       }
-      
+
+      if (!apparatusMessageReceived && stateTimer.isFinished()) {
+        background(50);
+        // Ask apparatus to shake again.
+        log("Try to refresh again");
+        //refresh();
+        stateTimer.start();
+      }
+
       if (apparatusRefreshed) {
         // Flash.
         transitionTo(State.FLASH);
@@ -246,27 +261,28 @@ class GenerativeMode extends AbstractMode {
         image(cam.getImage(), 0, 0, CAM_VIEW_WIDTH, CAM_VIEW_HEIGHT);
       }
 
-      // Display help text.
-      fill(255);
-      textSize(32);
-      String status = "exp # " + nExperiments + "  ";
-      if (autoMode)
-        status += "auto mode: " + nf(exposureTimer.countdownTime()/1000.0f, 3, 1) + " s";
-      else
-        status += "manual mode";
-      text(status, 10, height-10);
+      if (displayHelp) {
+        // Display help text.
+        fill(255);
+        textSize(32);
+        String status = "exp # " + nExperiments + "  ";
+        if (autoMode)
+          status += "auto mode: " + nf(exposureTimer.countdownTime()/1000.0f, 3, 1) + " s";
+        else
+          status += "manual mode";
+        text(status, 10, height-10);
+      }
 
       // In auto-mode: collect snapshots at a regular pace.
       if (autoMode && exposureTimer.isFinished()) {
         println("Auto trigger");
         requestSnapshot();
       }
-      
+
       if (newExperimentRequested) {
         transitionTo(State.NEW);
         newExperimentRequested = false;
-      }
-      else if (snapshotRequested) {
+      } else if (snapshotRequested) {
         println("Snap req.");
         transitionTo(State.FLASH);
       }
@@ -276,10 +292,10 @@ class GenerativeMode extends AbstractMode {
   void transitionTo(State nextState) {
     state = nextState;
     newState = true;
-    println("Switching to state: " + nextState);
-    println("   t = " + millis());
+    log("Switching to state: " + nextState);
+    log("   t = " + millis());
     if (stateTimer != null)
-      println("   timer = " + stateTimer.passedTime());
+      log("   timer = " + stateTimer.passedTime());
   }
 
   boolean enteredState() {
@@ -304,6 +320,11 @@ class GenerativeMode extends AbstractMode {
     // Toggle auto-mode.
     else if (key == 'a') {
       autoMode = !autoMode;
+    }
+    
+    // Toggle display help.
+    else if (key == 'h') {
+      displayHelp = !displayHelp;
     }
 
     // Launch new experiment.
@@ -345,8 +366,19 @@ class GenerativeMode extends AbstractMode {
   void ready() {
     neuronsReady = true;
   }
-  
+
   void refreshed() {
     apparatusRefreshed = true;
+  }
+
+  void refresh() {
+    apparatusMessageReceived = false;
+
+    // Ask apparatus to shake.
+    OscMessage msg = new OscMessage("/xeno/refresh");
+    msg.add(1);
+    oscP5.send(msg, remoteLocationApparatus);
+    
+    log("Sent call for refreshing");
   }
 }

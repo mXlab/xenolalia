@@ -28,6 +28,9 @@ class Settings {
   String seedImage;
   int nFeedbackSteps;
   boolean useBaseImage;
+
+  // Apparatus.
+  boolean useApparatus;
   
   // Neural net.
   String modelName;
@@ -68,6 +71,8 @@ class Settings {
   int nFeedbackSteps() { return nFeedbackSteps; }
   boolean useBaseImage() { return useBaseImage; }
 
+  boolean useApparatus() { return useApparatus; }
+
   void save() {
     try {
       JSONObject settings = new JSONObject();
@@ -97,6 +102,8 @@ class Settings {
       settings.setString("seed_image", seedImage);
       settings.setInt("n_feedback_steps", nFeedbackSteps);
       settings.setBoolean("use_base_image", useBaseImage);
+
+      settings.setBoolean("use_apparatus", useApparatus);
 
       settings.setFloat("exposure_time", exposureTime);
 
@@ -139,6 +146,8 @@ class Settings {
       nFeedbackSteps = settings.getInt("n_feedback_steps");
       useBaseImage = settings.getBoolean("use_base_image");
 
+      useApparatus = settings.getBoolean("use_apparatus");
+
       exposureTime = settings.getFloat("exposure_time");
       
       modelName = settings.getString("model_name");
@@ -160,13 +169,14 @@ class Settings {
     // Initialize image.
     imageRectPoints[0] = new PVector(0.25*width, 0.25*height);
     imageRectPoints[1] = new PVector(0.75*width, 0.75*height);
+
     // Default values for parameters.
     oscReceivePort = 7001;
 
     oscRemoteIp = "127.0.0.1";
     oscSendPort = 7000;
 
-    oscApparatusRemoteIp = "192.168.0.255";
+    oscApparatusRemoteIp = "192.168.0.102";
     oscApparatusSendPort = 7000;
 
     cameraId = 0;
