@@ -1,5 +1,5 @@
 #include "osc.hpp"
-#include "pins.h.
+#include "pins.h"
 #include <WiFi.h>
 #include <OSCMessage.h>
 #include "xenolalia.h"
