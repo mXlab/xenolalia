@@ -1,12 +1,12 @@
 // Capture FSM state enum.
 enum State {
   INIT, 
-  NEW, 
-  REFRESH,
-  MAIN, 
-  FLASH, 
-  SNAPSHOT, 
-  WAIT_FOR_GLYPH
+    NEW, 
+    REFRESH, 
+    MAIN, 
+    FLASH, 
+    SNAPSHOT, 
+    WAIT_FOR_GLYPH
 }
 
 // This mode runs the generative process through interoperability
@@ -38,7 +38,7 @@ class GenerativeMode extends AbstractMode {
   final int FLASH_TIME = 6000;
   final int HANDSHAKE_TIMEOUT = 5000;
   final int CAM_FILTER_INTER_SNAPSHOT_TIME = 500;
-  final int CAM_FILTER_N_SNAPSHOTS = 10;
+  final int CAM_FILTER_N_SNAPSHOTS = 5;
 
   State state;
 
@@ -60,7 +60,7 @@ class GenerativeMode extends AbstractMode {
 
   boolean newState; // true when entering a new state
 
-  
+
   void setup() {
     transitionTo(State.INIT);
   }
@@ -74,7 +74,7 @@ class GenerativeMode extends AbstractMode {
     // INIT : Initialize everything upon entering generative mode and wait for xeno_osc.py to be ready.
     if (state == State.INIT) {
       background(255, 0, 0);
-      
+
       // Initialize everything.
       if (enteredState()) {
         neuronsReady = false;
@@ -111,7 +111,7 @@ class GenerativeMode extends AbstractMode {
         transitionTo(State.NEW);
       }
     }
-    
+
     // NEW experiment : Create new experiment and run a first capture loop to get base image.
     else if (state == State.NEW) {
       background(0, 255, 0);
@@ -159,13 +159,13 @@ class GenerativeMode extends AbstractMode {
 
     // FLASH : Set white background 
     else if (state == State.FLASH) {
-     
+
       if (enteredState()) {
         // Start timer.
         stateTimer = new Timer(FLASH_TIME);
         stateTimer.start();
       }
-      
+
       // Set color to flash.
       background(FLASH_COLOR);
 
@@ -187,7 +187,7 @@ class GenerativeMode extends AbstractMode {
         stateTimer = new Timer(CAM_FILTER_INTER_SNAPSHOT_TIME);
         stateTimer.start();
       }
-      
+
       if (cam.available()) {
         cam.read();
         if (stateTimer.isFinished()) {
@@ -195,23 +195,21 @@ class GenerativeMode extends AbstractMode {
           stateTimer.start();
         }
       }
-      
+
       if (camFilter.nImages() >= CAM_FILTER_N_SNAPSHOTS) {
         if (newExperimentStarted) {
           // Reset next glyph received flag.
           nextGlyphReceived = false;
-          
+
           // Take a snapshot.
           snapshot(false);
 
           // Wait for glyph.
           transitionTo(State.WAIT_FOR_GLYPH);
-        }
-        
-        else {
+        } else {
           // Take shot of base image.
           snapshot(true);
-          
+
           // Go directly to MAIN.
           transitionTo(State.MAIN);
         }
@@ -357,9 +355,10 @@ class GenerativeMode extends AbstractMode {
       // Record snapshot.
       baseImage = camFilter.getImage();
       baseImage.save(savePath("test_base_image.png"));
-    }
-    else
+    } else {
       experiment.recordSnapshot(camFilter.getImage());
+//      camFilter.saveImages(experiment);
+    }
   }
 
   // Called when generative script has responded to handshake.

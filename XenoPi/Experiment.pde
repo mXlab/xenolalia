@@ -47,11 +47,15 @@ class Experiment {
   String experimentDir() {
     return "snapshots/"+info.getUid();
   }
+  
+  int nSnapshots() {
+    return nSnapshots;
+  }
 
   // Saves snapshot to disk and sends OSC message to announce creation of new image.
   void recordSnapshot(PImage snapshot) {
     // Generate image paths.
-    String basename = "snapshot_"+nSnapshots+"_"+nf(elapsedTime(), 8);
+    String basename = "snapshot_"+nf(nSnapshots, 2)+"_"+nf(elapsedTime(), 8);
     String prefix = experimentDir()+"/"+basename;
 
     String rawImageFilename = savePath(prefix+"_raw.png");

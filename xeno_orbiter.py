@@ -77,6 +77,7 @@ client = udp_client.SimpleUDPClient(args.ip, args.send_port)
 # Allows program to end cleanly on a CTRL-C command.
 def interrupt(signup, frame):
     global client, server
+    import numpy as np
     print("Exiting program... {}".format(np.mean(perf_measurements)))
     client.send_message("/xeno/orbiter/end", [])
     server.server_close()

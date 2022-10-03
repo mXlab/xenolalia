@@ -64,8 +64,8 @@ boolean shiftPressed = false;
 
 void setup() {
   //2592x1944
-//  size(1184, 624, P2D);
-  fullScreen(P2D);
+  size(1184, 624, P2D);
+//  fullScreen(P2D, SPAN);
 
   // Load configuration file.
   settings = new Settings();
@@ -89,7 +89,7 @@ void setup() {
   // this will use the first recognized camera by default
   // NOTE: If you run into trouble you can try changing the object
   cam = new GLCaptureCam(this, devices[settings.cameraId()], settings.cameraWidth(), settings.cameraHeight());
-  //cam = new CaptureCam(this, devices[settings.cameraId()]);
+  //cam = new GLCaptureCam(this, devices[0], configs[0]);
 
   // you could be more specific also, e.g.
   //

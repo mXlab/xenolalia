@@ -86,8 +86,8 @@ void setup() {
   //size(480, 320, P2D);
   fullScreen(P2D);
 
-  capwidth = capheight = 320;
-  camviewwidth = camviewheight = 100;
+  capwidth = capheight = 384;
+  camviewwidth = camviewheight = 288;
 
   newImage = createImage(width, height, RGB);
   processedImage = createImage(capwidth, capheight, RGB);

@@ -11,7 +11,7 @@ class ImageFilter {
   final int MEDIAN_N_ITERATIONS = 20;
   
   ImageFilter() {
-    this(false);
+    this(true);
   }
 
   ImageFilter(boolean useAverage) {
@@ -145,9 +145,45 @@ class ImageFilter {
     return averageImg;
   }
   
+  PImage medianFilter3x3(PImage img) {
+    PImage medianImg = img.copy();
+
+    color[] pixel  = new color[9];
+    int[]   pixelR = new int[9];
+    int[]   pixelG = new int[9];
+    int[]   pixelB = new int[9];
+    
+    for (int i=1; i<img.width-1; i++)
+      for (int j=1; j<img.height-1; j++) {
+        pixel[0] = img.get(i-1,j-1);
+        pixel[1] = img.get(i-1,j);
+        pixel[2] = img.get(i-1,j+1);
+        pixel[3] = img.get(i,j+1);
+        pixel[4] = img.get(i+1,j+1);
+        pixel[5] = img.get(i+1,j);
+        pixel[6] = img.get(i+1,j-1);
+        pixel[7] = img.get(i,j-1);
+        pixel[8] = img.get(i,j);
+         
+        for (int k=0; k<9; k++) {
+          pixelR[k] = int(red(pixel[k]));
+          pixelG[k] = int(green(pixel[k]));
+          pixelB[k] = int(blue(pixel[k]));
+        }
+         
+        sort(pixelR);
+        sort(pixelG);
+        sort(pixelB);
+        
+        medianImg.set(i, j, color(pixelR[4], pixelG[4], pixelB[4]));
+      }
+      
+    return medianImg;
+  }
+  
   // Returns filtered image.
   PImage getImage() {
-    return useAverage ? getAverage() : getMedian();
+    return medianFilter3x3(useAverage ? getAverage() : getMedian());
   }
   
   // Internal use (for median approximation).
@@ -157,5 +193,12 @@ class ImageFilter {
     float diffB = blue(c1)  - (float)c2[2];
     return sqrt( sq(diffR) + sq(diffG) + sq(diffB) );
   }
-
+  
+  void saveImages(Experiment exp) {
+    String prefix = exp.experimentDir()+"/image_filter_"+nf(exp.nSnapshots(), 2)+"_";
+    for (int i=0; i<nImages(); i++) {
+      images.get(i).save( savePath(prefix + i + ".png") );
+    }
+  }
+  
 }

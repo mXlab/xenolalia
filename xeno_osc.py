@@ -186,7 +186,7 @@ orbiter_client = udp_client.SimpleUDPClient(args.orbiter_ip, args.orbiter_send_p
 # Allows program to end cleanly on a CTRL-C command.
 def interrupt(signup, frame):
     global xenopi_client, orbiter_client, server
-    print("Exiting program... {}".format(np.mean(perf_measurements)))
+    # print("Exiting program... {}".format(np.mean(perf_measurements)))
     send_message("/xeno/neurons/end")
     server.server_close()
     sys.exit()
