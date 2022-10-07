@@ -26,13 +26,13 @@ def round_up_to_odd(f):
 
 # Converts a PIL grayscale image to a numpy array in [0,1] with given shape.
 def image_to_array(img, input_shape):
-    return np.asarray(img).reshape(input_shape) / 255.0
+    return np.asarray(img.convert('L')).reshape(input_shape) / 255.0
 
 # Converts a numpy array received from the neural network with all values in [0,1] to PIL grayscale image.
 def array_to_image(arr, width, height):
     return Image.fromarray(arr.reshape((width, height)) * 255.0).convert('L')
 
-def create_mask(image):
+def create_mask(image, invert=False):
     return Image.open("xeno_mask.png").convert('RGBA').resize(image.size)
 
 # Returns image resulting from subtraction of image from base_image.
@@ -46,9 +46,12 @@ def transform(image, input_quad):
     square_side = max(w, h)
     return image.transform((square_side, square_side), Image.QUAD, input_quad_abs)
 
-def add_mask(image):
-    # Apply mask to alleviate border flares / artefacts.
-    return Image.alpha_composite(image.convert('RGBA'), create_mask(image).convert('RGBA'))
+# Apply mask to alleviate border flares / artefacts.
+def add_mask(image, invert=False):
+    if invert:
+        return ImageOps.invert(add_mask(ImageOps.invert(image)))
+    else:
+        return Image.alpha_composite(image.convert('RGBA'), create_mask(image)).convert('RGB')
 
 # Apply different kinds of filterings to image in order to enhance its shape.
 def enhance(image):
