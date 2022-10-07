@@ -80,7 +80,7 @@ def resize_square_images(image_list, image_side=480):
 # Extract timestamp from snapshot file.
 # Example: snapshot_file_get_timestamp("/path/to/2019-08-02_17:23:28_604889_pro.png") returns "604889"
 def snapshot_file_get_timestamp(path):
-    return path.split('/')[1].split('_')[2]
+    return path.split('/')[-1].split('_')[2]
 
 # Returns list of images in folder that correspond to a certain pattern, ordered according to timestamp.
 def get_ordered_snapshot_images(folder, pattern):
@@ -105,8 +105,8 @@ def get_raw_images(experiment_folder, gif_file_side, input_quad, fit_in_circle=F
     raw_transformed_images = []
     for img in raw_images:
         __, __, __, __, __, rt = xi.process_image(img, base_image, image_side=28, input_quad=input_quad)
-        if fit_in_circle:
-            rt = xi.add_mask(rt)
+        # if fit_in_circle:
+        #     rt = xi.add_mask(rt)
         raw_transformed_images.append(rt)
     return resize_square_images(raw_images, gif_file_side), resize_square_images(raw_transformed_images, gif_file_side)
 
@@ -144,13 +144,13 @@ def experiment_to_gif(experiment_folder, gif_file_name, mode, gif_file_side=480,
         image_list = ann_frames
     elif mode == "raw":
         image_list = raw_frames
-    elif mode == "raw_transformed":
+    elif mode == "bio":
         image_list = raw_transformed_frames
-    elif mode == "ann_raw_transformed_concatenated":
+    elif mode == "ann_bio_cat":
         image_list = []
         for i in range(len(ann_frames) - 1):
             image_list.append(concatenate_horizontal(ann_frames[i], raw_transformed_frames[i]))
-    elif mode == "ann_raw_transformed_sequence":
+    elif mode == "ann_bio_seq":
         image_list = []
         for i in range(len(ann_frames) - 1):
             image_list.append(ann_frames[i])
@@ -175,7 +175,7 @@ if __name__ == "__main__":
     parser.add_argument("experiment_folder", type=str, help="Root folder of experiment")
     parser.add_argument("output_gif_file", type=str, help="Output GIF file")
 
-    parser.add_argument("-m", "--mode", type=str, default="raw_transformed", help="Animation mode")
+    parser.add_argument("-m", "--mode", type=str, default="bio", help="Animation mode")
     parser.add_argument("-i", "--image-side", type=int, default=480, help="Pixel dimension of side (square image)")
     parser.add_argument("-fps", "--frames-per-second", type=float, default=5.0, help="Number of frames/images per second")
     parser.add_argument("-b", "--ann-background", type=tuple_type, default="0,0,0", help="RGB color of background (ANN images)")
