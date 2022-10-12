@@ -155,16 +155,17 @@ function set_tags($uids, $tags, &$error) {
 // Returns images of a certain type in given directory.
 function get_images($dir) {
   $images = array();
-  foreach (glob("$dir/*.png") as $img) {
+  foreach (glob("$dir/snapshot_*.png") as $img) {
     // Append image info to images array.
     $image_info = get_image_info($img);
     if (!isset($images[$image_info->step])) {
-      $images[$image_info->step] = array('time' => $image_info->time);
+      $images[(int)$image_info->step] = array('time' => $image_info->time);
     }
-    $images[$image_info->step][$image_info->type] = $image_info->path;
+    $images[(int)$image_info->step][$image_info->type] = $image_info->path;
   }
 
-  return $images;
+  // Re-index array.
+  return array_values($images);
 }
 
 function get_image_info($img) {
