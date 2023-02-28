@@ -128,7 +128,7 @@ def crossfade(image_list, crossfade_steps=10):
 # "ann_raw_transformed_concatenated" : animated sequence intermixing ANN and raw transformed images side by side
 # "ann_raw_transformed_sequence" : animated sequence intermixing ANN and raw transformed images one after the other
 def experiment_to_gif(experiment_folder, gif_file_name, mode, gif_file_side=480, fps=5.0, ann_background=(0, 0, 0),
-                      ann_foreground=(255, 255, 255), input_quad=None, fit_in_circle=False):
+                      ann_foreground=(255, 255, 255), input_quad=None, fit_in_circle=False, add_mask=False):
     # Get input quad.
     if input_quad is None:
         import json
@@ -195,6 +195,8 @@ if __name__ == "__main__":
 
     parser.add_argument("-c", "--fit-in-circle", default=False, action='store_true', help="Append border to generated images so that they fit inside a circular mask")
 
+    parser.add_argument("--add-mask", default=False, action='store_true', help="Add mask to generated images")
+
     args = parser.parse_args()
 
     # Load input quad
@@ -204,4 +206,4 @@ if __name__ == "__main__":
         input_quad = load_settings("{}/settings.json".format(args.experiment_folder))
 
     # Create GIF.
-    experiment_to_gif(args.experiment_folder, args.output_gif_file, args.mode, gif_file_side=args.image_side, fps=args.frames_per_second, ann_background=args.ann_background, ann_foreground=args.ann_foreground, input_quad=input_quad, fit_in_circle=args.fit_in_circle)
+    experiment_to_gif(args.experiment_folder, args.output_gif_file, args.mode, gif_file_side=args.image_side, fps=args.frames_per_second, ann_background=args.ann_background, ann_foreground=args.ann_foreground, input_quad=input_quad, fit_in_circle=args.fit_in_circle, add_mask=args.add_mask)
