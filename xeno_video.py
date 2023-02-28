@@ -140,25 +140,35 @@ def experiment_to_gif(experiment_folder, gif_file_name, mode, gif_file_side=480,
     ann_frames = get_ann_images(experiment_folder, gif_file_side, ann_background, ann_foreground, fit_in_circle=fit_in_circle)
     raw_frames, raw_transformed_frames = get_raw_images(experiment_folder, gif_file_side, input_quad, fit_in_circle=fit_in_circle)
 
-    if mode == "ann":
-        image_list = ann_frames
-    elif mode == "raw":
-        image_list = raw_frames
-    elif mode == "bio":
-        image_list = raw_transformed_frames
-    elif mode == "ann_bio_cat":
-        image_list = []
-        for i in range(len(ann_frames) - 1):
-            image_list.append(concatenate_horizontal(ann_frames[i], raw_transformed_frames[i]))
-    elif mode == "ann_bio_seq":
-        image_list = []
-        for i in range(len(ann_frames) - 1):
-            image_list.append(ann_frames[i])
-            image_list.append(raw_transformed_frames[i])
-        image_list = crossfade(image_list, 20)
-        fps *= 20
+    if mode.endswith("single"):
+        if mode == "ann_single":
+            image = ann_frames[-1]
+        elif mode == "raw_single":
+            image = raw_frames[-1]
+        elif mode == "bio_single":
+            image = raw_transformed_frames[-1]
 
-    save_images_as_animation(image_list, gif_file_name, fps=fps)
+        image.save(gif_file_name)
+    else:
+        if mode == "ann":
+            image_list = ann_frames
+        elif mode == "raw":
+            image_list = raw_frames
+        elif mode == "bio":
+            image_list = raw_transformed_frames
+        elif mode == "ann_bio_cat":
+            image_list = []
+            for i in range(len(ann_frames) - 1):
+                image_list.append(concatenate_horizontal(ann_frames[i], raw_transformed_frames[i]))
+        elif mode == "ann_bio_seq":
+            image_list = []
+            for i in range(len(ann_frames) - 1):
+                image_list.append(ann_frames[i])
+                image_list.append(raw_transformed_frames[i])
+            image_list = crossfade(image_list, 20)
+            fps *= 20
+
+        save_images_as_animation(image_list, gif_file_name, fps=fps)
 
 
 if __name__ == "__main__":
