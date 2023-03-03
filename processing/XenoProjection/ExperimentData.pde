@@ -1,6 +1,7 @@
 import java.io.*;
 import java.util.*;
 
+
 class ExperimentData {
   String uid;
   String directory;
@@ -14,14 +15,13 @@ class ExperimentData {
   ExperimentData(String uid) {
     this.uid = uid;
     this.directory = DATA_DIR + this.uid;
-    println(this.directory);
     refresh();
   }
   
   // Lists file names that correspond to specified type.
   ArrayList<String> listFiles(String type) {
     // Get files that correspond to type.
-    File[] files = new File(this.directory).listFiles(new FilenameFilter() { //<>// //<>//
+    File[] files = new File(this.directory).listFiles(new FilenameFilter() { //<>//
       public boolean accept(File dir, String name) {
         return name.matches(".*_" + type + "_[0-9]*.png");
       }
@@ -55,10 +55,19 @@ class ExperimentData {
   
   PImage getImage(int i) {
     boolean indexIsEven = (i % 2 == 0);
-    if (startsWithArtificial)
-      return indexIsEven ? getArtificial(i / 2) : getBiological((i+1) / 2);
+    if (startsWithArtificial) //<>//
+      return indexIsEven ? getArtificial(i / 2) : getBiological(i / 2);
     else
-      return indexIsEven ? getBiological(i / 2) : getArtificial((i+1) / 2);
+      return indexIsEven ? getBiological(i / 2) : getArtificial(i / 2);
+  }
+  
+  PImage getImage(int i, DataType type) {
+    switch (type) {
+      case ARTIFICIAL: return getArtificial(i);
+      case BIOLOGICAL: return getBiological(i);
+      case ALL:        return getImage(i);
+    }
+    return null;
   }
   
   PImage getLastArtificial() { return getArtificial(-1); }
@@ -68,7 +77,7 @@ class ExperimentData {
     if (index < 0)
       index = filenames.size() + index;
     
-    return manager.getImage(filenames.get(index));
+    return manager.getImage(filenames.get(index)); //<>//
   }
    
   

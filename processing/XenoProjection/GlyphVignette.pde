@@ -3,16 +3,20 @@ class GlyphVignette extends Vignette {
   PImage img;
 
   GlyphVignette(ExperimentData exp) {
-    this(exp, false, -1);
+    this(exp, DataType.ALL, -1);
   }
 
-  GlyphVignette(ExperimentData exp, boolean useArtificial) {
-    this(exp, useArtificial, -1);
+  GlyphVignette(ExperimentData exp, int index) {
+    this(exp, DataType.ALL, index);
   }
 
-  GlyphVignette(ExperimentData exp, boolean useArtificial, int index) {
+  GlyphVignette(ExperimentData exp, DataType type) {
+    this(exp, type, -1);
+  }
+
+  GlyphVignette(ExperimentData exp, DataType type, int index) {
     super(exp);
-    img = useArtificial ? exp.getArtificial(index) : exp.getBiological(index);
+    img = exp.getImage(index, type);
   }
   
   void doDisplay() {
