@@ -3,7 +3,7 @@ class GlyphVignette extends Vignette {
   PImage img;
 
   GlyphVignette(ExperimentData exp) {
-    this(exp, DataType.ALL, -1);
+    this(exp, -1);
   }
 
   GlyphVignette(ExperimentData exp, int index) {

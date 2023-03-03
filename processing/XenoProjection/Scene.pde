@@ -14,7 +14,6 @@ class Scene {
   float vignetteSide;
 
   Timer timer;
-  DisplayMode displayMode;
 
   Scene(int nColumns, int nRows) {
     this.nColumns = nColumns;
@@ -28,16 +27,11 @@ class Scene {
 
     vignetteSide = (nRows * fullWidthSide <= HEIGHT ? fullWidthSide : fullHeightSide);
 
-    displayMode = DisplayMode.DEFAULT;
     timer = new Timer(TOTAL_DURATION);
 
     pg = createGraphics(round(vignetteSide*nColumns), round(vignetteSide*nRows));
 
     reset();
-  }
-
-  void setDisplayMode(DisplayMode displayMode) {
-    this.displayMode = displayMode;
   }
 
   int nVignettes() {
