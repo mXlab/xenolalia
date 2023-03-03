@@ -1,9 +1,13 @@
 abstract class Vignette {
 
+  final float VIGNETTE_RADIUS = 0.5f * VIGNETTE_SIDE;
+
   PGraphics pg;
   ExperimentData exp;
   
   PGraphics mask;
+  
+  float side;
 
   Vignette(ExperimentData exp) {
     pg = createGraphics(VIGNETTE_SIDE, VIGNETTE_SIDE);
@@ -11,23 +15,42 @@ abstract class Vignette {
     mask = null;
   }
   
+  void addMask(color maskColor) {
+    addMask(maskColor, 0.9);
+  }
+  
   void addMask(color maskColor, float transparencyRadius) {
-    color transparentColor = maskColor;
-    final float VIGNETTE_RADIUS = VIGNETTE_SIDE * 0.5;
+    // Create a graycale transparency mask.
+    PGraphics alphaMask = createGraphics(VIGNETTE_SIDE, VIGNETTE_SIDE); //<>//
+    alphaMask.beginDraw();
+    alphaMask.background(255);
+    alphaMask.noStroke();
+    
+    // Draw concentric circles for gradient.
+    float radiusBegin = transparencyRadius * VIGNETTE_RADIUS;
+    float radiusEnd   = VIGNETTE_RADIUS;
+    for (float r=radiusEnd; r>radiusBegin; r--) {
+      float alpha = map(r, radiusBegin, radiusEnd, 0, 255);
+      alphaMask.fill(alpha);
+      alphaMask.circle(VIGNETTE_RADIUS, VIGNETTE_RADIUS, 2*r);  
+    }
+    
+    // Draw final full white/transparent circle.
+    alphaMask.fill(0);
+    alphaMask.circle(VIGNETTE_RADIUS, VIGNETTE_RADIUS, 2*radiusBegin);
+
+    alphaMask.endDraw();
+    
     mask = createGraphics(VIGNETTE_SIDE, VIGNETTE_SIDE);
     mask.beginDraw();
     mask.background(maskColor);
-    float radiusBegin = transparencyRadius * VIGNETTE_SIDE;
-    float radiusEnd   = VIGNETTE_RADIUS;
-    for (float r=radiusBegin; r<radiusEnd; r++) {
-      float alpha = map(r, radiusBegin, radiusEnd, 0, 255);
-      mask.fill(maskColor.red(), maskColor.green(), maskColor.blue(), alpha);
-      mask.circle(VIGNETTE_RADIUS, VIGNETTE_RADIUS, 2*r);
-    }
+    mask.mask(alphaMask);
     mask.endDraw();
   }
   
-  void removeMask() { mask = null; }
+  void removeMask() {
+    mask = null; 
+  }
 
   boolean hasMask() { return mask != null; }
   
@@ -36,8 +59,16 @@ abstract class Vignette {
 
   void display(float x, float y, float side) {
     pg.beginDraw();
+    
+    // Call child class display function.
     doDisplay();
+    
+    // Add mask.
+    if (hasMask())
+      pg.image(mask, 0, 0);
     pg.endDraw();
+    
+    // Dislay graphics.
     image(pg, x, y, side, side);
   }
   

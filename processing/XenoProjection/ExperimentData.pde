@@ -10,7 +10,6 @@ class ExperimentData {
   ArrayList<String> artificialImageFilenames;
   ArrayList<String> biologicalImageFilenames;
   
-  Map<String, PImage> imageCache = new HashMap<String, PImage>();
   
   ExperimentData(String uid) {
     this.uid = uid;
@@ -21,8 +20,8 @@ class ExperimentData {
   
   // Lists file names that correspond to specified type.
   ArrayList<String> listFiles(String type) {
-    // Get files that correspond to type. //<>//
-    File[] files = new File(this.directory).listFiles(new FilenameFilter() {
+    // Get files that correspond to type.
+    File[] files = new File(this.directory).listFiles(new FilenameFilter() { //<>// //<>//
       public boolean accept(File dir, String name) {
         return name.matches(".*_" + type + "_[0-9]*.png");
       }
@@ -65,21 +64,11 @@ class ExperimentData {
   PImage getLastArtificial() { return getArtificial(-1); }
   PImage getLastBiological() { return getBiological(-1); }
 
-  PImage _loadImage(String imageFilename) {
-    println(imageFilename);
-    return loadImage(imageFilename);
-
-//    if (!imageCache.containsKey(imageFilename))
-//      return imageCache.put(imageFilename, loadImage(imageFilename));
-//    else
-//      return imageCache.get(imageFilename);
-  }
-  
   PImage _getImage(int index, ArrayList<String> filenames) {
     if (index < 0)
       index = filenames.size() + index;
     
-    return _loadImage(filenames.get(index));
+    return manager.getImage(filenames.get(index));
   }
    
   
