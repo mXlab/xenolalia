@@ -1,26 +1,23 @@
-class GlyphVignette extends Vignette {
-  
+class GlyphVignette extends Vignette { //<>//
+
   PImage img;
 
+  int index;
+
   GlyphVignette(ExperimentData exp) {
-    this(exp, -1);
-  }
-
-  GlyphVignette(ExperimentData exp, int index) {
-    this(exp, DataType.ALL, index);
-  }
-
-  GlyphVignette(ExperimentData exp, DataType type) {
-    this(exp, type, -1);
-  }
-
-  GlyphVignette(ExperimentData exp, DataType type, int index) {
     super(exp);
-    img = exp.getImage(index, type);
-  }
-  
-  void doDisplay() {
-     pg.image(img, 0, 0, VIGNETTE_SIDE, VIGNETTE_SIDE); //<>//
+    this.index = -1;
   }
 
+  void setIndex(int index) {
+    this.index = index;
+  }
+
+  void build() {
+    img = exp.getImage(index, type, palette);
+  }
+
+  void doDisplay() {
+    pg.image(img, 0, 0, VIGNETTE_SIDE, VIGNETTE_SIDE);
+  }
 }

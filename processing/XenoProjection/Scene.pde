@@ -1,13 +1,16 @@
 class Scene {
 
+  //final int RUN_DURATION = 15000;
+  //final int END_DURATION =  5000;
   final int RUN_DURATION = 15000;
   final int END_DURATION =  5000;
+
   final int TOTAL_DURATION = RUN_DURATION + END_DURATION;
   final float RUN_DURATION_PROPORTION = RUN_DURATION / (float)TOTAL_DURATION;
   
   int nColumns;
   int nRows;
-
+  
   Vignette[] vignettes;
 
   PGraphics pg;
@@ -46,11 +49,12 @@ class Scene {
   }
 
   void putVignette(int c, int r, Vignette v) {
-    vignettes[_getIndex(c, r)] = v;
+    putVignette(_getIndex(c, r), v);
   }
 
   void putVignette(int i, Vignette v) {
     vignettes[i] = v;
+    v.setScene(this);
   }
 
   Vignette getVignette(int c, int r) {
@@ -82,7 +86,8 @@ class Scene {
   }
 
   void doDisplay() {
-    imageMode(CORNER);
+    pg.background(255);
+    pg.imageMode(CORNER);
     int k=0;
     for (int r=0; r<nRows; r++) {
       for (int c=0; c<nColumns; c++, k++) {
@@ -91,6 +96,10 @@ class Scene {
       }
     }
   }
+  
+  float progress() { return timer.progress(); }
+  float runProgress() { return min(timer.passedTime() / (float)RUN_DURATION, 1.0); }
+  float endProgress() { return constrain((timer.passedTime() - RUN_DURATION) / END_DURATION, 0.0, 1.0); }
 
   boolean isFinished() {
     return timer.isFinished();

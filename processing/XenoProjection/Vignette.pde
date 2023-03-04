@@ -36,23 +36,28 @@ PImage createVignetteMask(color maskColor, float transparencyRadius) {
 
 abstract class Vignette {
 
-
   PGraphics pg;
   ExperimentData exp;
+  Scene scene;
 
   PImage mask;
 
   float side;
 
+  DataType type;
+  ArtificialPalette palette;
 
   Vignette(ExperimentData exp) {
-    this(exp, null);
-  }
-
-  Vignette(ExperimentData exp, PImage mask) {
     pg = createGraphics(VIGNETTE_SIDE, VIGNETTE_SIDE);
+    this.scene = null;
     this.exp = exp;
-    this.mask = mask;
+    this.mask = DEFAULT_MASK;
+    this.type = DataType.ALL;
+    this.palette = ArtificialPalette.WHITE;
+  }
+  
+  void setScene(Scene scene) {
+    this.scene = scene;
   }
 
   void addMask(PImage mask) {
@@ -65,6 +70,14 @@ abstract class Vignette {
 
   boolean hasMask() {
     return mask != null;
+  }
+
+  void setDataType(DataType type) {
+    this.type = type;
+  }
+
+  void setArtificialPalette(ArtificialPalette palette) {
+    this.palette = palette;
   }
 
   void build() {
