@@ -5,7 +5,6 @@ class SequentialScene extends Scene {
   }
 
   void doDisplay() {
-    pg.background(255);
     pg.imageMode(CORNER);
     int k=0;
     for (int r=0; r<nRows; r++) {

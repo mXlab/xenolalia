@@ -18,6 +18,9 @@ class GlyphVignette extends Vignette { //<>//
   }
 
   void doDisplay() {
+//    pg.stroke(255);
+    pg.ellipseMode(CORNER);
     pg.image(img, 0, 0, VIGNETTE_SIDE, VIGNETTE_SIDE);
+    //pg.circle(0, 0, VIGNETTE_SIDE);
   }
 }

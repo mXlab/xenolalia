@@ -8,6 +8,8 @@ class Scene {
   final int TOTAL_DURATION = RUN_DURATION + END_DURATION;
   final float RUN_DURATION_PROPORTION = RUN_DURATION / (float)TOTAL_DURATION;
   
+  color background;
+  
   int nColumns;
   int nRows;
   
@@ -34,6 +36,8 @@ class Scene {
 
     pg = createGraphics(round(vignetteSide*nColumns), round(vignetteSide*nRows));
 
+    background = 0;
+    
     reset();
   }
 
@@ -44,10 +48,15 @@ class Scene {
   int nColumns() {
     return nColumns;
   }
+
   int nRows() {
     return nRows;
   }
 
+  void setBackground(color background) {
+    this.background = background;
+  }
+    
   void putVignette(int c, int r, Vignette v) {
     putVignette(_getIndex(c, r), v);
   }
@@ -70,8 +79,10 @@ class Scene {
 
   void display() {
     pg.beginDraw();
+    pg.smooth();
 
     // Call child class display function.
+    pg.background(background);
     doDisplay();
 
     pg.endDraw();
@@ -80,19 +91,19 @@ class Scene {
     imageMode(CENTER);
     rectMode(CENTER);
     noStroke();
-    fill(255);
+    fill(background);
     rect(width/2, height/2, WIDTH, HEIGHT);
     image(pg, width/2, height/2);
   }
 
   void doDisplay() {
-    pg.background(255);
     pg.imageMode(CORNER);
     int k=0;
     for (int r=0; r<nRows; r++) {
       for (int c=0; c<nColumns; c++, k++) {
         Vignette v = getVignette(c, r);
-        v.display(c*vignetteSide, r*vignetteSide, vignetteSide, pg);
+        if (v != null)
+          v.display(c*vignetteSide, r*vignetteSide, vignetteSide, pg);
       }
     }
   }

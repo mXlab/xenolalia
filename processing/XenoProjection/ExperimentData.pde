@@ -1,6 +1,13 @@
 import java.io.*;
 import java.util.*;
 
+ExperimentData[] loadExperiments(String filename) {
+  String[] experimentUids = loadStrings(filename);
+  ExperimentData[] experiments = new ExperimentData[experimentUids.length];
+  for (int i=0; i<experiments.length; i++)
+    experiments[i] = new ExperimentData(experimentUids[i]);
+  return experiments;
+}
 
 class ExperimentData {
   String uid;
@@ -14,14 +21,14 @@ class ExperimentData {
   ExperimentData(String uid) {
     this.uid = uid;
     this.directory = DATA_DIR + this.uid;
-    refresh();
+    refresh(); //<>//
   }
   
   // Lists file names that correspond to specified type.
   ArrayList<String> listFiles(String type) {
     // Get files that correspond to type.
     File[] files = new File(this.directory).listFiles(new FilenameFilter() {
-      public boolean accept(File dir, String name) { //<>//
+      public boolean accept(File dir, String name) {
         return name.matches(".*_" + type + "_[0-9]*.png");
       }
     });
@@ -48,14 +55,14 @@ class ExperimentData {
   int nBiological() { return biologicalImageFilenames.size(); }
   int nImages() { return nArtificial() + nBiological(); }
   int nImages(DataType type) {
-    switch (type) {
+    switch (type) { //<>//
       case ARTIFICIAL: return nArtificial();
       case BIOLOGICAL: return nBiological();
       case ALL:        return nImages();
     }
     return 0;
   }
-   //<>//
+  
   PImage getArtificial(int i, ArtificialPalette palette) {
     PImage img = _getImage(i, artificialImageFilenames);
     PGraphics pg = createGraphics(img.width, img.height);

@@ -44,6 +44,10 @@ abstract class Vignette {
 
   float side;
 
+  color borderColor;
+  float borderWeight;
+  boolean useBorder;
+
   DataType type;
   ArtificialPalette palette;
 
@@ -53,11 +57,23 @@ abstract class Vignette {
     this.exp = exp;
     this.mask = DEFAULT_MASK;
     this.type = DataType.ALL;
+    this.useBorder = true;
+    this.borderColor = color(64);
+    this.borderWeight = 4;
     this.palette = ArtificialPalette.WHITE;
   }
-  
+
   void setScene(Scene scene) {
     this.scene = scene;
+  }
+
+  void noBorder() {
+    useBorder = false;
+  }
+
+  void setBorder(color borderColor, float borderWeight) {
+    this.borderColor = borderColor;
+    this.borderWeight = borderWeight;
   }
 
   void addMask(PImage mask) {
@@ -85,6 +101,7 @@ abstract class Vignette {
 
   void display(float x, float y, float side, PGraphics pgTarget) {
     pg.beginDraw();
+    pg.smooth();
 
     // Call child class display function.
     doDisplay();
@@ -92,10 +109,20 @@ abstract class Vignette {
     // Add mask.
     if (hasMask())
       pg.image(mask, 0, 0);
+
     pg.endDraw();
 
     // Dislay graphics.
     pgTarget.image(pg, x, y, side, side);
+
+    // Add border.
+    if (useBorder) {
+      pgTarget.ellipseMode(CENTER);
+      pgTarget.stroke(borderColor);
+      pgTarget.strokeWeight(borderWeight);
+      pgTarget.fill(0, 0);
+      pgTarget.circle(x+side/2, y+side/2, side - 2*borderWeight);
+    }
   }
 
   void doDisplay() {
