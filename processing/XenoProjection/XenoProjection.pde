@@ -1,17 +1,14 @@
 final String DATA_DIR = "/home/sofian/Desktop/xenolalia/contents/"; //<>//
 final int VIGNETTE_SIDE = 480;
 
-final int WIDTH  = 1920;
-final int HEIGHT = 600;
-
 PImage DEFAULT_MASK;
 
 DataManager manager = new DataManager();
 SceneManager scenes = new SceneManager();
 
 void setup() {
-  //size(1920, 1080, P2D);
-  fullScreen(P2D);
+  size(1920, 1080, P2D);
+  //fullScreen(P2D);
 
   smooth();
   DEFAULT_MASK = createVignetteMask(0);
@@ -23,7 +20,7 @@ void setup() {
   // Single artificial image of current experiment (image on apparatus).
   if (true)
   {
-    Scene scene = new Scene(1, 1);
+    Scene scene = new Scene(1, 1, createRect(0, 0.5, 1, 0.5));
     GlyphVignette v = new GlyphVignette(currentExperiment);
     v.setArtificialPalette(ArtificialPalette.MAGENTA);
     v.setDataType(DataType.ARTIFICIAL);
@@ -98,34 +95,11 @@ void setup() {
     }
     scenes.add(scene);
   }
+  
 }
 
 void draw() {
   background(0);
-  //ExperimentData currentExperiment = new ExperimentData("2022-10-07_13:53:30_hexagram-uqam-2022_nodepi-02");
-
-  //float t = map(mouseX, 0, width, 0, 1);
-  //println(t);
-
-
-  //PImage test;
-
-  ////PImage test = currentExperiment.getLastBiological();
-  ////image(currentExperiment.getLastBiological(), 0, 0);
-  //if (keyPressed) {
-
-  //  if (key == 'a')
-  //    test = currentExperiment.getLastArtificial();
-  //  else if (key == 'b')
-  //    test = currentExperiment.getLastBiological();
-  //  else
-  //    test = lerpImage(currentExperiment.getLastArtificial().copy(),
-  //      currentExperiment.getLastBiological().copy(), t);
-
-  //  image(test, 0, 0, width, height);
-  //}
-
-
 
   if (scenes.currentScene().isFinished())
     scenes.nextScene();

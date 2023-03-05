@@ -1,7 +1,11 @@
 class SequentialScene extends Scene {
 
   SequentialScene(int nImages, int maxImagesPerRow) {
-    super(min(nImages, maxImagesPerRow), ceil(nImages / (float)min(nImages, maxImagesPerRow)));
+    this(nImages, maxImagesPerRow, new Rect(width, height));
+  }
+  
+  SequentialScene(int nImages, int maxImagesPerRow, Rect boundingRect) {
+    super(min(nImages, maxImagesPerRow), ceil(nImages / (float)min(nImages, maxImagesPerRow)), boundingRect);
   }
 
   void doDisplay() {

@@ -13,6 +13,8 @@ class Scene {
   int nColumns;
   int nRows;
   
+  Rect boundingRect;
+  
   Vignette[] vignettes;
 
   PGraphics pg;
@@ -21,16 +23,21 @@ class Scene {
   Timer timer;
 
   Scene(int nColumns, int nRows) {
+    this(nColumns, nRows, new Rect());
+  }
+  
+  Scene(int nColumns, int nRows, Rect boundingRect) {
     this.nColumns = nColumns;
     this.nRows = nRows;
+    this.boundingRect = boundingRect;
 
     vignettes = new Vignette[nColumns*nRows];
 
     // Find best proportions for graphics.
-    float fullWidthSide  = WIDTH  / (float)nColumns;
-    float fullHeightSide = HEIGHT / (float)nRows;
+    float fullWidthSide  = boundingRect.w / (float)nColumns;
+    float fullHeightSide = boundingRect.h / (float)nRows;
 
-    vignetteSide = (nRows * fullWidthSide <= HEIGHT ? fullWidthSide : fullHeightSide);
+    vignetteSide = (nRows * fullWidthSide <= boundingRect.h ? fullWidthSide : fullHeightSide);
 
     timer = new Timer(TOTAL_DURATION);
 
@@ -40,7 +47,7 @@ class Scene {
     
     reset();
   }
-
+  
   int nVignettes() {
     return vignettes.length;
   }
@@ -87,13 +94,28 @@ class Scene {
 
     pg.endDraw();
 
-    // Dislay graphics.
+    // Dislay graphics on main window.
     imageMode(CENTER);
     rectMode(CENTER);
     noStroke();
     fill(background);
-    rect(width/2, height/2, WIDTH, HEIGHT);
-    image(pg, width/2, height/2);
+    rect(boundingRect.x, boundingRect.y, boundingRect.w, boundingRect.h);
+    image(pg, boundingRect.x, boundingRect.y);
+    
+    // Displays the bounding rectangle, for adjustment purposes.
+    if (keyPressed && key == ' ') {
+      stroke(0, 0, 255);
+      strokeWeight(2);
+      fill(0, 0);
+      ellipseMode(CENTER);
+      rect(boundingRect.x, boundingRect.y, boundingRect.w, boundingRect.h);
+      println(boundingRect.x, boundingRect.y, boundingRect.w, boundingRect.h);
+      float crosshairRadius = min(height/20, 80);
+      //circle(boundingRect.x, boundingRect.y, crosshairRadius*2);
+      line(boundingRect.x-crosshairRadius, boundingRect.y, boundingRect.x+crosshairRadius, boundingRect.y);
+      line(boundingRect.x, boundingRect.y-crosshairRadius, boundingRect.x, boundingRect.y+crosshairRadius);
+
+    }
   }
 
   void doDisplay() {
