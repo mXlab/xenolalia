@@ -197,6 +197,15 @@ sudo /etc/cron.hourly/xeno_sync_snapshots
 ```
 The web-app can be access here: http://xenodata.sofianaudry.com/
 
+# Default IP Addresses & Ports
+
+| IP          | Machine              | Programs & OSC input ports|
+|-------------|----------------------|---------------------------|
+|192.168.0.**100**|xenopc            |xeno_server.py (7000), XenoProjection (7001)|
+|192.168.0.**101**|Xenopi (RPi)      |xeno_osc.py (7000), XenoPi (7001), xeno_orbiter.py (7002)|
+|192.168.0.**102**|Apparatus (ESP32) |XenolaliaApparatus (7000)|
+|192.168.0.**103**|Xenoscope (RPi)   |Xenoscope (n/a)|
+
 # Troubleshooting
 
 ## Processing crashes with OpenGL errors
