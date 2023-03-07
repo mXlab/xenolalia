@@ -19,10 +19,20 @@ class ExperimentData {
   ArrayList<String> biologicalImageFilenames;
   
   ExperimentData(String uid) {
+    reload(uid);
+  } //<>//
+  
+  ExperimentData copy() {
+    return new ExperimentData(this.uid);
+  }
+  
+  void reload(String uid) {
     this.uid = uid;
     this.directory = DATA_DIR + this.uid;
-    refresh(); //<>//
+    refresh();
   }
+  
+  String getUid() { return uid; }
   
   // Lists file names that correspond to specified type.
   ArrayList<String> listFiles(String type) {
@@ -115,6 +125,5 @@ class ExperimentData {
     
     return manager.getImage(filenames.get(index)); //<>//
   }
-   
-  
+    
 }

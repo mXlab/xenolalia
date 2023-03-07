@@ -127,4 +127,5 @@ abstract class Vignette {
 
   void doDisplay() {
   }
+  
 }

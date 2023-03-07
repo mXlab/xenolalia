@@ -7,6 +7,10 @@ class SequentialScene extends Scene {
   SequentialScene(int nImages, int maxImagesPerRow, Rect boundingRect) {
     super(min(nImages, maxImagesPerRow), ceil(nImages / (float)min(nImages, maxImagesPerRow)), boundingRect);
   }
+  
+  //void initSequence(int nImages, int maxImagesPerRow) {
+  //  init(min(nImages, maxImagesPerRow), ceil(nImages / (float)min(nImages, maxImagesPerRow)));
+  //}
 
   void doDisplay() {
     pg.imageMode(CORNER);

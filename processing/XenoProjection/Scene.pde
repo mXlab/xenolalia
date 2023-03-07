@@ -2,8 +2,8 @@ class Scene {
 
   //final int RUN_DURATION = 15000;
   //final int END_DURATION =  5000;
-  final int RUN_DURATION = 15000;
-  final int END_DURATION =  5000;
+  final int RUN_DURATION = 1000;
+  final int END_DURATION =  500;
 
   final int TOTAL_DURATION = RUN_DURATION + END_DURATION;
   final float RUN_DURATION_PROPORTION = RUN_DURATION / (float)TOTAL_DURATION;
@@ -21,16 +21,24 @@ class Scene {
   float vignetteSide;
 
   Timer timer;
+  
+  boolean needsRefresh;
 
   Scene(int nColumns, int nRows) {
     this(nColumns, nRows, new Rect());
   }
   
   Scene(int nColumns, int nRows, Rect boundingRect) {
+    this.boundingRect = boundingRect;
+    timer = new Timer(TOTAL_DURATION);
+    background = 0;
+    init(nColumns, nRows);
+  }
+  
+  void init(int nColumns, int nRows) {
     this.nColumns = nColumns;
     this.nRows = nRows;
-    this.boundingRect = boundingRect;
-
+    
     vignettes = new Vignette[nColumns*nRows];
 
     // Find best proportions for graphics.
@@ -39,12 +47,8 @@ class Scene {
 
     vignetteSide = (nRows * fullWidthSide <= boundingRect.h ? fullWidthSide : fullHeightSide);
 
-    timer = new Timer(TOTAL_DURATION);
-
     pg = createGraphics(round(vignetteSide*nColumns), round(vignetteSide*nRows));
 
-    background = 0;
-    
     reset();
   }
   
@@ -72,16 +76,43 @@ class Scene {
     vignettes[i] = v;
     v.setScene(this);
   }
-
+  
+  void insertVignette(int i, Vignette v)  {
+    Vignette[] newVignettes = new Vignette[vignettes.length];
+    for (int j=0; j<i; j++)
+      newVignettes[j] = vignettes[j];
+    newVignettes[i] = v;
+    for (int j=i+1; j<vignettes.length; j++)
+      newVignettes[j] = vignettes[j-1];
+    vignettes = newVignettes;
+    v.setScene(this);
+  }
+  
   Vignette getVignette(int c, int r) {
-    return vignettes[_getIndex(c, r)];
+    return getVignette(_getIndex(c, r));
+  }
+
+  Vignette getVignette(int i) {
+    return vignettes[i];
   }
 
   void build() {
+    for (Vignette v : vignettes) {
+      if (v != null)
+        v.build();
+    }
+    reset();
   }
 
   void reset() {
     timer.start();
+    needsRefresh = false;
+  }
+  
+  boolean needsRefresh() { return this.needsRefresh; }
+  
+  void requestRefresh() {
+    this.needsRefresh = true;
   }
 
   void display() {
@@ -100,6 +131,8 @@ class Scene {
     noStroke();
     fill(background);
     rect(boundingRect.x, boundingRect.y, boundingRect.w, boundingRect.h);
+    
+    // Display scene PGraphics.
     image(pg, boundingRect.x, boundingRect.y);
     
     // Displays the bounding rectangle, for adjustment purposes.

@@ -8,4 +8,8 @@ class SceneManager extends ArrayList<Scene> {
     currentScene().reset();
     return currentScene();
   }
+    
+  void replaceCurrentScene(Scene scene) {
+    set(currentSceneIdx, scene);
+  }
 }
