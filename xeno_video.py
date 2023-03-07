@@ -128,7 +128,7 @@ def crossfade(image_list, crossfade_steps=10):
 # "ann_raw_transformed_concatenated" : animated sequence intermixing ANN and raw transformed images side by side
 # "ann_raw_transformed_sequence" : animated sequence intermixing ANN and raw transformed images one after the other
 def experiment_to_gif(experiment_folder, gif_file_name, mode, gif_file_side=480, fps=5.0, ann_background=(0, 0, 0),
-                      ann_foreground=(255, 255, 255), input_quad=None, fit_in_circle=False, add_mask=False):
+                      ann_foreground=(255, 255, 255), input_quad=None, fit_in_circle=False, add_mask=False, index=-1):
     # Get input quad.
     if input_quad is None:
         import json
@@ -139,16 +139,40 @@ def experiment_to_gif(experiment_folder, gif_file_name, mode, gif_file_side=480,
     # Get image frames.
     ann_frames = get_ann_images(experiment_folder, gif_file_side, ann_background, ann_foreground, fit_in_circle=fit_in_circle)
     raw_frames, raw_transformed_frames = get_raw_images(experiment_folder, gif_file_side, input_quad, fit_in_circle=fit_in_circle)
-
+    
     if mode.endswith("single"):
         if mode == "ann_single":
-            image = ann_frames[-1]
+            image = ann_frames[index]
         elif mode == "raw_single":
-            image = raw_frames[-1]
+            image = raw_frames[index]
         elif mode == "bio_single":
-            image = raw_transformed_frames[-1]
+            image = raw_transformed_frames[index]
 
         image.save(gif_file_name)
+        
+    elif mode.endswith("all"):
+        ann_first = len(ann_frames) > len(raw_frames)
+        index_offset = 0
+        
+        if mode == "ann_all":
+            image_list = ann_frames
+        elif mode == "raw_all":
+            image_list = raw_frames
+            if ann_first:
+                index_offset = 1
+        elif mode == "bio_all":
+            image_list = raw_transformed_frames
+            if ann_first:
+                index_offset = 1
+
+        for i in range(len(image_list)):
+            k = i + index_offset
+            image_file_name = gif_file_name.replace("%d", f'{k:02d}')
+            if not os.path.exists(image_file_name):
+                image_list[i].save(gif_file_name.replace("%d", f'{k:02d}'))
+            else:
+                print("File already exists: {}".format(image_file_name))
+
     else:
         if mode == "ann":
             image_list = ann_frames
@@ -186,10 +210,12 @@ if __name__ == "__main__":
     parser.add_argument("output_gif_file", type=str, help="Output GIF file")
 
     parser.add_argument("-m", "--mode", type=str, default="bio", help="Animation mode")
-    parser.add_argument("-i", "--image-side", type=int, default=480, help="Pixel dimension of side (square image)")
+    parser.add_argument("-s", "--image-side", type=int, default=480, help="Pixel dimension of side (square image)")
     parser.add_argument("-fps", "--frames-per-second", type=float, default=5.0, help="Number of frames/images per second")
     parser.add_argument("-b", "--ann-background", type=tuple_type, default="0,0,0", help="RGB color of background (ANN images)")
     parser.add_argument("-f", "--ann-foreground", type=tuple_type, default="255,255,255", help="RGB color of foreground (ANN images)")
+
+    parser.add_argument("-i", "--index", type=int, default=-1, help="Image index for the *_single modes.")
 
     parser.add_argument("-q", "--input-quad", type=list_type, default=None, help="Comma-separated list of numbers defining input quad (overrides configuration file)")
 
@@ -206,4 +232,4 @@ if __name__ == "__main__":
         input_quad = load_settings("{}/settings.json".format(args.experiment_folder))
 
     # Create GIF.
-    experiment_to_gif(args.experiment_folder, args.output_gif_file, args.mode, gif_file_side=args.image_side, fps=args.frames_per_second, ann_background=args.ann_background, ann_foreground=args.ann_foreground, input_quad=input_quad, fit_in_circle=args.fit_in_circle, add_mask=args.add_mask)
+    experiment_to_gif(args.experiment_folder, args.output_gif_file, args.mode, gif_file_side=args.image_side, fps=args.frames_per_second, ann_background=args.ann_background, ann_foreground=args.ann_foreground, input_quad=input_quad, fit_in_circle=args.fit_in_circle, add_mask=args.add_mask, index=args.index)
