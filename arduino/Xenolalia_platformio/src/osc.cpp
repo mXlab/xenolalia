@@ -67,14 +67,16 @@ void drain(OSCMessage &msg){
  
   osc::send("/xeno/handshake");
   osc::send("/debug", "Draining tube");
-  xenolalia::drain();
+  bool val = msg.getInt(0);
+  xenolalia::drain(val);
 }
 
 void fill(OSCMessage &msg){
 
   osc::send("/xeno/handshake");
   osc::send("/debug", "Filling tube");
-  xenolalia::fill();
+  bool val = msg.getInt(0);
+  xenolalia::fill(val);
 }
 
 namespace osc

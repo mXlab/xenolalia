@@ -1,0 +1,16 @@
+class DataManager {
+  
+  Map<String, PImage> imageCache = new HashMap<String, PImage>();
+  
+  PImage getImage(String imageFilename) {
+    if (imageCache.containsKey(imageFilename))
+      return imageCache.get(imageFilename);
+      
+    else {
+      PImage img = loadImage(imageFilename);
+      imageCache.put(imageFilename, img);
+      return img;
+    }
+  }
+  
+}

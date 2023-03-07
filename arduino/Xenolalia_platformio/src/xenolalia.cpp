@@ -112,14 +112,28 @@ namespace xenolalia{
 
   }
 
-    void drain()
+    void drain(bool on)
   {
-    out_pump.start();
+    if(on)
+    {
+      in_pump.start();
+    }else
+    {
+      in_pump.stop();
+    }
   }
 
-    void fill()
+    void fill(bool on)
   {
-    in_pump.start();
+    if(on)
+    {
+      out_pump.start();
+    }else
+    {
+      out_pump.stop();
+    }
+    
+    
   }
   
     int get_petridish_level()

@@ -34,11 +34,11 @@ namespace xenolalia{
     * @brief drain the liquid out of the tube
     * 
     */
-   void drain();
+   void drain(bool on);
 
    /** @brief used to pump in the euglena in the tube
     */
-   void fill();
+   void fill(bool on);
 
    /**
     * @brief Get the petridish current level

@@ -27,6 +27,10 @@
   </div>
 </div>
 
+<div id="overlay" class="w3-center">
+  <img src="" />
+</div>
+
 <!-- !PAGE CONTENT! -->
 <div class="w3-main w3-content w3-padding" style="max-width:1200px;margin-top:100px">
 
@@ -47,20 +51,21 @@
     </div>
   </div>
 
-  <!-- First Photo Grid-->
+  <!-- !MAIN TABLE!-->
   <div class="w3-row-padding w3-padding-16 w3-center w3-small" id="xeno-main">
     <div class="w3-twothird">
 
       <table class="w3-table w3-striped w3-bordered w3-hoverable" id="xeno-table">
         <thead>
           <tr class="w3-black">
+            <td class="no-sort"><input id="select-all" class="w3-check" type="checkbox"></th>
             <th class="no-sort">Images</th>
+            <th>Nb</th>
             <th>Session</th>
             <th>Node</th>
             <th>Local Time</th>
       <!--      <th>UTC Time</th>-->
-            <th>Time zone</th>
-            <td class="no-sort"><input id="select-all" class="w3-check" type="checkbox"></th>
+            <th>Time Zone</th>
       <!--      <th>Time source</th>-->
           </tr>
         <thead>
@@ -70,88 +75,56 @@
 
     </div>
 
+    <!-- INSPECTOR! -->
     <div class="w3-third" id="xeno-info" style="display:none;">
 
-      <div class="w3-container w3-padding-32" id="xeno-info-preview">
-        <img id="preview-thumbnail" class="preview" src="http://tats.name/xenolalia/2020-02-24_17:04:50_optofonica-2020_nodepi-01/snapshot_1_015958_raw.png" />
-        <img id="preview-ann" class="preview" src="http://tats.name/xenolalia/2020-02-24_17:04:50_optofonica-2020_nodepi-01/snapshot_1_015958_raw_3ann.png" />
+      <!-- Preview images -->
+      <div id="xeno-info-preview">
+        <img id="preview-thumbnail" class="preview" src="nonexisting.png" />
+        <img id="preview-ann" class="preview" src="nonexisting.png" />
       </div>
 
-      <table class="w3-table w3-striped w3-bordered w3-padding-32" id="xeno-info-table">
-        <tbody></tbody>
-      </table>
+      <!-- Step-by-step image gallery -->
+      <div class="w3-padding-16">
+        <table class="w3-table w3-bordered w3-centered" id="xeno-gallery-table">
+          <thead>
+            <tr class="w3-black">
+              <th>Step</th>
+              <th>Time</th>
+              <th>Raw</th>
+              <th>Trans.</th>
+              <th>Filt.</th>
+              <!-- <th>Resized</th> -->
+              <th>ANN</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
 
-      <table class="w3-table w3-bordered w3-centered w3-padding-32" id="xeno-gallery-table">
-        <thead>
-          <tr class="w3-black">
-            <th>Step</th>
-            <th>Time</th>
-            <th>Raw</th>
-            <th>Trans.</th>
-            <th>Filt.</th>
-            <!-- <th>Resized</th> -->
-            <th>ANN</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+      <!-- Properties -->
+      <div class="w3-padding-16">
+        <table class="w3-table w3-striped w3-bordered " id="xeno-info-table">
+          <thead>
+            <tr class="w3-black">
+              <th>Property</th>
+              <th>Value</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
     </div>
 
   </div>
-
-  <!-- Pagination -->
-  <div class="w3-center w3-padding-32">
-    <div class="w3-bar">
-      <a href="#" class="w3-bar-item w3-button w3-hover-black">«</a>
-      <a href="#" class="w3-bar-item w3-black w3-button">1</a>
-      <a href="#" class="w3-bar-item w3-button w3-hover-black">2</a>
-      <a href="#" class="w3-bar-item w3-button w3-hover-black">3</a>
-      <a href="#" class="w3-bar-item w3-button w3-hover-black">4</a>
-      <a href="#" class="w3-bar-item w3-button w3-hover-black">»</a>
-    </div>
-  </div>
-
-  <!-- Footer -->
-  <footer class="w3-row-padding w3-padding-32">
-    <div class="w3-third">
-      <h3>FOOTER</h3>
-      <p>Praesent tincidunt sed tellus ut rutrum. Sed vitae justo condimentum, porta lectus vitae, ultricies congue gravida diam non fringilla.</p>
-      <p>Powered by <a href="https://www.w3schools.com/w3css/default.asp" target="_blank">w3.css</a></p>
-    </div>
-
-    <div class="w3-third">
-      <h3>BLOG POSTS</h3>
-      <ul class="w3-ul w3-hoverable">
-        <li class="w3-padding-16">
-          <img src="/w3images/workshop.jpg" class="w3-left w3-margin-right" style="width:50px">
-          <span class="w3-large">Lorem</span><br>
-          <span>Sed mattis nunc</span>
-        </li>
-        <li class="w3-padding-16">
-          <img src="/w3images/gondol.jpg" class="w3-left w3-margin-right" style="width:50px">
-          <span class="w3-large">Ipsum</span><br>
-          <span>Praes tinci sed</span>
-        </li>
-      </ul>
-    </div>
-
-    <div class="w3-third w3-serif">
-      <h3>POPULAR TAGS</h3>
-      <p>
-        <span class="w3-tag w3-black w3-margin-bottom">Travel</span> <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">New York</span> <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Dinner</span>
-        <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Salmon</span> <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">France</span> <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Drinks</span>
-        <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Ideas</span> <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Flavors</span> <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Cuisine</span>
-        <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Chicken</span> <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Dressing</span> <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Fried</span>
-        <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Fish</span> <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Duck</span>
-      </p>
-    </div>
-  </footer>
 
 <!-- End page content -->
 </div>
 
 <script>
-// Script to open and close sidebar
+
+// Scripts to open and close sidebar
 function w3_open() {
   document.getElementById("mySidebar").style.display = "block";
 }
@@ -161,27 +134,39 @@ function w3_close() {
 }
 
 
+// Returns time in a human-readable format.
 function infoDateTime(info, label) {
   let t = info[label];
   return `${t.year}-${t.month}-${t.day} ${t.hour}:${t.minute}:${t.second}`;
 }
 
-function infoColumn(info, label, time=false) {
+// Returns one column of a query result.
+function infoColumn(info, label, time=false, query=true, sortValue=false) {
   if (time)
     return `<td data-sort-value="${info.unix_time}">` + infoDateTime(info, label) + '</td>';
-  else
-    return `<td><a class="filter" href="#" data-query-filter="${label}">${info[label]}</a></td>`;
+  else {
+    let content = info[label];
+    if (query)
+      content = `<a class="filter" href="#" data-query-filter="${label}">${content}</a>`;
+    if (sortValue)
+      return `<td data-sort-value="${sortValue}">${content}</td>`;
+    else
+      return `<td>${content}</td>`;
+  }
 }
 
-function infoProperty(property, info, label, time=false) {
-  return `<tr class="property"><td>${property}</td>` + infoColumn(info, label, time) + '</tr>'
+// Returns one property for property table.
+function infoProperty(property, info, label, time=false, query=true) {
+  return `<tr class="property"><td>${property}</td>` + infoColumn(info, label, time, query) + '</tr>'
 }
 
+// Returns one column for a gallery image.
 function galleryColumn(img) {
   return '<td>' + (img ? `<img class="snapshot" src="${img}" />` : '&nbsp;') + '</td>';
 }
 
-function encode_uri_json(elements) {
+// Returns an encoded URI for a dictionary of elements.
+function encodeUriJson(elements) {
   var s = "";
   Object.keys(elements).forEach(function(key) {
     s += key + "=" + encodeURIComponent(JSON.stringify(elements[key])) + "&";
@@ -189,16 +174,18 @@ function encode_uri_json(elements) {
   return s;
 }
 
+// Performs an AJAX query using the REST API.
 function query(q, itemCallback, preCallback, postCallback) {
-  var tt = $.getJSON( "api.php?action=query&" + encode_uri_json({q: q}), function( data ) {
+  var tt = $.getJSON( "api.php?action=query&" + encodeUriJson({q: q}), function( data ) {
+    // TODO: Find a better way to handle errors.
+    // (it should be non-intrusive ideally, like maybe list them somewhere in a panel on the window)
     if (data.error) {
-//      alert("Errors were found, see console.");
-      console.log(data.error);
+      console.log("API errors found: ", data.error);
     }
     if (preCallback)
       postCallback(data.result);
     if (itemCallback) {
-      $.each( data.result, function(key, item) {
+      $.each( data.result.reverse(), function(key, item) {
         itemCallback(item.info.uid, item.info, item.images);
       });
     }
@@ -208,9 +195,10 @@ function query(q, itemCallback, preCallback, postCallback) {
   return tt;
 }
 
-function update_tags(operation, uids, tags, postCallback) {
+//  Update tags some items using AJAX call on the REST API.
+function updateTags(operation, uids, tags, postCallback) {
   var tt = $.getJSON( `api.php?action=update_tags&operation=${operation}&` +
-                        encode_uri_json({uids: uids, tags: tags}), function( data ) {
+                        encodeUriJson({uids: uids, tags: tags}), function( data ) {
     if (data.error) {
       alert("Errors were found, see console.");
       console.log(data.error);
@@ -222,8 +210,9 @@ function update_tags(operation, uids, tags, postCallback) {
   return tt;
 }
 
+// Downloads
 function download(uids, postCallback) {
-  var tt = $.getJSON( `api.php?action=download&` + encode_uri_json({uids: uids}), function( data ) {
+  var tt = $.getJSON( `api.php?action=download&` + encodeUriJson({uids: uids}), function( data ) {
     if (data.error) {
       alert("Errors were found, see console.");
       console.log(data.error);
@@ -235,9 +224,50 @@ function download(uids, postCallback) {
   return tt;
 }
 
+// Makes sure to update the actions on all dynamic elements.
+function updateDynamicElements() {
+  // Filterable links.
+  $("a.filter").unbind('click').click(function(e) {
+    let q = {};
+    q[ $(this).attr('data-query-filter') ] = $(this).text();
+    update( q );
+    e.preventDefault();
+  });
+
+  // Clickable images.
+  $("img").unbind('click').click(function(e) {
+    console.log("image clicked");
+    $("#overlay img").attr("src", $(this).attr("src"));
+    $("#overlay").css("display", "block");
+  });
+
+}
+
+function preloadImage(img) {
+  x = new Image();
+  x.src = img;
+  return x;
+}
+
+// Preload images from an array received from the REST API.
+function preloadImagesInfo(images) {
+  var preloaded = [];
+  images.forEach(function(imgInfo) {
+    var imgInfoPreloaded = [];
+    Object.keys(imgInfo).forEach(function(key) {
+      if (key != 'time') {
+        imgInfoPreloaded[key] = preloadImage(imgInfo[key]);
+      }
+    });
+    preloaded.push(imgInfoPreloaded);
+  });
+  return preloaded;
+}
+
+// Preloads an array of images.
 function preloadImages(images) {
   var preloaded = [];
-  images.forEach(img => { x = new Image(); x.src = img; preloaded.push(x); });
+  images.forEach(img => { x = new Image(); x.src = img; console.log("Preload: ", img); preloaded.push(x); });
   return preloaded;
 }
 
@@ -256,26 +286,33 @@ function update(q) {
     function(uid, info, images) {
       i += 1;
       let nImages = images.length;
-      let lastImage = images[nImages-1];
-      let thumbnail = lastImage["raw"];
-      let annThumbnail = lastImage["ann"];
-      $("table#xeno-table tbody").append(
-        `<tr class="item" data-uid="${uid}">` +
-          `<td><img class="thumbnail w3-round w3-hover-opacity" src="${thumbnail}" alt="${uid}">
-               <img class="thumbnail w3-round w3-hover-opacity" src="${annThumbnail}" alt="${uid}">
-</td>` +
-          infoColumn(info, 'session_name') +
-          infoColumn(info, 'node_name') +
-//                    infoColumn(info, 'local_time', true) +
-          infoColumn(info, 'utc_time', true) +
-          infoColumn(info, 'time_zone') +
-          `<td><input class="select-item w3-check" type="checkbox" name="${uid}"></td>` +
-//                    infoColumn(info, 'time_source') +
-        '</tr>');
+      if (nImages > 0) {
+        preloadImagesInfo(images);
+        console.log(uid, info, images, nImages)
+        let lastImage = images[nImages-1];
+        let thumbnail = (lastImage.raw ? lastImage.raw : "nonexisting.png");
+        let annThumbnail = (lastImage.ann ? lastImage.ann : "nonexisting.png");
+        // Add one row to main table.
+        $("table#xeno-table tbody").append(
+          `<tr class="item" data-uid="${uid}">` +
+            `<td><input class="select-item w3-check" type="checkbox" name="${uid}"></td>` +
+            `<td><img class="thumbnail w3-round w3-hover-opacity" src="${thumbnail}" alt="${uid}">
+                 <img class="thumbnail w3-round w3-hover-opacity" src="${annThumbnail}" alt="${uid}">
+  </td>` +
+            infoColumn(info, 'n_images', false, false, info.n_images) +
+            infoColumn(info, 'session_name') +
+            infoColumn(info, 'node_name') +
+  //                    infoColumn(info, 'local_time', true) +
+            infoColumn(info, 'utc_time', true) +
+            infoColumn(info, 'time_zone') +
+  //                    infoColumn(info, 'time_source') +
+          '</tr>');
+      }
     },
 
     // Pre-callback.
     function(data) {
+      // Clear table and reset filters.
       $("table#xeno-table tbody").empty();
       $("a.filter").unbind('click');
     },
@@ -285,21 +322,10 @@ function update(q) {
       // Sort table.
       $("table#xeno-table").tablesort();
 
-      // Filterable links.
-      $("a.filter").unbind('click').click(function(e) {
-        let q = {};
-        console.log($(this));
-        q[ $(this).attr('data-query-filter') ] = $(this).text();
-        update( q );
-        console.log("Filter was clicked : ", q);
-        e.preventDefault();
-      });
+      // Update filters.
+      updateDynamicElements();
 
-      // CHeckbox handling.
-      $('#select-all').on('change', function() {
-        $('.select-item').prop('checked', this.checked);
-      });
-
+      // Setup inspector view upon clicking.
       $(".item *").click(function(e) {
         $(".item").removeClass("selected");
         $(this).parent().addClass("selected");
@@ -308,25 +334,46 @@ function update(q) {
           function(uid, info, images) {
             // Collect parameters.
             let nImages = images.length;
-            let lastImage = images[nImages-1];
-            let thumbnail = lastImage["raw"];
-            let annThumbnail = lastImage["ann"];
 
-            // Display info panel.
-            $("#xeno-info").show();
+            if (nImages > 0) {
+              let lastImage = images[nImages-1];
+              let thumbnail = lastImage["raw"];
+              let annThumbnail = lastImage["ann"];
 
-            // Display preview images.
-            thumbnailObj = $("img#preview-thumbnail");
-            // thumbnailAnimation = new PreviewAnimation(thumbnailObj, images["raw"], 1, 2000);
-            //
-            thumbnailObj.attr("src", thumbnail)
-               .height($("img#preview-thumbnail").width())
-            //    .hover(
-            //      function() { thumbnailAnimation.start(); },
-            //      function() { thumbnailAnimation.stop(); }
-            //    );
+              // Display info panel.
+              $("#xeno-info").show();
 
-            $("img#preview-ann").attr("src", annThumbnail);
+              // Display preview images.
+              thumbnailObj = $("img#preview-thumbnail");
+              // thumbnailAnimation = new PreviewAnimation(thumbnailObj, images["raw"], 1, 2000);
+              //
+              thumbnailObj.attr("src", thumbnail)
+                 .height($("img#preview-thumbnail").width())
+              //    .hover(
+              //      function() { thumbnailAnimation.start(); },
+              //      function() { thumbnailAnimation.stop(); }
+              //    );
+
+              $("img#preview-ann").attr("src", annThumbnail);
+
+              // Display image strips.
+              $("table#xeno-gallery-table tbody").empty();
+              for (let step=0; step<images.length; step++) {
+                let imageInfo = images[step];
+                console.log(step, imageInfo)
+                $("table#xeno-gallery-table tbody").append(
+                  '<tr>' +
+                    `<td>${step}</td>` +
+                    `<td>${imageInfo.time}</td>` +
+                    galleryColumn(imageInfo.raw) +
+                    galleryColumn(imageInfo.transformed) +
+                    galleryColumn(imageInfo.filtered) +
+  //                  galleryColumn(imageInfo.resized) +
+                    galleryColumn(imageInfo.ann) +
+                  '</tr>'
+                );
+              }
+            }
 
             // Display information table.
             $("table#xeno-info-table tbody").empty().append(
@@ -335,30 +382,16 @@ function update(q) {
               infoProperty("Node name", info, 'node_name') +
               infoProperty("Local time", info, 'local_time', true) +
               infoProperty("UTC time", info, 'utc_time', true) +
-              infoProperty("Duration", info, 'duration') +
-              infoProperty("Nb images", info, 'n_images') +
+              infoProperty("Duration", info, 'duration', false, false) +
+              infoProperty("Nb images", info, 'n_images', false, false) +
               infoProperty("Time zone", info, 'time_zone') +
               infoProperty("Time source", info, 'time_source') +
+              infoProperty("Seed image", info, 'seed_image') +
               infoProperty("Tags", info, 'tags')
             );
 
-            // Display image strips.
-            $("table#xeno-gallery-table tbody").empty();
-            for (let step=0; step<images.length; step++) {
-              let imageInfo = images[step];
-              console.log(step, imageInfo)
-              $("table#xeno-gallery-table tbody").append(
-                '<tr>' +
-                  `<td>${step}</td>` +
-                  `<td>${imageInfo.time}</td>` +
-                  galleryColumn(imageInfo.raw) +
-                  galleryColumn(imageInfo.transformed) +
-                  galleryColumn(imageInfo.filtered) +
-//                  galleryColumn(imageInfo.resized) +
-                  galleryColumn(imageInfo.ann) +
-                '</tr>'
-              );
-            }
+            updateDynamicElements();
+
 
             //
             // .append(
@@ -405,7 +438,8 @@ $(document).ready(function() {
        uids.push($(this).attr("name"));
      }
    });
-   a = update_tags('add', uids, ['_hidden'], function() {
+   $('#select-all').prop('checked', false);
+   a = updateTags('add', uids, ['_hidden'], function() {
      refresh();
    });
   })
@@ -418,7 +452,8 @@ $(document).ready(function() {
        uids.push($(this).attr("name"));
      }
    });
-   a = update_tags('remove', uids, ['_hidden'], function() {
+   $('#select-all').prop('checked', false);
+   a = updateTags('remove', uids, ['_hidden'], function() {
      refresh();
    });
   })
@@ -439,6 +474,15 @@ $(document).ready(function() {
   $('#toggle-hidden').click(function() {
     console.log("click toggle")
     refresh();
+  });
+
+  // CHeckbox handling.
+  $('#select-all').on('change', function() {
+    $('.select-item').prop('checked', this.checked);
+  });
+
+  $("#overlay").click(function(e) {
+    $(this).hide();
   });
 
 });
