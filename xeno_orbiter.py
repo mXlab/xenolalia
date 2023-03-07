@@ -18,7 +18,7 @@ from luma.core.render import canvas
 #from luma.oled.device import ssd1327
 from luma.oled.device import ssd1351
 
-from PIL import Image
+from PIL import Image, ImageOps
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
@@ -55,7 +55,15 @@ def handle_new(addr):
 def handle_step(addr, image_path):
 	global device, images
 	print("Orbiter: step {}".format(image_path))
-	img = Image.open(image_path).convert(device.mode).resize((device.width, device.height), Image.ANTIALIAS)
+	x_offset = -3
+	y_offset = -3
+	img = Image.open(image_path)
+	img = img.rotate(90)
+#	border_size = round(0.41421356237 * img.width) # (sqrt(2)-1) * width
+	border_size = round(0.35 * img.width) # (sqrt(2)-1) * width
+	img = ImageOps.expand(img, border=border_size, fill="black")
+	img = img.convert(device.mode).resize((device.width, device.height), Image.ANTIALIAS)
+	img = img.transform(img.size, Image.AFFINE, (1, 0, x_offset, 0, 1, y_offset))
 	images.append(img)
 
 # Handler for first image step.
