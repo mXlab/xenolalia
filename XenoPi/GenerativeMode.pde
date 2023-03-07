@@ -37,8 +37,8 @@ class GenerativeMode extends AbstractMode {
 
   final int FLASH_TIME = 6000;
   final int HANDSHAKE_TIMEOUT = 5000;
-  final int CAM_FILTER_INTER_SNAPSHOT_TIME = 500;
-  final int CAM_FILTER_N_SNAPSHOTS = 5;
+  final int SNAPSHOT_BASE_TIME = 10000;
+  final int SNAPSHOT_INTER_SHOT_TIME = 2000;
 
   State state;
 
@@ -49,7 +49,8 @@ class GenerativeMode extends AbstractMode {
   // Current base image.
   PImage baseImage;
 
-  ImageFilter camFilter;
+  // Current snapshot.
+  PImage snapshot;
 
   boolean neuronsReady;
   boolean apparatusRefreshed;
@@ -77,6 +78,7 @@ class GenerativeMode extends AbstractMode {
 
       // Initialize everything.
       if (enteredState()) {
+        snapshot = null;
         neuronsReady = false;
         apparatusRefreshed = false;
         newExperimentStarted = false;
@@ -89,7 +91,6 @@ class GenerativeMode extends AbstractMode {
         stateTimer.start();
 
         exposureTimer = new Timer(settings.exposureTimeMs());
-        camFilter = new ImageFilter();
       }
 
       // Send handshakes and wait for response.
@@ -183,20 +184,30 @@ class GenerativeMode extends AbstractMode {
     else if (state == State.SNAPSHOT) {
       // Wait until a new image is available before taking accepting the snapshot.
       if (enteredState()) {
-        camFilter.reset();
-        stateTimer = new Timer(CAM_FILTER_INTER_SNAPSHOT_TIME);
+        snapshot = null;
+        stateTimer = new Timer(SNAPSHOT_BASE_TIME);
         stateTimer.start();
       }
 
       if (cam.available()) {
         cam.read();
         if (stateTimer.isFinished()) {
-          camFilter.addImage(cam.getImage());
-          stateTimer.start();
+          println("Trying to take snapshot.");
+          PImage img = cam.getImage();
+          if (!imageLineDetected(img)) {
+            snapshot = img;
+          } else {
+            float confidence = imageLineDetectConfidence(img);
+            println("Detected line with confidence: " + confidence);
+            img.save(savePath(experiment.experimentDir() + "/lined_image_" + millis() + "_" + confidence + ".png"));
+            stateTimer.setTotalTime(SNAPSHOT_INTER_SHOT_TIME);
+            stateTimer.start();
+          }
         }
       }
 
-      if (camFilter.nImages() >= CAM_FILTER_N_SNAPSHOTS) {
+      if (snapshot != null) {
+        println("Snapshot taken without lines");
         if (newExperimentStarted) {
           // Reset next glyph received flag.
           nextGlyphReceived = false;
@@ -246,7 +257,6 @@ class GenerativeMode extends AbstractMode {
       if (flash) { // flash!
         background(FLASH_COLOR);
       } else { // projected image
-        println("Project image");
         background(PROJECTION_BACKGROUND_COLOR);
         tint(PROJECTION_COLOR); // tint
         drawScaledImage(glyph);
@@ -298,6 +308,8 @@ class GenerativeMode extends AbstractMode {
 
   boolean enteredState() {
     boolean isEntering = newState;
+    if (isEntering)
+      println("Entering state: " + state);
     newState = false;
     return isEntering;
   }
@@ -353,10 +365,10 @@ class GenerativeMode extends AbstractMode {
   void snapshot(boolean baseImageSnapshot) {
     if (baseImageSnapshot) {
       // Record snapshot.
-      baseImage = camFilter.getImage();
+      baseImage = snapshot;
       baseImage.save(savePath("test_base_image.png"));
     } else {
-      experiment.recordSnapshot(camFilter.getImage());
+      experiment.recordSnapshot(snapshot);
 //      camFilter.saveImages(experiment);
     }
   }

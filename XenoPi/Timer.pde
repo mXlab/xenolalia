@@ -11,8 +11,12 @@ class Timer {
   boolean running = false;
   int totalTime;
 
-  Timer(int tempTotalTime) {
-    totalTime = tempTotalTime;
+  Timer(int totalTime) {
+    this.totalTime = totalTime;
+  }
+
+  void setTotalTime(int tempTotalTime) {
+    this.totalTime = totalTime;
   }
 
   void start() {

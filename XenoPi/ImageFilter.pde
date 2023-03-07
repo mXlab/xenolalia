@@ -1,3 +1,32 @@
+float distColor(color c1, color c2) {
+  return abs(brightness(c1) - brightness(c2)) / 255.0f;
+}
+
+boolean imageLineDetected(PImage img) {
+  return imageLineDetectConfidence(img) >= 0.01; // we tolerate small variations
+}
+
+float imageLineDetectConfidence(PImage img) {
+  float confidence = 0;
+  for (int y=1; y<img.height-1; y++) {
+    float sumLine = 0;
+    for (int x=0; x<img.width; x++) {
+      color up     = img.get(x, y-1);
+      color center = img.get(x, y);
+      color down   = img.get(x, y+1);
+      float diffUp     = distColor(center, up);
+      float diffDown   = distColor(center, down);
+      float diffUpDown = distColor(up, down);
+      sumLine += (diffUp + diffDown)/2 - diffUpDown;
+    }
+    sumLine /= width;
+    
+    if (sumLine > 0)
+      confidence += sumLine;
+  }
+  return confidence;
+}
+
 // Allows the filtering of a sequence of images according to either
 // average or median of images.
 class ImageFilter {

@@ -45,7 +45,7 @@ class Experiment {
   }
 
   String experimentDir() {
-    return "snapshots/"+info.getUid();
+    return "snapshots/"+(info != null ? info.getUid() : "default_exp");
   }
   
   int nSnapshots() {
