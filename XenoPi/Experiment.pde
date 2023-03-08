@@ -31,9 +31,11 @@ class Experiment {
     baseImageFilename = savePath(experimentDir()+"/base_image.png");
     baseImage.save(baseImageFilename);
 
-    // Send message that a new experiment has started.
+    // Send messages that a new experiment has started.
     oscP5.send(new OscMessage("/xeno/euglenas/new"), remoteLocation);
+    updateServer("new");
   }
+  
   
   ExperimentInfo getInfo() {
     return info;
@@ -65,7 +67,8 @@ class Experiment {
       snapshot.save(rawImageFilename);
 
     // Send an OSC message to announce creation of new image.
-    OscMessage msg = new OscMessage("/xeno/euglenas/" + (firstSnapshotExternal ? "begin" : "step"));
+    String msgType = (firstSnapshotExternal ? "begin" : "step");
+    OscMessage msg = new OscMessage("/xeno/euglenas/" + msgType);
     msg.add(rawImageFilename);
     msg.add(baseImageFilename);
 
@@ -75,4 +78,9 @@ class Experiment {
     nSnapshots++;
   }
   
+  void updateServer(String addr) {
+    OscMessage msg = new OscMessage("/xeno/exp/" + addr);
+    msg.add(info.getUid());
+    oscP5.send(msg, remoteLocationServer);
+  }
 }

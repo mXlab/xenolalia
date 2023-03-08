@@ -39,6 +39,7 @@ import netP5.*;
 
 OscP5 oscP5;
 NetAddress remoteLocation;
+NetAddress remoteLocationServer;
 NetAddress remoteLocationApparatus;
 NetAddress remoteLocationLogging;
 
@@ -46,7 +47,7 @@ AbstractCam cam;
 AbstractMode mode;
 Settings settings;
 
-final String LOGGING_IP = "192.168.0.188";
+final String LOGGING_IP = "192.168.0.100";
 final int    LOGGING_PORT  = 8000;
 
 // Constants.
@@ -109,6 +110,7 @@ void setup() {
   // Setup OSC.
   oscP5 = new OscP5(this, settings.oscReceivePort());
   remoteLocation = new NetAddress(settings.oscRemoteIp(), settings.oscSendPort());
+  remoteLocationServer = new NetAddress(settings.oscServerRemoteIp(), settings.oscServerSendPort());
   remoteLocationApparatus = new NetAddress(settings.oscApparatusRemoteIp(), settings.oscApparatusSendPort());
   remoteLocationLogging = new NetAddress(LOGGING_IP, LOGGING_PORT);
   

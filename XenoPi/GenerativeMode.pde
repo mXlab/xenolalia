@@ -6,7 +6,8 @@ enum State {
     MAIN, 
     FLASH, 
     SNAPSHOT, 
-    WAIT_FOR_GLYPH
+    WAIT_FOR_GLYPH,
+    PRESENTATION
 }
 
 // This mode runs the generative process through interoperability
@@ -39,6 +40,14 @@ class GenerativeMode extends AbstractMode {
   final int HANDSHAKE_TIMEOUT = 5000;
   final int SNAPSHOT_BASE_TIME = 10000;
   final int SNAPSHOT_INTER_SHOT_TIME = 2000;
+  
+  final int N_SNAPSHOTS_PER_EXPERIMENT = 3;
+  
+  // Time to wait for liquid to settle after refresh.
+  final int POST_REFRESH_TIME = 20000; //unused now
+  
+  // At the end of a cycle, wait for this time to present the result.
+  final int PRESENTATION_TIME = 180000; // 3 minutes
 
   State state;
 
@@ -283,18 +292,41 @@ class GenerativeMode extends AbstractMode {
 
       // In auto-mode: collect snapshots at a regular pace.
       if (autoMode && exposureTimer.isFinished()) {
-        println("Auto trigger");
-        requestSnapshot();
+        
+         if (experiment.nSnapshots() < N_SNAPSHOTS_PER_EXPERIMENT)
+           requestSnapshot();
+         else
+           transitionTo(State.PRESENTATION);
       }
 
       if (newExperimentRequested) {
         transitionTo(State.NEW);
         newExperimentRequested = false;
+        experiment.updateServer("end"); // tell server current experiment is over
       } else if (snapshotRequested) {
         println("Snap req.");
         transitionTo(State.FLASH);
       }
     }
+    
+    // PRESENTATION loop : Display flash background to show result.
+    else if (state == State.PRESENTATION) {
+      if (enteredState()) {
+        stateTimer = new Timer(PRESENTATION_TIME);
+        stateTimer.start();
+      }
+
+      background(FLASH_COLOR);
+      
+      if (stateTimer.isFinished()) {
+        transitionTo(State.NEW);
+        newExperimentRequested = false;
+        experiment.updateServer("end"); // tell server current experiment is over
+      }
+
+    }
+    
+    
   }
 
   void transitionTo(State nextState) {
@@ -358,6 +390,7 @@ class GenerativeMode extends AbstractMode {
     glyph = loadImage(imagePath);
     snapshotRequested = false;
     nextGlyphReceived = true;
+    experiment.updateServer("step");
   }
 
   // Saves snapshot to disk and sends OSC message to announce
