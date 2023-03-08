@@ -95,6 +95,16 @@ def generate_random():
     # Convert back to frame.
     return xeno_image.image_to_array(image, input_shape)
 
+# Generates frame from starting frame mixed with previous frame.
+def generate_merge(n_steps, starting_frame, prev_frame):
+    if n_steps <= 0:
+        return prev_frame
+    else:
+        frame = np.maximum(starting_frame, prev_frame)
+        for t in range(n_steps-1):
+            frame = model.predict(frame)
+        return frame
+
 # Generates frame from starting frame.
 def generate(n_steps, starting_frame, prev_frame):
     global input_shape, seed_image
@@ -122,8 +132,13 @@ def generate(n_steps, starting_frame, prev_frame):
             break
         # Needs more time, just keep projecting.
         elif starting_frame is not None:
-            print("Not validated : resending")
-            frame = prev_frame
+            print("Not validated : trying merge")
+            frame = generate_merge(n_steps, starting_frame, prev_frame)
+            if validate(frame):
+                print("Validated")
+            else:
+                print("Not validated : resend")
+                frame = prev_frame
             break
 
     return frame

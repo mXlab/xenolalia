@@ -6,7 +6,8 @@ enum State {
     MAIN, 
     FLASH, 
     SNAPSHOT, 
-    WAIT_FOR_GLYPH
+    WAIT_FOR_GLYPH,
+    PRESENTATION
 }
 
 // This mode runs the generative process through interoperability
@@ -37,8 +38,16 @@ class GenerativeMode extends AbstractMode {
 
   final int FLASH_TIME = 6000;
   final int HANDSHAKE_TIMEOUT = 5000;
-  final int CAM_FILTER_INTER_SNAPSHOT_TIME = 500;
-  final int CAM_FILTER_N_SNAPSHOTS = 5;
+  final int SNAPSHOT_BASE_TIME = 10000;
+  final int SNAPSHOT_INTER_SHOT_TIME = 2000;
+  
+  final int N_SNAPSHOTS_PER_EXPERIMENT = 3;
+  
+  // Time to wait for liquid to settle after refresh.
+  final int POST_REFRESH_TIME = 20000; //unused now
+  
+  // At the end of a cycle, wait for this time to present the result.
+  final int PRESENTATION_TIME = 180000; // 3 minutes
 
   State state;
 
@@ -49,7 +58,8 @@ class GenerativeMode extends AbstractMode {
   // Current base image.
   PImage baseImage;
 
-  ImageFilter camFilter;
+  // Current snapshot.
+  PImage snapshot;
 
   boolean neuronsReady;
   boolean apparatusRefreshed;
@@ -77,6 +87,7 @@ class GenerativeMode extends AbstractMode {
 
       // Initialize everything.
       if (enteredState()) {
+        snapshot = null;
         neuronsReady = false;
         apparatusRefreshed = false;
         newExperimentStarted = false;
@@ -89,7 +100,6 @@ class GenerativeMode extends AbstractMode {
         stateTimer.start();
 
         exposureTimer = new Timer(settings.exposureTimeMs());
-        camFilter = new ImageFilter();
       }
 
       // Send handshakes and wait for response.
@@ -183,20 +193,30 @@ class GenerativeMode extends AbstractMode {
     else if (state == State.SNAPSHOT) {
       // Wait until a new image is available before taking accepting the snapshot.
       if (enteredState()) {
-        camFilter.reset();
-        stateTimer = new Timer(CAM_FILTER_INTER_SNAPSHOT_TIME);
+        snapshot = null;
+        stateTimer = new Timer(SNAPSHOT_BASE_TIME);
         stateTimer.start();
       }
 
       if (cam.available()) {
         cam.read();
         if (stateTimer.isFinished()) {
-          camFilter.addImage(cam.getImage());
-          stateTimer.start();
+          println("Trying to take snapshot.");
+          PImage img = cam.getImage();
+          if (!imageLineDetected(img)) {
+            snapshot = img;
+          } else {
+            float confidence = imageLineDetectConfidence(img);
+            println("Detected line with confidence: " + confidence);
+            img.save(savePath(experiment.experimentDir() + "/lined_image_" + millis() + "_" + confidence + ".png"));
+            stateTimer.setTotalTime(SNAPSHOT_INTER_SHOT_TIME);
+            stateTimer.start();
+          }
         }
       }
 
-      if (camFilter.nImages() >= CAM_FILTER_N_SNAPSHOTS) {
+      if (snapshot != null) {
+        println("Snapshot taken without lines");
         if (newExperimentStarted) {
           // Reset next glyph received flag.
           nextGlyphReceived = false;
@@ -246,7 +266,6 @@ class GenerativeMode extends AbstractMode {
       if (flash) { // flash!
         background(FLASH_COLOR);
       } else { // projected image
-        println("Project image");
         background(PROJECTION_BACKGROUND_COLOR);
         tint(PROJECTION_COLOR); // tint
         drawScaledImage(glyph);
@@ -273,18 +292,41 @@ class GenerativeMode extends AbstractMode {
 
       // In auto-mode: collect snapshots at a regular pace.
       if (autoMode && exposureTimer.isFinished()) {
-        println("Auto trigger");
-        requestSnapshot();
+        
+         if (experiment.nSnapshots() < N_SNAPSHOTS_PER_EXPERIMENT)
+           requestSnapshot();
+         else
+           transitionTo(State.PRESENTATION);
       }
 
       if (newExperimentRequested) {
         transitionTo(State.NEW);
         newExperimentRequested = false;
+        experiment.updateServer("end"); // tell server current experiment is over
       } else if (snapshotRequested) {
         println("Snap req.");
         transitionTo(State.FLASH);
       }
     }
+    
+    // PRESENTATION loop : Display flash background to show result.
+    else if (state == State.PRESENTATION) {
+      if (enteredState()) {
+        stateTimer = new Timer(PRESENTATION_TIME);
+        stateTimer.start();
+      }
+
+      background(FLASH_COLOR);
+      
+      if (stateTimer.isFinished()) {
+        transitionTo(State.NEW);
+        newExperimentRequested = false;
+        experiment.updateServer("end"); // tell server current experiment is over
+      }
+
+    }
+    
+    
   }
 
   void transitionTo(State nextState) {
@@ -298,6 +340,8 @@ class GenerativeMode extends AbstractMode {
 
   boolean enteredState() {
     boolean isEntering = newState;
+    if (isEntering)
+      println("Entering state: " + state);
     newState = false;
     return isEntering;
   }
@@ -346,6 +390,7 @@ class GenerativeMode extends AbstractMode {
     glyph = loadImage(imagePath);
     snapshotRequested = false;
     nextGlyphReceived = true;
+    experiment.updateServer("step");
   }
 
   // Saves snapshot to disk and sends OSC message to announce
@@ -353,10 +398,10 @@ class GenerativeMode extends AbstractMode {
   void snapshot(boolean baseImageSnapshot) {
     if (baseImageSnapshot) {
       // Record snapshot.
-      baseImage = camFilter.getImage();
+      baseImage = snapshot;
       baseImage.save(savePath("test_base_image.png"));
     } else {
-      experiment.recordSnapshot(camFilter.getImage());
+      experiment.recordSnapshot(snapshot);
 //      camFilter.saveImages(experiment);
     }
   }

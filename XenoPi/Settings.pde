@@ -15,6 +15,8 @@ class Settings {
   int oscReceivePort;
   String oscRemoteIp;
   int oscSendPort;
+  String oscServerRemoteIp;
+  int oscServerSendPort;
   String oscApparatusRemoteIp;
   int oscApparatusSendPort;
 
@@ -56,7 +58,10 @@ class Settings {
 
   String oscRemoteIp() { return oscRemoteIp; }
   int oscSendPort() { return oscSendPort; }
-  
+
+  String oscServerRemoteIp() { return oscServerRemoteIp; }
+  int oscServerSendPort() { return oscServerSendPort; }
+
   String oscApparatusRemoteIp() { return oscApparatusRemoteIp; }
   int oscApparatusSendPort() { return oscApparatusSendPort; }
   
@@ -92,6 +97,8 @@ class Settings {
       settings.setInt("osc_receive_port", oscReceivePort);
       settings.setString("osc_remote_ip", oscRemoteIp);
       settings.setInt("osc_send_port", oscSendPort);
+      settings.setString("osc_server_remote_ip", oscServerRemoteIp);
+      settings.setInt("osc_server_send_port", oscServerSendPort);
       settings.setString("osc_apparatus_remote_ip", oscApparatusRemoteIp);
       settings.setInt("osc_apparatus_send_port", oscApparatusSendPort);
       
@@ -135,6 +142,9 @@ class Settings {
       oscRemoteIp = settings.getString("osc_remote_ip");
       oscSendPort = settings.getInt("osc_send_port");
 
+      oscServerRemoteIp = settings.getString("osc_server_remote_ip");
+      oscServerSendPort = settings.getInt("osc_server_send_port");
+
       oscApparatusRemoteIp = settings.getString("osc_apparatus_remote_ip");
       oscApparatusSendPort = settings.getInt("osc_apparatus_send_port");
 
@@ -175,6 +185,9 @@ class Settings {
 
     oscRemoteIp = "127.0.0.1";
     oscSendPort = 7000;
+
+    oscServerRemoteIp = "192.168.0.100";
+    oscServerSendPort = 7000;
 
     oscApparatusRemoteIp = "192.168.0.102";
     oscApparatusSendPort = 7000;
