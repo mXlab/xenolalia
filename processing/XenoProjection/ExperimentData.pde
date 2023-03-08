@@ -120,6 +120,9 @@ class ExperimentData {
   PImage getLastBiological() { return getBiological(-1); }
 
   PImage _getImage(int index, ArrayList<String> filenames) {
+    if (filenames.size() == 0)
+      return null;
+      
     if (index < 0)
       index = filenames.size() + index;
     

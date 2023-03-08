@@ -97,16 +97,19 @@ def handle_new(addr, uid):
     send_message("/xeno/server/new", uid)
 
 # # Handler for first image step.
-def handle_begin(addr, uid):
-    fetch_experiment(uid)
-    send_message("/xeno/server/begin", uid)
+# def handle_begin(addr, uid):
+#     print("Received begin {}".format(uid))
+#     fetch_experiment(uid)
+#     send_message("/xeno/server/begin", uid)
 
 # # Handler for first image step.
 def handle_step(addr, uid):
+    print("Received step {}".format(uid))
     fetch_experiment(uid)
     send_message("/xeno/server/step", uid)
 
 def handle_end(addr, uid):
+    print("Received end {}".format(uid))
     fetch_experiment(uid)
     send_message("/xeno/server/end", uid)
 
@@ -137,7 +140,7 @@ def handle_end(addr, uid):
 # Create OSC dispatcher.
 dispatcher = dispatcher.Dispatcher()
 dispatcher.map("/xeno/exp/new", handle_new)
-dispatcher.map("/xeno/exp/begin", handle_begin)
+# dispatcher.map("/xeno/exp/begin", handle_begin)
 dispatcher.map("/xeno/exp/step", handle_step)
 dispatcher.map("/xeno/exp/end", handle_end)
 # dispatcher.map("/xeno/exp/handshake", handle_handshake)

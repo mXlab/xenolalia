@@ -1,9 +1,9 @@
 class Scene {
 
-  //final int RUN_DURATION = 15000;
-  //final int END_DURATION =  5000;
-  final int RUN_DURATION = 1000;
-  final int END_DURATION =  500;
+  final int RUN_DURATION = 15000;
+  final int END_DURATION =  5000;
+  //final int RUN_DURATION = 1000;
+  //final int END_DURATION = 500;
 
   final int TOTAL_DURATION = RUN_DURATION + END_DURATION;
   final float RUN_DURATION_PROPORTION = RUN_DURATION / (float)TOTAL_DURATION;

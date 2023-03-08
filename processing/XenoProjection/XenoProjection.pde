@@ -22,9 +22,11 @@ SequentialScene sequentialScene;
 SequentialScene nextSequentialScene; // sequential scene that will be loaded next
 Scene recentGlyphsScene;
 
+float midpointY = -0.225;
+
 void setup() {
-  size(1920, 1080, P2D);
-  //fullScreen(P2D);
+  //  size(1920, 1080, P2D);
+  fullScreen(P2D);
 
   smooth();
   DEFAULT_MASK = createVignetteMask(0);
@@ -33,10 +35,12 @@ void setup() {
   oscP5 = new OscP5(this, OSC_RECEIVE_PORT);
 
   oscP5.plug(this, "experimentNew", "/xeno/server/new");
-  oscP5.plug(this, "experimentBegin", "/xeno/server/begin");
   oscP5.plug(this, "experimentStep", "/xeno/server/step");
   oscP5.plug(this, "experimentEnd", "/xeno/server/end");
 
+  Rect singleVignetteRect = createRect(0, midpointY, 1, 0.53);
+  Rect doubleVignetteRect = createRect(0, midpointY, 1, 0.4);
+  Rect gridVignetteRect   = createRect(0, midpointY, 1, 0.4);
 
   // Create first scene.
   currentExperiment = new ExperimentData("2022-10-07_13:53:30_hexagram-uqam-2022_nodepi-02");
@@ -46,7 +50,7 @@ void setup() {
   // Single artificial image of current experiment (image on apparatus).
   if (true)
   {
-    Scene scene = new Scene(1, 1, createRect(0, 0.5, 1, 0.5));
+    Scene scene = new Scene(1, 1, singleVignetteRect);
     GlyphVignette v = new GlyphVignette(currentExperiment);
     v.setArtificialPalette(ArtificialPalette.MAGENTA);
     v.setDataType(DataType.ARTIFICIAL);
@@ -58,7 +62,7 @@ void setup() {
   // Side-by-side animation of current experiment.
   if (true)
   {
-    Scene scene = new Scene(2, 1);
+    Scene scene = new Scene(2, 1, doubleVignetteRect);
 
     MorphoVignette v;
 
@@ -78,7 +82,7 @@ void setup() {
   // Single animation of alternating images from current experiment.
   if (true)
   {
-    Scene scene = new Scene(1, 1);
+    Scene scene = new Scene(1, 1, singleVignetteRect);
 
     MorphoVignette v;
 
@@ -96,7 +100,7 @@ void setup() {
   // Stepwise alternating sequence of images from current experiment.
   if (true)
   {
-    SequentialScene scene = new SequentialScene(previousExperiment.nImages()-1, 50);
+    SequentialScene scene = createSequentialScene(previousExperiment);
     for (int i=0; i<previousExperiment.nImages()-1; i++) {
       GlyphVignette v = new GlyphVignette(previousExperiment);
       v.setIndex(i);
@@ -110,7 +114,7 @@ void setup() {
   // Animation of recent generative glyphs.
   if (true)
   {
-    Scene scene = new Scene(5, 2);
+    Scene scene = new Scene(5, 2, gridVignetteRect);
     for (int i=0; i<min(scene.nVignettes(), allExperiments.length); i++) {
       MorphoVignette v = new MorphoVignette(allExperiments[i]);
       v.setDataType(DataType.BIOLOGICAL);
@@ -156,30 +160,29 @@ void refreshScenes(ArrayList<Scene> scenesToRefresh) {
     s.requestRefresh();
 }
 
+boolean newExperimentStarted = false;
 void experimentNew(String uid) {
-  currentExperiment.reload(uid);
-  refreshScenes(currentExperimentScenes);
-  println("Received new");
+  newExperimentStarted = true;
 }
-
-void experimentBegin(String uid) {
-  currentExperiment.refresh();
-  refreshScenes(currentExperimentScenes);
-}
-
+ //<>//
 void experimentStep(String uid) {
+  println(":::::: STEP ::::::");
+  if (newExperimentStarted) {
+    currentExperiment.reload(uid);
+    newExperimentStarted = false;
+  }
   currentExperiment.refresh();
   refreshScenes(currentExperimentScenes);
 }
 
 void experimentEnd(String uid) {
-  println("END");
+  println(":::::: END ::::::");
   previousExperiment.reload(currentExperiment.getUid());
 
   refreshScenes(previousExperimentScenes);
   sequentialScene.requestRefresh();
 
-  nextSequentialScene = new SequentialScene(previousExperiment.nImages()-1, 50);
+  nextSequentialScene = createSequentialScene(previousExperiment);
   for (int i=0; i<previousExperiment.nImages()-1; i++) {
     GlyphVignette v = new GlyphVignette(previousExperiment);
     v.setIndex(i);
@@ -188,4 +191,8 @@ void experimentEnd(String uid) {
   }
 
   recentGlyphsScene.requestRefresh();
+}
+
+SequentialScene createSequentialScene(ExperimentData exp) {
+  return new SequentialScene( exp.nImages()-1, 50, createRect(0, midpointY, 1, 1));
 }
