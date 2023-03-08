@@ -32,8 +32,13 @@ parser.add_argument("-sx", "--xenopi-send-port", default="7001",
 
 parser.add_argument("-ie", "--orbiter-ip", default="127.0.0.1",
                     help="The IP address where the orbiter program runs.")
-parser.add_argument("-se", "--orbiter-send-port", default="8001",
+parser.add_argument("-se", "--orbiter-send-port", default="7002",
                     type=int, help="The port number used to send data to the orbiter.")
+
+parser.add_argument("-is", "---server-ip", default="192.168.0.100",
+                    help="The IP address where the server program runs.")
+parser.add_argument("-ss", "--server-send-port", default="7000",
+                    type=int, help="The port number used to send data to the server.")
 
 parser.add_argument("-r", "--receive-port", default="7000",
                     type=int, help="The port number to listen on.")

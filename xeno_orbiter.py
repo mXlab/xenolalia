@@ -27,7 +27,7 @@ parser.add_argument("-i", "--ip", default="127.0.0.1",
                     help="Specify the ip address to send data to.")
 parser.add_argument("-s", "--send-port", default="7000",
                     type=int, help="Specify the port number to send data to.")
-parser.add_argument("-r", "--receive-port", default="8001",
+parser.add_argument("-r", "--receive-port", default="7002",
                     type=int, help="Specify the port number to listen on.")
 
 args = parser.parse_args()
