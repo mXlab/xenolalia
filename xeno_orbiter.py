@@ -101,8 +101,9 @@ async def loop():
 			device.display(images[current_frame])
 			current_frame = (current_frame + 1) % len(images)
 		
+		wait_time = (2.5*frame_interval) if (current_frame == 0) else frame_interval
 		# Wait.
-		await asyncio.sleep(frame_interval)
+		await asyncio.sleep(wait_time)
 		
 async def init():
 	server = osc_server.AsyncIOOSCUDPServer(("0.0.0.0", args.receive_port), dispatcher, asyncio.get_event_loop())
