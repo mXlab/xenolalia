@@ -11,5 +11,5 @@ basedir="./XenoPi/snapshots/"
 for id in `cat $batchfile`; do
   echo "# $id #"
   expdir="${basedir}/${id}"
-  bash generate_videos.sh $expdir $id
+  bash bin/generate_videos.sh $id
 done
