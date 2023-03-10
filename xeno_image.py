@@ -3,13 +3,11 @@
 
 import numpy as np
 
-import os
-import os.path
-import time
-import math
 import argparse
 
-from PIL import Image, ImageOps, ImageFilter, ImageEnhance, ImageChops
+from PIL import Image, ImageOps, ImageFilter, ImageChops
+
+from squircle import to_square, to_circle
 
 import cv2
 from skimage.morphology import thin
@@ -97,7 +95,7 @@ def resize(image, image_side):
     return image.resize((image_side, image_side), resample=Image.LANCZOS)
 
 # Processes raw image.
-def process_image(image, base_image=False, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0]):
+def process_image(image, base_image=False, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0], circular=False):
     # Transform image using input quad.
     raw_transformed = transform(image.convert('RGB'), input_quad)
 
