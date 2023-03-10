@@ -66,7 +66,7 @@ def rsync(src_dir, dst_dir):
         {xenopi_ip}:{src_dir} {dst_dir}".format(
             password=args.xenopi_password, username=args.xenopi_username, 
             xenopi_ip=args.xenopi_ip, src_dir=src_dir.rstrip("/") + "/", dst_dir=dst_dir)
-    print(cmd)
+    #print(cmd)
     # Execute.
     p = Popen(cmd, shell=True)
     print("rsync started")
@@ -92,7 +92,7 @@ def update_experiment_images(uid):
 
 # Handler for new experiment..
 def handle_new(addr, uid):
-    print("Received new {}".format(uid))
+    print("** Received NEW {}".format(uid))
     fetch_experiment(uid)
     send_message("/xeno/server/new", uid)
 
@@ -104,12 +104,12 @@ def handle_new(addr, uid):
 
 # # Handler for first image step.
 def handle_step(addr, uid):
-    print("Received step {}".format(uid))
+    print("** Received STEP {}".format(uid))
     fetch_experiment(uid)
     send_message("/xeno/server/step", uid)
 
 def handle_end(addr, uid):
-    print("Received end {}".format(uid))
+    print("** Received END {}".format(uid))
     fetch_experiment(uid)
     send_message("/xeno/server/end", uid)
 
