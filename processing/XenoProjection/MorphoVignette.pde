@@ -26,19 +26,35 @@ class MorphoVignette extends Vignette {
     }
   }
 
-  void doDisplay() {
-    float progress = scene.runProgress();
-    
-    float imageIndex = progress * (images.length-1);
-    int prevImageIndex = floor(imageIndex);
-    int nextImageIndex = ceil(imageIndex);
-    
-    PImage prevImage = images[prevImageIndex];
-    PImage nextImage = images[nextImageIndex];
-    
-    float t = imageIndex - prevImageIndex;
+  int lastImageIndex = -1;
 
-    PImage img = useInterpolation ? lerpImage(prevImage, nextImage, t) : images[round(imageIndex)];
-    pg.image(img, 0, 0, VIGNETTE_SIDE, VIGNETTE_SIDE);
+  void doDisplay() {
+    if (images.length > 0) {
+      float progress = scene.runProgress();
+
+      float imageIndex = progress * (images.length-1);
+      int prevImageIndex = floor(imageIndex);
+      int nextImageIndex = ceil(imageIndex);
+
+      PImage prevImage = images[prevImageIndex];
+      PImage nextImage = images[nextImageIndex];
+
+      float t = imageIndex - prevImageIndex;
+
+      if (lastImageIndex == images.length-1) {
+        scene.oscSendMessage("/end", 0);
+        lastImageIndex = -1;
+      }
+      else if (nextImageIndex == images.length-1) {
+  
+      }
+      else if (nextImageIndex != lastImageIndex) {
+        scene.oscSendMessage("/step", nextImageIndex);
+        lastImageIndex = nextImageIndex;
+      }
+
+      PImage img = useInterpolation ? lerpImage(prevImage, nextImage, t) : images[round(imageIndex)];
+      pg.image(img, 0, 0, VIGNETTE_SIDE, VIGNETTE_SIDE);
+    }
   }
 }

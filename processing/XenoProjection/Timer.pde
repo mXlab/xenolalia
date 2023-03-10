@@ -19,14 +19,20 @@ class Timer {
   }
 
   // Total time passed.
-  int passedTime() { return millis() - savedTime; }
+  int passedTime() {
+    return millis() - savedTime;
+  }
 
   // Countdown.
-  int countdownTime() { return max(totalTime - passedTime(), 0); }
+  int countdownTime() {
+    return max(totalTime - passedTime(), 0);
+  }
 
   // Progress (%).
-  float progress() { return min(passedTime() / float(totalTime), 1); }
-  
+  float progress() {
+    return min(passedTime() / float(totalTime), 1);
+  }
+
   boolean isFinished() {
     return (countdownTime() == 0);
   }

@@ -51,6 +51,7 @@ abstract class Vignette {
   DataType type;
   ArtificialPalette palette;
 
+
   Vignette(ExperimentData exp) {
     pg = createGraphics(VIGNETTE_SIDE, VIGNETTE_SIDE);
     this.scene = null;
@@ -62,6 +63,7 @@ abstract class Vignette {
     this.borderWeight = 4;
     this.palette = ArtificialPalette.WHITE;
   }
+
 
   void setScene(Scene scene) {
     this.scene = scene;
@@ -127,5 +129,4 @@ abstract class Vignette {
 
   void doDisplay() {
   }
-  
 }

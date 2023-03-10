@@ -7,38 +7,56 @@ class Scene {
 
   final int TOTAL_DURATION = RUN_DURATION + END_DURATION;
   final float RUN_DURATION_PROPORTION = RUN_DURATION / (float)TOTAL_DURATION;
-  
+
   color background;
-  
+
   int nColumns;
   int nRows;
-  
+
   Rect boundingRect;
-  
+
   Vignette[] vignettes;
 
   PGraphics pg;
   float vignetteSide;
 
   Timer timer;
-  
+
   boolean needsRefresh;
+
+  String oscAddress = null;
 
   Scene(int nColumns, int nRows) {
     this(nColumns, nRows, new Rect());
   }
-  
+
   Scene(int nColumns, int nRows, Rect boundingRect) {
     this.boundingRect = boundingRect;
     timer = new Timer(TOTAL_DURATION);
     background = 0;
     init(nColumns, nRows);
   }
-  
+
+  void setOscAddress(String addr) {
+    oscAddress = addr;
+  }
+
+  boolean usesOsc() {
+    return oscAddress != null;
+  }
+
+  void oscSendMessage(String path, int value) {
+    if (usesOsc()) {
+      OscMessage msg = new OscMessage(oscAddress + path);
+      msg.add(value);
+      oscP5.send(msg, sonoscope);
+    }
+  }
+
   void init(int nColumns, int nRows) {
     this.nColumns = nColumns;
     this.nRows = nRows;
-    
+
     vignettes = new Vignette[nColumns*nRows];
 
     // Find best proportions for graphics.
@@ -51,7 +69,7 @@ class Scene {
 
     reset();
   }
-  
+
   int nVignettes() {
     return vignettes.length;
   }
@@ -67,7 +85,7 @@ class Scene {
   void setBackground(color background) {
     this.background = background;
   }
-    
+
   void putVignette(int c, int r, Vignette v) {
     putVignette(_getIndex(c, r), v);
   }
@@ -76,18 +94,18 @@ class Scene {
     vignettes[i] = v;
     v.setScene(this);
   }
-  
-  void insertVignette(int i, Vignette v)  {
+
+  void insertVignette(int i, Vignette v) {
     Vignette[] newVignettes = new Vignette[vignettes.length];
     for (int j=0; j<i; j++)
-      newVignettes[j] = vignettes[j];
+    newVignettes[j] = vignettes[j];
     newVignettes[i] = v;
     for (int j=i+1; j<vignettes.length; j++)
-      newVignettes[j] = vignettes[j-1];
+    newVignettes[j] = vignettes[j-1];
     vignettes = newVignettes;
     v.setScene(this);
   }
-  
+
   Vignette getVignette(int c, int r) {
     return getVignette(_getIndex(c, r));
   }
@@ -99,7 +117,7 @@ class Scene {
   void build() {
     for (Vignette v : vignettes) {
       if (v != null)
-        v.build();
+      v.build();
     }
     reset();
   }
@@ -108,9 +126,11 @@ class Scene {
     timer.start();
     needsRefresh = false;
   }
-  
-  boolean needsRefresh() { return this.needsRefresh; }
-  
+
+  boolean needsRefresh() {
+    return this.needsRefresh;
+  }
+
   void requestRefresh() {
     this.needsRefresh = true;
   }
@@ -131,10 +151,10 @@ class Scene {
     noStroke();
     fill(background);
     rect(boundingRect.x, boundingRect.y, boundingRect.w, boundingRect.h);
-    
+
     // Display scene PGraphics.
     image(pg, boundingRect.x, boundingRect.y);
-    
+
     // Displays the bounding rectangle, for adjustment purposes.
     if (keyPressed && key == ' ') {
       stroke(0, 0, 255);
@@ -147,7 +167,6 @@ class Scene {
       //circle(boundingRect.x, boundingRect.y, crosshairRadius*2);
       line(boundingRect.x-crosshairRadius, boundingRect.y, boundingRect.x+crosshairRadius, boundingRect.y);
       line(boundingRect.x, boundingRect.y-crosshairRadius, boundingRect.x, boundingRect.y+crosshairRadius);
-
     }
   }
 
@@ -158,14 +177,20 @@ class Scene {
       for (int c=0; c<nColumns; c++, k++) {
         Vignette v = getVignette(c, r);
         if (v != null)
-          v.display(c*vignetteSide, r*vignetteSide, vignetteSide, pg);
+        v.display(c*vignetteSide, r*vignetteSide, vignetteSide, pg);
       }
     }
   }
-  
-  float progress() { return timer.progress(); }
-  float runProgress() { return min(timer.passedTime() / (float)RUN_DURATION, 1.0); }
-  float endProgress() { return constrain((timer.passedTime() - RUN_DURATION) / END_DURATION, 0.0, 1.0); }
+
+  float progress() {
+    return timer.progress();
+  }
+  float runProgress() {
+    return min(timer.passedTime() / (float)RUN_DURATION, 1.0);
+  }
+  float endProgress() {
+    return constrain((timer.passedTime() - RUN_DURATION) / END_DURATION, 0.0, 1.0);
+  }
 
   boolean isFinished() {
     return timer.isFinished();

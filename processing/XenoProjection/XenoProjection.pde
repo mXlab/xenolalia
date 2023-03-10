@@ -1,4 +1,5 @@
-import oscP5.*; //<>//
+import oscP5.*; //<>// //<>//
+import netP5.*;
 
 OscP5 oscP5;
 
@@ -22,7 +23,9 @@ SequentialScene sequentialScene;
 SequentialScene nextSequentialScene; // sequential scene that will be loaded next
 Scene recentGlyphsScene;
 
-float midpointY = -0.225;
+NetAddress sonoscope;
+
+float midpointY = -0.15;
 
 void setup() {
   //  size(1920, 1080, P2D);
@@ -38,14 +41,18 @@ void setup() {
   oscP5.plug(this, "experimentStep", "/xeno/server/step");
   oscP5.plug(this, "experimentEnd", "/xeno/server/end");
 
+  sonoscope = new NetAddress("127.0.0.1", 8005);
+
   Rect singleVignetteRect = createRect(0, midpointY, 1, 0.53);
   Rect doubleVignetteRect = createRect(0, midpointY, 1, 0.4);
   Rect gridVignetteRect   = createRect(0, midpointY, 1, 0.4);
 
   // Create first scene.
-  currentExperiment = new ExperimentData("2022-10-07_13:53:30_hexagram-uqam-2022_nodepi-02");
-  previousExperiment = new ExperimentData("2022-10-07_13:53:30_hexagram-uqam-2022_nodepi-02");
+  currentExperiment = new ExperimentData("2022-10-13_14:53:52_hexagram-uqam-2022_nodepi-02");
+
   ExperimentData[] allExperiments = loadExperiments("/home/sofian/Desktop/xenolalia/contents/experiments.txt");
+  previousExperiment = allExperiments[0];
+
 
   // Single artificial image of current experiment (image on apparatus).
   if (true)
@@ -83,6 +90,7 @@ void setup() {
   if (true)
   {
     Scene scene = new Scene(1, 1, singleVignetteRect);
+    scene.setOscAddress("/retina");
 
     MorphoVignette v;
 
@@ -101,6 +109,8 @@ void setup() {
   if (true)
   {
     SequentialScene scene = createSequentialScene(previousExperiment);
+    scene.setOscAddress("/sequence");
+    scene.oscSendMessage("/test", 0);
     for (int i=0; i<previousExperiment.nImages()-1; i++) {
       GlyphVignette v = new GlyphVignette(previousExperiment);
       v.setIndex(i);
@@ -164,7 +174,7 @@ boolean newExperimentStarted = false;
 void experimentNew(String uid) {
   newExperimentStarted = true;
 }
- //<>//
+
 void experimentStep(String uid) {
   println(":::::: STEP ::::::");
   if (newExperimentStarted) {
@@ -195,4 +205,9 @@ void experimentEnd(String uid) {
 
 SequentialScene createSequentialScene(ExperimentData exp) {
   return new SequentialScene( exp.nImages()-1, 50, createRect(0, midpointY, 1, 1));
+}
+
+void keyPressed() {
+  if (key == 's')
+    saveFrame();
 }
