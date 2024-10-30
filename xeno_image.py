@@ -85,7 +85,7 @@ def simplify(image):
 
     # Thin image: this will turn small "speckles" into single-pixel lines.
     img = img_as_bool(img)
-    img = thin(img, max_num_iter=5)
+    img = thin(img, max_iter=5)
     img = img_as_ubyte(img)
 
     # Erode image: further reduce speckles to obtain more pure image.
