@@ -61,9 +61,16 @@ def enhance(image):
     image_mask = ImageOps.invert(create_mask(image).convert('L'))
 
     # Image filters to enhance contrasts.
-    filtered = ImageOps.invert(filtered)
+
+    # Invert image: dark/green zones should show up as light zones.
+    filtered = ImageOps.invert(filtered) 
+
+    # Apply median filter - this will reduce noise in the image.
     filtered = filtered.filter(ImageFilter.MedianFilter(median_filter_size))
+
+    # Equalize the image histogram - creates a uniform distribution of grayscale values in the output image.
     filtered = ImageOps.equalize(filtered, image_mask)
+
     #    filtered = ImageEnhance.Brightness(filtered).enhance(brightness_factor)
     # filtered = ImageEnhance.Contrast(filtered).enhance(2)
     return filtered
