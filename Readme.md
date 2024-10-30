@@ -4,10 +4,10 @@
 
 Xenolalia consists mainly of 4 different components:
  1. **Mesoscope** Device / machine / apparatus where the experiments happen
-   * xenopi (RPi) which runs the display and experiment control (XenoPi), the neural network generator (xeno_osc.py) and the orbiter (xeno_orbiter.py)
-   * Apparatus controller (ESP32) which controls the pumps and motors
+    * xenopi (RPi) which runs the display and experiment control (XenoPi), the neural network generator (xeno_osc.py) and the orbiter (xeno_orbiter.py)
+    * Apparatus controller (ESP32) which controls the pumps and motors
  2. **Macroscope** Large-scale projection showing the experiments in real time
-   * xenopc (PC) running projection (XenoProjection) and python server operating file transfers (xeno_server.py)
+    * xenopc (PC) running projection (XenoProjection) and python server operating file transfers (xeno_server.py)
  3. **Microscope** Microscope ("xenoscope") showing the live cells
  4. **Sonoscope** (Optional) Sonification of the neural network
 
