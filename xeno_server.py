@@ -6,7 +6,7 @@ import sys
 import signal
 import argparse
 
-from subprocess import Popen
+from subprocess import Popen, PIPE
 
 from pythonosc import dispatcher
 from pythonosc import osc_server
@@ -66,11 +66,17 @@ def rsync(src_dir, dst_dir):
         {xenopi_ip}:{src_dir} {dst_dir}".format(
             password=args.xenopi_password, username=args.xenopi_username, 
             xenopi_ip=args.xenopi_ip, src_dir=src_dir.rstrip("/") + "/", dst_dir=dst_dir)
-    #print(cmd)
-    # Execute.
-    p = Popen(cmd, shell=True)
-    print("rsync started")
-    p.communicate() # block until finished
+
+    # Execute command
+    p = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
+    stdout, stderr = p.communicate()  # block until finished
+    
+    # Check return code
+    if p.returncode != 0:
+        print("rsync failed with return code:", p.returncode)
+        print("Error output:", stderr.decode())
+
+    return p.returncode
     
 def fetch_experiment(uid, update_images=True):
     # First create directory.
