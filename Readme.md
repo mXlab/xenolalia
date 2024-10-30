@@ -132,8 +132,47 @@ You can exit ```XenoPi``` with the ESC key. If you started the programs using ``
 
 (\*) In auto mode (default) snapshots will be taken at a regular pace as specified by the "exposure_time" setting. In manual mode (ie. non-auto mode) the user has the responsibility to manually take snapshots using the SPACEBAR.
 
+## XenoPC Configuration
 
-## Raspberry Pi Configuration
+### Installation
+
+OS: Ubuntu 24.04
+
+#### Install Packages
+
+```
+# Update/upgrade Debian packages
+sudo apt update
+sudo apt upgrade
+
+# Install debian packages.
+sudo apt install -y git git-gui \
+                      python3-dev python3-setuptools python3-h5py \
+                      libblas-dev liblapack-dev libatlas-base-dev gfortran \
+                      xdotool \
+                      python-virtualenv \
+                      software-properties-common dirmngr apt-transport-https lsb-release ca-certificates \
+                      liblo-tools liblo7 \
+                      rsync sshpass
+
+```
+
+#### Install Python libraries in Virtual Environment
+
+From main directory:
+
+```
+python -m venv xeno-env
+source xeno-env/bin/activate
+```
+
+```
+pip install numpy
+pip install -r requirements_pc.txt
+pip install -U six wheel mock
+```
+
+## Xenopi Configuration
 
 Follow these instructions in order to install everything on a Raspberry Pi.
 
