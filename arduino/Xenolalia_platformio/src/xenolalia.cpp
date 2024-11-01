@@ -42,14 +42,25 @@ namespace xenolalia{
         delay(2000);
 
         osc::send("/debug", "Filling the petridish with euglena");
+        
+        // First: fill full.
         fill_petridish();
-        delay(2000);  
-   }
-  
-    void fill_petridish(){
+        delay(5000); // wait for the "wash" effect
 
+        // Empty again.
+        empty_petridish();
+        delay(500);
+
+        // Second: fill half
+        fill_petridish(0.5);
+        delay(500);
+   }
+
+    void fill_petridish(float level){
+    #define MAX_PUMP_COUNT 24
     int dishlevel = 1;
-    const int numPump{24};
+    int numPump = (int) (MAX_PUMP_COUNT*level);
+    numPump = constrain(numPump, 0, MAX_PUMP_COUNT);
     bool petriFull{false};
     char buff[64];
    
@@ -71,8 +82,6 @@ namespace xenolalia{
         }
 
         out_pump.start(250);
-        
-
       }
 
       petriFull = true;
