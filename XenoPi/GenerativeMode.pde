@@ -1,8 +1,9 @@
 // Capture FSM state enum.
 enum State {
-  INIT, 
+    INIT, 
     NEW, 
-    REFRESH, 
+    REFRESH,
+    POST_REFRESH,
     MAIN, 
     FLASH, 
     SNAPSHOT, 
@@ -29,6 +30,7 @@ class GenerativeMode extends AbstractMode {
 
   // Base colors.
   final color FLASH_COLOR = color(255);
+  final color POST_REFRESH_COLOR = color(#00ffff); // cyan
   final color PROJECTION_COLOR = color(#ff00ff); // magenta
   final color PROJECTION_BACKGROUND_COLOR = color(0);
 
@@ -41,10 +43,10 @@ class GenerativeMode extends AbstractMode {
   final int SNAPSHOT_BASE_TIME = 10000;
   final int SNAPSHOT_INTER_SHOT_TIME = 2000;
   
-  final int N_SNAPSHOTS_PER_EXPERIMENT = 3;
+  final int N_SNAPSHOTS_PER_EXPERIMENT = 12;
   
   // Time to wait for liquid to settle after refresh.
-  final int POST_REFRESH_TIME = 20000; //unused now
+  final int POST_REFRESH_TIME = 15000; // 15 seconds
   
   // At the end of a cycle, wait for this time to present the result.
   final int PRESENTATION_TIME = 180000; // 3 minutes
@@ -162,9 +164,25 @@ class GenerativeMode extends AbstractMode {
       }
 
       if (apparatusRefreshed) {
+        // Post-refresh.
+        transitionTo(State.POST_REFRESH);
+      }
+    }
+
+    // POST_REFRESH : Wait for euglenas to settle in petri dish.
+    else if (state == State.POST_REFRESH) {
+      background(POST_REFRESH_COLOR);
+      if (enteredState()) {
+        // Start timer.
+        stateTimer = new Timer(POST_REFRESH_TIME);
+        stateTimer.start();
+      }
+
+      if (stateTimer.isFinished()) {
         // Flash.
         transitionTo(State.FLASH);
       }
+
     }
 
     // FLASH : Set white background 
