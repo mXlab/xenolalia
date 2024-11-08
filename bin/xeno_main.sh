@@ -27,6 +27,9 @@ echo ""
 
 trap "$cleanup; exit" SIGINT
 
+# Wait for xeno_osc.py to start before launching processing sketch
+sleep 20
+
 # Launch processing sketch.
 echo "Launching XenoPi"
 /usr/local/bin/processing-java --sketch=$xeno_dir/XenoPi --run
