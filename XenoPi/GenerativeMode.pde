@@ -30,7 +30,8 @@ class GenerativeMode extends AbstractMode {
 
   // Base colors.
   final color FLASH_COLOR = color(255);
-  final color POST_REFRESH_COLOR = color(#00ffff); // cyan
+//  final color POST_REFRESH_COLOR = color(#00ffff); // cyan
+  final color POST_REFRESH_COLOR = color(#7efeff); // blue-cyan
   final color PROJECTION_COLOR = color(#ff00ff); // magenta
   final color PROJECTION_BACKGROUND_COLOR = color(0);
 
@@ -46,7 +47,7 @@ class GenerativeMode extends AbstractMode {
   final int N_SNAPSHOTS_PER_EXPERIMENT = 12;
   
   // Time to wait for liquid to settle after refresh.
-  final int POST_REFRESH_TIME = 15000; // 15 seconds
+  final int POST_REFRESH_TIME = 120000; // 2 minutes
   
   // At the end of a cycle, wait for this time to present the result.
   final int PRESENTATION_TIME = 180000; // 3 minutes
