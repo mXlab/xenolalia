@@ -1,3 +1,4 @@
+// A scene presents one or multiple vignettes in a grid-like view.
 class Scene {
 
   final int RUN_DURATION = 15000;

@@ -20,7 +20,7 @@ namespace xenolalia{
 
    /** @brief fill the petridish with liquid
     */
-   void fill_petridish();
+   void fill_petridish(float level=1.0f);
 
    /** @brief empty the petridish of its liquid
     */
