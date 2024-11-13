@@ -104,14 +104,17 @@ void setup() {
   settings = new Settings();
 
   // Initialize mode.
-  mode = new CameraCalibrationMode();
-//  mode.setup();
+  cameraCalibrationMode();
 
   // Setup OSC.
   oscP5 = new OscP5(this, settings.oscReceivePort());
+  // xeno_osc.py on XenoPi (local)
   remoteLocation = new NetAddress(settings.oscRemoteIp(), settings.oscSendPort());
+  // xeno_server.py on XenoPC
   remoteLocationServer = new NetAddress(settings.oscServerRemoteIp(), settings.oscServerSendPort());
+  // apparatus on ESP32
   remoteLocationApparatus = new NetAddress(settings.oscApparatusRemoteIp(), settings.oscApparatusSendPort());
+  // localhost
   remoteLocationLogging = new NetAddress(LOGGING_IP, LOGGING_PORT);
   
   oscP5.plug(this, "nextImage", "/xeno/neurons/step");
@@ -121,7 +124,9 @@ void setup() {
   
   oscP5.plug(this, "refreshed", "/xeno/apparatus/refreshed");
   oscP5.plug(this, "apparatusHandshake", "/xeno/handshake");
-  
+
+  oscP5.plug(this, "begin", "/xeno/control/begin");
+
   log("XenoPi started");
 }
 
@@ -149,6 +154,19 @@ void apparatusHandshake() {
   log("Received apparatusHandshake().");
 }
 
+void begin() {
+  log("Begin generative process.");
+  generativeMode();
+}
+
+void cameraCalibrationMode() {
+  mode = new CameraCalibrationMode();
+}
+
+void generativeMode() {
+  mode = new GenerativeMode();
+}
+
 void draw() {
   mode.draw();
 }
@@ -156,9 +174,9 @@ void draw() {
 void keyPressed() {
   // Switch mode.
   if (key == 'c')
-    mode = new CameraCalibrationMode();
+    cameraCalibrationMode();
   else if (key == 'g')
-    mode = new GenerativeMode();
+    generativeMode();
   //
   else if (key == CODED && keyCode == SHIFT)
     shiftPressed = true;
