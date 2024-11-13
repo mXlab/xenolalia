@@ -231,6 +231,21 @@ From the ```~/xenolalia``` directory the following script once with the login in
 sudo bash bin/xeno_pi_install.sh
 ```
 
+#### Configure auto-launch
+
+Run the following command:
+```
+crontab -e
+```
+
+If asked select: ```/bin/nano```
+
+Add the following line to the file and save:
+
+```
+@reboot sleep 30 && /bin/bash /home/pi/xenolalia/bin/xeno_pi_main.sh
+```
+
 #### Processing libraries
 
 Add the following libraries:
@@ -251,7 +266,6 @@ To restore the system in case of a mistake you can run the ```system_restore.sh`
 ### Notes
 
  * Dual monitor: I could never get my second monitor to work on the Pi4, it kept displaying the rainbow colorwheel splash screen. Did not find a solution.
-
 
 
 ## Xenodata
