@@ -1,4 +1,4 @@
-class GlyphVignette extends Vignette { //<>//
+class GlyphVignette extends Vignette {
 
   PImage img;
 

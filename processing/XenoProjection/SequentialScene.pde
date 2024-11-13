@@ -1,3 +1,4 @@
+// A special kind of scene that shows a sequence of vignettes appearing from left to right,
 class SequentialScene extends Scene {
 
   SequentialScene(int nImages, int maxImagesPerRow) {

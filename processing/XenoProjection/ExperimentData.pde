@@ -9,6 +9,7 @@ ExperimentData[] loadExperiments(String filename) {
   return experiments;
 }
 
+/// Data from a single experiment.
 class ExperimentData {
   String uid;
   String directory;
@@ -20,7 +21,7 @@ class ExperimentData {
   
   ExperimentData(String uid) {
     reload(uid);
-  } //<>//
+  }
   
   ExperimentData copy() {
     return new ExperimentData(this.uid);
@@ -65,7 +66,7 @@ class ExperimentData {
   int nBiological() { return biologicalImageFilenames.size(); }
   int nImages() { return nArtificial() + nBiological(); }
   int nImages(DataType type) {
-    switch (type) { //<>//
+    switch (type) {
       case ARTIFICIAL: return nArtificial();
       case BIOLOGICAL: return nBiological();
       case ALL:        return nImages();
@@ -126,7 +127,7 @@ class ExperimentData {
     if (index < 0)
       index = filenames.size() + index;
     
-    return manager.getImage(filenames.get(index)); //<>//
+    return manager.getImage(filenames.get(index));
   }
     
 }

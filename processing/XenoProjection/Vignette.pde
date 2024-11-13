@@ -34,6 +34,7 @@ PImage createVignetteMask(color maskColor, float transparencyRadius) {
   return mask.get();
 }
 
+// A vignette presents a single experiment using a specitic kind of view (defined by the subclass).
 abstract class Vignette {
 
   PGraphics pg;
