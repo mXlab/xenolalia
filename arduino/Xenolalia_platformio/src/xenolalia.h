@@ -40,6 +40,8 @@ namespace xenolalia{
     */
    void fill(bool on);
 
+   void mix();
+
    /**
     * @brief Get the petridish current level
     * @return int liquid level
