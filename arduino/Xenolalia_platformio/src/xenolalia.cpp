@@ -57,42 +57,40 @@ namespace xenolalia{
    }
 
     void fill_petridish(float level){
-    #define MAX_PUMP_COUNT 24
-    int dishlevel = 1;
-    int numPump = (int) (MAX_PUMP_COUNT*level);
-    numPump = constrain(numPump, 0, MAX_PUMP_COUNT);
-    bool petriFull{false};
-    char buff[64];
-   
-    while(petriFull == false)
-    {
-      
-     
-      for( int i{0} ; i < numPump ; i++)
+      #define MAX_PUMP_COUNT 24
+      int dishlevel = 1;
+      int numPump = (int) (MAX_PUMP_COUNT*level);
+      numPump = constrain(numPump, 0, MAX_PUMP_COUNT);
+      bool petriFull{false};
+      char buff[64];
+    
+      while(petriFull == false)
       {
-      
-        dishlevel = get_petridish_level();
-        sprintf(buff, "dishlevel : %d | liquid Treshold : %d " ,dishlevel , threshold);
-        osc::send("/debug", buff);
-
-        if(dishlevel >= threshold)
+        for( int i{0} ; i < numPump ; i++)
         {
-          petriFull = true;
-          break;
+        
+          dishlevel = get_petridish_level();
+          sprintf(buff, "dishlevel : %d | liquid Treshold : %d " ,dishlevel , threshold);
+          osc::send("/debug", buff);
+
+          if(dishlevel >= threshold)
+          {
+            petriFull = true;
+            break;
+          }
+
+          out_pump.start(250);
         }
 
-        out_pump.start(250);
+        petriFull = true;
+        osc::send("/debug", "Exceded max pump count" );  
       }
 
-      petriFull = true;
-      osc::send("/debug", "Exceded max pump count" );  
+      delay(500);
+      osc::send("/debug", "Petridish is full" );
+      pixel_ring::set_color(pixel_ring::black);
+
     }
-
-    delay(500);
-    osc::send("/debug", "Petridish is full" );
-    pixel_ring::set_color(pixel_ring::black);
-
-   }
   
     void empty_petridish(){
        pixel_ring::set_color(pixel_ring::yellow);
@@ -100,79 +98,81 @@ namespace xenolalia{
        pixel_ring::set_color(pixel_ring::black);
    }
   
+    void mix() {
+      euglena_mixer::mix();
+    }
+
     void test(){
-    const int pause{2000};
-    osc::send("/debug" , "Testing pixel ring .\n Cycling through colors.");
-    pixel_ring::test(1000);
-    delay(pause);
+      const int pause{2000};
+      osc::send("/debug" , "Testing pixel ring .\n Cycling through colors.");
+      pixel_ring::test(1000);
+      delay(pause);
 
-    osc::send("/debug" , "Testing servo moter .\n Moving left and right.");
-    euglena_mixer::test();
-    delay(pause);
+      osc::send("/debug" , "Testing servo moter .\n Moving left and right.");
+      euglena_mixer::test();
+      delay(pause);
 
 
-    osc::send("/debug" , "Testing output pump .\n Pumping 1 shot in petridish.");
-    out_pump.start(5000);
-    delay(pause);
+      osc::send("/debug" , "Testing output pump .\n Pumping 1 shot in petridish.");
+      out_pump.start(5000);
+      delay(pause);
 
-    osc::send("/debug" , "Testing input pump .\n Emptying out petridish.");
-    in_pump.start(5000);
-    delay(pause);
+      osc::send("/debug" , "Testing input pump .\n Emptying out petridish.");
+      in_pump.start(5000);
+      delay(pause);
 
-  }
+    }
 
     void drain(bool on)
-  {
-    if(on)
     {
-      in_pump.start();
-    }else
-    {
-      in_pump.stop();
+      if(on)
+      {
+        in_pump.start();
+      }else
+      {
+        in_pump.stop();
+      }
     }
-  }
 
     void fill(bool on)
-  {
-    if(on)
     {
-      out_pump.start();
-    }else
-    {
-      out_pump.stop();
+      if(on)
+      {
+        out_pump.start();
+      }else
+      {
+        out_pump.stop();
+      }
     }
-    
-    
-  }
   
     int get_petridish_level()
-  {
-    int liquidLevel{0};
-    int myLevel{0};
-
-    pixel_ring::set_color(pixel_ring::black);
-    for(int i=1; i<=20; ++i)
     {
-      liquidLevel=liquid_sensor.get_level();
-      myLevel += liquidLevel;
-      delay(10);
-    }
-    
-    liquidLevel = int(myLevel/20);
-    
-      
-      if(liquidLevel < threshold)
-      { 
-         pixel_ring::set_color(pixel_ring::green);
-        //  delay(100);
-        //  pixel_ring::set_color(pixel_ring::black);
-      }
-      else
+      int liquidLevel{0};
+      int myLevel{0};
+
+      pixel_ring::set_color(pixel_ring::black);
+      for(int i=1; i<=20; ++i)
       {
-         pixel_ring::set_color(pixel_ring::red);
-         delay(100);
+        liquidLevel=liquid_sensor.get_level();
+        myLevel += liquidLevel;
+        delay(10);
       }
-      return liquidLevel;
-   }
+      
+      liquidLevel = int(myLevel/20);
+      
+        
+        if(liquidLevel < threshold)
+        { 
+          pixel_ring::set_color(pixel_ring::green);
+          //  delay(100);
+          //  pixel_ring::set_color(pixel_ring::black);
+        }
+        else
+        {
+          pixel_ring::set_color(pixel_ring::red);
+          delay(100);
+        }
+        return liquidLevel;
+    }
 
 }//namespace xenolalia
