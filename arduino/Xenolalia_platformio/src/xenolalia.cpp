@@ -51,8 +51,8 @@ namespace xenolalia{
         empty_petridish();
         delay(500);
 
-        // Second: fill half
-        fill_petridish(0.5);
+        // Second: fill partially.
+        fill_petridish(0.67);
         delay(500);
    }
 
