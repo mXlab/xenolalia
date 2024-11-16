@@ -40,16 +40,15 @@ class MorphoVignette extends Vignette {
       PImage nextImage = images[nextImageIndex];
 
       float t = imageIndex - prevImageIndex;
-
+    
       if (lastImageIndex == images.length-1) {
-        scene.oscSendMessage("/end", 0);
         lastImageIndex = -1;
       }
-      else if (nextImageIndex == images.length-1) {
-  
-      }
       else if (nextImageIndex != lastImageIndex) {
-        scene.oscSendMessage("/step", nextImageIndex);
+        if (nextImageIndex == images.length-1)
+          scene.oscSendMessage("/last"); // XXX this repeats multiple times, we could fix it using a boolean like in SequentialScene
+        else
+          scene.oscSendMessage("/step", nextImageIndex);
         lastImageIndex = nextImageIndex;
       }
 

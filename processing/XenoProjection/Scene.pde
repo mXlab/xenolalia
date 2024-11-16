@@ -46,6 +46,10 @@ class Scene {
     return oscAddress != null;
   }
 
+  void oscSendMessage(String path) {
+    oscSendMessage(path, 0);
+  }
+  
   void oscSendMessage(String path, int value) {
     if (usesOsc()) {
       OscMessage msg = new OscMessage(oscAddress + path);
@@ -126,6 +130,14 @@ class Scene {
   void reset() {
     timer.start();
     needsRefresh = false;
+  }
+  
+  void start() {
+    oscSendMessage("/start");    
+  }
+  
+  void end() {
+    oscSendMessage("/end");
   }
 
   boolean needsRefresh() {

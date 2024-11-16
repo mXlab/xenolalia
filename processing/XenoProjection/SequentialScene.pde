@@ -1,5 +1,6 @@
 // A special kind of scene that shows a sequence of vignettes appearing from left to right,
 class SequentialScene extends Scene {
+  boolean lastStepDone;
 
   SequentialScene(int nImages, int maxImagesPerRow) {
     this(nImages, maxImagesPerRow, new Rect(width, height));
@@ -7,8 +8,14 @@ class SequentialScene extends Scene {
 
   SequentialScene(int nImages, int maxImagesPerRow, Rect boundingRect) {
     super(min(nImages, maxImagesPerRow), ceil(nImages / (float)min(nImages, maxImagesPerRow)), boundingRect);
+    lastStepDone = false;
   }
 
+  void reset() {
+    super.reset();
+    lastStepDone = false;
+  }
+   
   //void initSequence(int nImages, int maxImagesPerRow) {
   //  init(min(nImages, maxImagesPerRow), ceil(nImages / (float)min(nImages, maxImagesPerRow)));
   //}
@@ -30,18 +37,15 @@ class SequentialScene extends Scene {
       }
     }
   
-
-    if (lastImageIndex == nVignettes()-1) {
-      oscSendMessage("/end", 0);
-      lastImageIndex = -1;
+    if (!lastStepDone) {
+      if (lastImageIndex == nVignettes()-1) {
+        lastStepDone = true;
+        lastImageIndex = -1;
+      }
+      else if (maxIndex != lastImageIndex) {
+        oscSendMessage("/step", maxIndex);
+        lastImageIndex = maxIndex;
+      }
     }
-    else if (maxIndex == nVignettes()-1) {
-
-    }
-    else if (maxIndex != lastImageIndex) {
-      oscSendMessage("/step", maxIndex);
-      lastImageIndex = maxIndex;
-    }
-
   }
 }
