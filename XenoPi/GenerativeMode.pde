@@ -39,18 +39,21 @@ class GenerativeMode extends AbstractMode {
   Timer exposureTimer;
   Timer stateTimer;
 
-  final int FLASH_TIME = 6000;
+  final int FLASH_TIME = 8000;
+  final int GLOW_STOP_BEFORE_SNAPSHOT_TIME = 3000; // should be smaller than FLASH_TIME
   final int HANDSHAKE_TIMEOUT = 5000;
   final int SNAPSHOT_BASE_TIME = 10000;
   final int SNAPSHOT_INTER_SHOT_TIME = 2000;
   
   final int N_SNAPSHOTS_PER_EXPERIMENT = 12;
+  //final int N_SNAPSHOTS_PER_EXPERIMENT = 3;
   
   // Time to wait for liquid to settle after refresh.
   final int POST_REFRESH_TIME = 120000; // 2 minutes
   
   // At the end of a cycle, wait for this time to present the result.
-  final int PRESENTATION_TIME = 180000; // 3 minutes
+  final int PRESENTATION_TIME = 300000; // 5 minutes
+//  final int PRESENTATION_TIME = 2000; // 5 minutes
 
   State state;
 
@@ -103,6 +106,9 @@ class GenerativeMode extends AbstractMode {
         stateTimer.start();
 
         exposureTimer = new Timer(settings.exposureTimeMs());
+
+        // Make sure to stop glow.
+        glow(false);
       }
 
       // Send handshakes and wait for response.
@@ -193,6 +199,7 @@ class GenerativeMode extends AbstractMode {
         // Start timer.
         stateTimer = new Timer(FLASH_TIME);
         stateTimer.start();
+        glow(true);
       }
 
       // Set color to flash.
@@ -202,8 +209,14 @@ class GenerativeMode extends AbstractMode {
       if (cam.available())
         cam.read();
 
+      // Stop glow early to prevent it from affecting snapshots.
+      if (stateTimer.countdownTime() <= GLOW_STOP_BEFORE_SNAPSHOT_TIME) {
+        glow(false);
+      }
+
       // When finished: transit to snapshot mode.
       if (stateTimer.isFinished()) {
+        glow(false);
         transitionTo(State.SNAPSHOT);
       }
     }
@@ -257,6 +270,8 @@ class GenerativeMode extends AbstractMode {
 
     // WAIT_FOR_GLYPH : Wait for response from server to get glyph.
     else if (state == State.WAIT_FOR_GLYPH) {
+      if (enteredState()) // this is just to print a message
+      {} // nothing to do here
       if (nextGlyphReceived)
         transitionTo(State.MAIN);
     }
@@ -333,6 +348,7 @@ class GenerativeMode extends AbstractMode {
       if (enteredState()) {
         stateTimer = new Timer(PRESENTATION_TIME);
         stateTimer.start();
+        glow(true); // start glow
       }
 
       background(FLASH_COLOR);
@@ -341,11 +357,10 @@ class GenerativeMode extends AbstractMode {
         transitionTo(State.NEW);
         newExperimentRequested = false;
         experiment.updateServer("end"); // tell server current experiment is over
+        glow(false); // stop glow
       }
 
     }
-    
-    
   }
 
   void transitionTo(State nextState) {
@@ -359,8 +374,13 @@ class GenerativeMode extends AbstractMode {
 
   boolean enteredState() {
     boolean isEntering = newState;
-    if (isEntering)
+    if (isEntering) {
       println("Entering state: " + state);
+      // Update server.
+      OscMessage msg = new OscMessage("/xeno/exp/state");
+      msg.add(state.toString());
+      oscP5.send(msg, remoteLocationServer);
+    }
     newState = false;
     return isEntering;
   }
@@ -443,5 +463,13 @@ class GenerativeMode extends AbstractMode {
     oscP5.send(msg, remoteLocationApparatus);
     
     log("Sent call for refreshing");
+  }
+
+  void glow(boolean on) {
+    OscMessage msg = new OscMessage("/xeno/glow");
+    msg.add(on ? 1 : 0);
+    oscP5.send(msg, remoteLocationApparatus);
+
+    log("Sent call to " + (on ? "start" : "stop") + "glow.");
   }
 }
