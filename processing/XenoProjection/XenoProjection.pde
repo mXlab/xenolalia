@@ -65,7 +65,7 @@ void setup() {
   previousExperiment = allExperiments[0];
 
   // Single artificial image of current experiment (image on apparatus).
-  if (false)
+  if (true)
   {
     Scene scene = new Scene(1, 1, singleVignetteRect);
     GlyphVignette v = new GlyphVignette(currentExperiment);
@@ -77,7 +77,7 @@ void setup() {
   }
 
   // Side-by-side animation of current experiment.
-  if (false)
+  if (true)
   {
     Scene scene = new Scene(2, 1, doubleVignetteRect);
 
@@ -94,10 +94,6 @@ void setup() {
 
     scenes.add(scene);
     previousExperimentScenes.add(scene);
-    
-
-    
-
   }
 
   // Single animation of alternating images from current experiment.
@@ -136,7 +132,7 @@ void setup() {
   }
 
   // Animation of recent generative glyphs.
-  if (false)
+  if (true)
   {
     Scene scene = new Scene(5, 2, gridVignetteRect);
     for (int i=0; i<min(scene.nVignettes(), allExperiments.length); i++) {
