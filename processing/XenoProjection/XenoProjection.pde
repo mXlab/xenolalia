@@ -1,18 +1,16 @@
 import oscP5.*;
 import netP5.*;
 
-
-OscP5 oscP5;
-
-//final String DATA_DIR = "/home/sofian/Desktop/xenolalia/contents/";
-//final String DATA_DIR = "/Users/tez/Projects/XENOSOUND/XenoProjection/contents/";
-
-String DATA_DIR; 
-
-final int VIGNETTE_SIDE = 480;
-
+// Constants.
 final int OSC_RECEIVE_PORT = 7001;
 final int OSC_SEND_PORT = 7002; // sonoscope
+final int VIGNETTE_SIDE = 480;
+
+// Globals.
+String DATA_DIR;
+
+OscP5 oscP5;
+NetAddress sonoscope;
 
 PImage DEFAULT_MASK;
 
@@ -29,19 +27,18 @@ SequentialScene sequentialScene;
 SequentialScene nextSequentialScene; // sequential scene that will be loaded next
 Scene recentGlyphsScene;
 
-NetAddress sonoscope;
-
 float midpointY = -0.15;
 
 /////////////////////////////////////
 void setup() {
-    //size(1920, 1080, P2D);
-    //size(1280, 720, P2D);
   fullScreen(P2D);
 
+  smooth();
+
+  // Init data directory.
   DATA_DIR =  sketchPath("") + "contents/";
 
-  smooth();
+  // Create default mask.
   DEFAULT_MASK = createVignetteMask(0);
 
   // Setup OSC.
@@ -53,16 +50,17 @@ void setup() {
 
   sonoscope = new NetAddress("127.0.0.1", OSC_SEND_PORT);
 
+  // Create vignette rectangles.
   Rect singleVignetteRect = createRect(0, midpointY, 1, 0.53);
   Rect doubleVignetteRect = createRect(0, midpointY, 1, 0.4);
   Rect gridVignetteRect   = createRect(0, midpointY, 1, 0.4);
 
-  // Create first scene.
-  currentExperiment = new ExperimentData("2022-10-13_14:53:52_hexagram-uqam-2022_nodepi-02");
-
+  // Load starting experiments.
   ExperimentData[] allExperiments = loadExperiments(sketchPath("") + "contents/experiments.txt");
-
   previousExperiment = allExperiments[0];
+
+  // Create first experiment.
+  currentExperiment = new ExperimentData("2022-10-13_14:53:52_hexagram-uqam-2022_nodepi-02");
 
   // Single artificial image of current experiment (image on apparatus).
   if (true)
@@ -144,10 +142,12 @@ void setup() {
     recentGlyphsScene = scene;
   }
 
+  // Build all scenes.
   for (Scene s : scenes) {
     s.build();
   }
   
+  // Start first scene.
   scenes.currentScene().start();
 }
 
