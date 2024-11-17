@@ -152,6 +152,7 @@ void setup() {
     s.build();
   }
   
+  scenes.currentScene().start();
 }
 
 
