@@ -62,8 +62,6 @@ void setup() {
 
   ExperimentData[] allExperiments = loadExperiments(sketchPath("") + "contents/experiments.txt");
 
-  ExperimentData[] allExperiments = loadExperiments(sketchPath("") + "contents/experiments.txt");
-
   previousExperiment = allExperiments[0];
 
   // Single artificial image of current experiment (image on apparatus).
@@ -118,11 +116,7 @@ void setup() {
     v.setUseInterpolation(true);
     scene.putVignette(0, v);
     scenes.add(scene);
-    previousExperimentScenes.add(scene);
-    
-    zerosequences();
-    sequences[1]=1;
-    
+    previousExperimentScenes.add(scene);    
   }
 
   // Stepwise alternating sequence of images from current experiment.
