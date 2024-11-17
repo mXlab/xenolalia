@@ -34,6 +34,7 @@ void setup() {
   fullScreen(P2D);
 
   smooth();
+  noCursor();
 
   // Init data directory.
   DATA_DIR =  sketchPath("") + "contents/";
@@ -118,7 +119,6 @@ void setup() {
   {
     SequentialScene scene = createSequentialScene(previousExperiment);
     scene.setOscAddress("/sequence");
-    scene.oscSendMessage("/test", 0);
     for (int i=0; i<previousExperiment.nImages()-1; i++) {
       GlyphVignette v = new GlyphVignette(previousExperiment);
       v.setIndex(i);
