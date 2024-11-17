@@ -43,18 +43,17 @@ class MorphoVignette extends Vignette {
       float t = imageIndex - prevImageIndex;
       
       if (lastImageIndex == images.length-1) {
+        if (t == 0) // Send ending message when we are completely on the last image
           scene.oscSendMessage("/end", 0);
         lastImageIndex = -1;
       }
-      else if (nextImageIndex == images.length-1) {
-  
-      }
-
       else if (nextImageIndex != lastImageIndex) {
-        if (nextImageIndex == images.length-1)
+        if (nextImageIndex == images.length-1) {
           scene.oscSendMessage("/last"); // XXX this repeats multiple times, we could fix it using a boolean like in SequentialScene
-        else
+        }
+        else {
           scene.oscSendMessage("/step", nextImageIndex);
+        }
         lastImageIndex = nextImageIndex;
       }
 
