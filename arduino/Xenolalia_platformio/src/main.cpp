@@ -46,18 +46,21 @@
 #include "osc.hpp"
 #include "ota.hpp"
 
-
+#include "soc/soc.h"
+#include "soc/rtc_cntl_reg.h"
 void setup() 
 {
+  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
 
   Serial.begin(9600);
   delay(2000);
   xenolalia::init();
-  osc::connect_to_wifi(osc::ssid,osc::pass);
+  osc::connect_to_wifi(osc::ssid, osc::pass);
   osc::init_udp(); 
   ota::init(osc::local_IP[3]);
   Serial.println("Xenolalia");
 
+  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 1); //reenable brownout detector
 }
 
 void loop()
