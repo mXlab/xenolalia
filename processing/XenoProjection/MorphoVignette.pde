@@ -24,19 +24,12 @@ class MorphoVignette extends Vignette {
     for (int i=0; i<images.length; i++) {
       images[i] = exp.getImage(i, type, palette);
     }
-
   }
 
   int lastImageIndex = -1;
   
-
-
   void doDisplay() {
     
-    //println("================== ");
-    //println("sequences: " + sequences[1]);
-    //println("================== ");
-
     if (images.length > 0) {
       float progress = scene.runProgress();
 
@@ -48,9 +41,9 @@ class MorphoVignette extends Vignette {
       PImage nextImage = images[nextImageIndex];
 
       float t = imageIndex - prevImageIndex;
-
+      
       if (lastImageIndex == images.length-1) {
-        scene.oscSendMessage("/end", 0);
+          scene.oscSendMessage("/end", 0);
         lastImageIndex = -1;
       }
       else if (nextImageIndex == images.length-1) {
@@ -67,10 +60,6 @@ class MorphoVignette extends Vignette {
 
       PImage img = useInterpolation ? lerpImage(prevImage, nextImage, t) : images[round(imageIndex)];
       pg.image(img, 0, 0, VIGNETTE_SIDE, VIGNETTE_SIDE);
-      
-
-  
-  
     }
   }
 }
