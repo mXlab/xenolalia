@@ -233,17 +233,17 @@ sudo bash bin/xeno_pi_install.sh
 
 #### Configure auto-launch
 
-Run the following command:
+Edit the autostart file:
 ```
-crontab -e
+nano ~/.config/lxsession/LXDE-pi/autostart
 ```
 
-If asked select: ```/bin/nano```
-
-Add the following line to the file and save:
-
+Paste the following script and save:
 ```
-@reboot sleep 30 && /bin/bash /home/pi/xenolalia/bin/xeno_pi_main.sh
+# Wait to make sure Wifi is running before startup
+sleep 10
+# Launch script
+/bin/bash /home/pi/xenolalia/bin/xeno_pi_main.sh > /home/pi/startuplog 2>&1
 ```
 
 #### Processing libraries

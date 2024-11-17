@@ -20,6 +20,8 @@ class SequentialScene extends Scene {
   //  init(min(nImages, maxImagesPerRow), ceil(nImages / (float)min(nImages, maxImagesPerRow)));
   //}
 
+
+
   int lastImageIndex = -1;
 
   void doDisplay() {
