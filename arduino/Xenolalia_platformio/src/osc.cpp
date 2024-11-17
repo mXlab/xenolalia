@@ -84,6 +84,24 @@ void mix(OSCMessage &msg){
   xenolalia::mix();
 }
 
+void setColor(OSCMessage &msg){
+
+  osc::send("/xeno/handshake");
+  osc::send("/debug", "Setting color");
+  int r = msg.getInt(0);
+  int g = msg.getInt(1);
+  int b = msg.getInt(2);
+  xenolalia::setColor(r, g, b);
+}
+
+void glow(OSCMessage &msg){
+
+  osc::send("/xeno/handshake");
+  osc::send("/debug", "Glowing");
+  bool on = msg.getInt(0);
+  xenolalia::glow(on);
+}
+
 namespace osc
 {
   const char* ssid {"Xenolalia"};
@@ -190,10 +208,12 @@ void send( const char* adress ){
       if (!msg.hasError()) {
        
         msg.dispatch("/xeno/test_hardware", test_hardware);
-        msg.dispatch("/xeno/refresh",start_cycle);
+        msg.dispatch("/xeno/refresh", start_cycle);
         msg.dispatch("/xeno/drain", drain);
         msg.dispatch("/xeno/fill", fill);
         msg.dispatch("/xeno/mix", mix);
+        msg.dispatch("/xeno/color", setColor);
+        msg.dispatch("/xeno/glow", glow);
       }
       else
       {

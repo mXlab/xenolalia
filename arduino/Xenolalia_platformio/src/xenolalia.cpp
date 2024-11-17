@@ -9,7 +9,6 @@
 #include "liquid_sensor.hpp"
 #include "osc.hpp"
 
-
 namespace xenolalia{
     
 
@@ -18,13 +17,29 @@ namespace xenolalia{
     Liquid_level_sensor liquid_sensor(pins::liquid_sensor);
     const int threshold{500};
 
+    pq::SineOsc glowLfo(10.0f);
+    bool isGlowing{false};
+    RgbColor glowColorA(255, 0, 255);
+    RgbColor glowColorB(255, 255, 255);
+
     void init(){
     
         in_pump.init();
         out_pump.init();
         pixel_ring::init();
         liquid_sensor.init();
-        euglena_mixer::init();  
+        euglena_mixer::init(); 
+        pq::Plaquette.begin(); 
+    }
+
+    void update() {
+      pq::Plaquette.step();
+      if (isGlowing) {
+        RgbColor color = RgbColor::LinearBlend(glowColorA, glowColorB, glowLfo);
+        pixel_ring::set_color(color);
+      }
+      else
+        pixel_ring::set_color(pixel_ring::black);
     }
 
     void cycle(){
@@ -100,6 +115,15 @@ namespace xenolalia{
   
     void mix() {
       euglena_mixer::mix();
+    }
+
+    void setColor(int r, int g, int b) {
+      RgbColor color(r, g, b);
+      pixel_ring::set_color(color);
+    }
+
+    void glow(bool on) {
+      isGlowing = on;
     }
 
     void test(){

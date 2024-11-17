@@ -65,4 +65,5 @@ void loop()
   ota::update();
   osc::wifi_check_connection();
   osc::update();
+  xenolalia::update();
 }
