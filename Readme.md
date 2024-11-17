@@ -289,3 +289,31 @@ The web-app can be access here: http://xenodata.sofianaudry.com/
 Make sure you have enough GPU memory by adding the following line to ```/boot/config.txt```:
 
 ```gpu_mem=320```
+
+### Pure data priority and sound problems
+
+It looks like there are problems when running Pd without admin rights:
+
+```
+priority 6 scheduling failed; running at normal priority
+priority 8 scheduling failed.
+```
+
+and/or :
+
+```
+ALSA output error (snd_pcm_open): Device or resource busy
+```
+
+The solution is to run as superuser (sudo). To allow this without having to type a password, type:
+
+```sudo visudo```
+
+Add the following lines to the file:
+
+```
+# Allow to run pd as superuser.
+xeno    ALL=NOPASSWD: /usr/bin/pd
+```
+
+Then save (CTRL-X). You should now be able to run Pd as sudo without having to type a password.
