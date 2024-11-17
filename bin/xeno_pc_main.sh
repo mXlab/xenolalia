@@ -16,12 +16,16 @@ echo "Launching xeno_server (PID=$xeno_server_pid)"
 
 # Launch Open Stage Control.
 echo "Launching Open Stage Control..."
-/usr/local/bin/open-stage-control &
+/usr/bin/open-stage-control &
 open_stage_control_pid=$!
-
 echo "Launching Open Stage Control (PID=$open_stage_control_pid)"
 
-cleanup="sudo kill $prevent_sleep_pid $xeno_server_pid"
+# Launch Pd sonoscope.
+sudo /usr/bin/pd $xeno_dir/pd/xeno-sonoscope.pd &
+xeno_sonoscope_pid=$!
+echo "Launching xeno-sonoscope (PID=$xeno_sonoscope_pid)"
+
+cleanup="sudo kill $prevent_sleep_pid $xeno_server_pid $open_stage_control_pid $xeno_sonoscope_pid"
 
 echo ""
 echo "If the script does not terminate nicely you can kill all subprocesses by running:"

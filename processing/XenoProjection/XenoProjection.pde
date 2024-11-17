@@ -1,12 +1,16 @@
-import oscP5.*; //<>// //<>//
+import oscP5.*;
 import netP5.*;
 
-OscP5 oscP5;
-
-final String DATA_DIR = "/home/sofian/Desktop/xenolalia/contents/";
+// Constants.
+final int OSC_RECEIVE_PORT = 7001;
+final int OSC_SEND_PORT = 7002; // sonoscope
 final int VIGNETTE_SIDE = 480;
 
-final int OSC_RECEIVE_PORT = 7001;
+// Globals.
+String DATA_DIR;
+
+OscP5 oscP5;
+NetAddress sonoscope;
 
 PImage DEFAULT_MASK;
 
@@ -23,15 +27,19 @@ SequentialScene sequentialScene;
 SequentialScene nextSequentialScene; // sequential scene that will be loaded next
 Scene recentGlyphsScene;
 
-NetAddress sonoscope;
-
 float midpointY = -0.15;
 
+/////////////////////////////////////
 void setup() {
-  //  size(1920, 1080, P2D);
   fullScreen(P2D);
 
   smooth();
+  noCursor();
+
+  // Init data directory.
+  DATA_DIR =  sketchPath("") + "contents/";
+
+  // Create default mask.
   DEFAULT_MASK = createVignetteMask(0);
 
   // Setup OSC.
@@ -41,18 +49,19 @@ void setup() {
   oscP5.plug(this, "experimentStep", "/xeno/server/step");
   oscP5.plug(this, "experimentEnd", "/xeno/server/end");
 
-  sonoscope = new NetAddress("127.0.0.1", 8005);
+  sonoscope = new NetAddress("127.0.0.1", OSC_SEND_PORT);
 
+  // Create vignette rectangles.
   Rect singleVignetteRect = createRect(0, midpointY, 1, 0.53);
   Rect doubleVignetteRect = createRect(0, midpointY, 1, 0.4);
   Rect gridVignetteRect   = createRect(0, midpointY, 1, 0.4);
 
-  // Create first scene.
-  currentExperiment = new ExperimentData("2022-10-13_14:53:52_hexagram-uqam-2022_nodepi-02");
-
-  ExperimentData[] allExperiments = loadExperiments("/home/sofian/Desktop/xenolalia/contents/experiments.txt");
+  // Load starting experiments.
+  ExperimentData[] allExperiments = loadExperiments(sketchPath("") + "contents/experiments.txt");
   previousExperiment = allExperiments[0];
 
+  // Create first experiment.
+  currentExperiment = new ExperimentData("2022-10-13_14:53:52_hexagram-uqam-2022_nodepi-02");
 
   // Single artificial image of current experiment (image on apparatus).
   if (true)
@@ -95,14 +104,14 @@ void setup() {
     MorphoVignette v;
 
     v= new MorphoVignette(previousExperiment);
+    scene.setOscAddress("/retina");
     v.setArtificialPalette(ArtificialPalette.MAGENTA);
     v.setDataType(DataType.ALL);
     v.setLastImageOffset(1);
     v.setUseInterpolation(true);
     scene.putVignette(0, v);
-
     scenes.add(scene);
-    previousExperimentScenes.add(scene);
+    previousExperimentScenes.add(scene);    
   }
 
   // Stepwise alternating sequence of images from current experiment.
@@ -110,7 +119,6 @@ void setup() {
   {
     SequentialScene scene = createSequentialScene(previousExperiment);
     scene.setOscAddress("/sequence");
-    scene.oscSendMessage("/test", 0);
     for (int i=0; i<previousExperiment.nImages()-1; i++) {
       GlyphVignette v = new GlyphVignette(previousExperiment);
       v.setIndex(i);
@@ -134,19 +142,31 @@ void setup() {
     recentGlyphsScene = scene;
   }
 
+  // Build all scenes.
   for (Scene s : scenes) {
     s.build();
   }
+  
+  // Start first scene.
+  scenes.currentScene().start();
 }
 
+
+////////////////////////////////////////////////////
 void draw() {
+  // Clear background.
+  // Clear background.
   background(0);
 
-  Scene current = scenes.currentScene();
-  if (current.isFinished()) {
+  // If current scene has ended, cleanup and go to next scene.
+  if (scenes.currentScene().isFinished()) {
+
+    // Make sure all scenes are built properly.
     for (int i=0; i<scenes.size(); i++) {
+
       Scene s = scenes.get(i);
       if (s.needsRefresh()) {
+        // Deal with special cases.
         if (s == sequentialScene) {
           sequentialScene = nextSequentialScene;
           scenes.set(i, sequentialScene);
@@ -156,12 +176,17 @@ void draw() {
           v.setDataType(DataType.BIOLOGICAL);
           s.insertVignette(0, v);
         }
+
+        // Build scene.
         s.build();
       }
     }
+
+    // Switch to next scene.
     scenes.nextScene();
   }
 
+  // Display current scene.
   scenes.currentScene().display();
 }
 
@@ -172,21 +197,25 @@ void refreshScenes(ArrayList<Scene> scenesToRefresh) {
 
 boolean newExperimentStarted = false;
 void experimentNew(String uid) {
+  println("NEW experiment " + uid);
   newExperimentStarted = true;
 }
 
 void experimentStep(String uid) {
-  println(":::::: STEP ::::::");
+  println("STEP experiment " + uid);
+  // First step: update currentExperiment with new UID.
   if (newExperimentStarted) {
     currentExperiment.reload(uid);
     newExperimentStarted = false;
   }
+
+  // Refresh current experiment.
   currentExperiment.refresh();
   refreshScenes(currentExperimentScenes);
 }
 
 void experimentEnd(String uid) {
-  println(":::::: END ::::::");
+  println("END experiment " + uid);
   previousExperiment.reload(currentExperiment.getUid());
 
   refreshScenes(previousExperimentScenes);
@@ -207,7 +236,34 @@ SequentialScene createSequentialScene(ExperimentData exp) {
   return new SequentialScene( exp.nImages()-1, 50, createRect(0, midpointY, 1, 1));
 }
 
+////////////////////////////////////////////////////
 void keyPressed() {
   if (key == 's')
     saveFrame();
+   else if (key == 'o')
+    sendOSCMessage("/example", random(10));
+    
+}
+
+////////////////////////////////////////////////////
+// This function is automatically called when an OSC message is received
+void oscEvent(OscMessage message) {
+  // Print the address pattern of the message
+  println("Received OSC message: " + message.addrPattern());
+}
+
+
+////////////////////////////////////////////////////
+// Function to send an OSC message
+void sendOSCMessage(String address, float value) {
+  // Create a new OSC message with a specific address pattern
+  OscMessage message = new OscMessage(address);
+  
+  // Add arguments to the message
+  message.add(value); // Add a float argument, for example
+  
+  // Send the OSC message to the destination
+  oscP5.send(message, sonoscope);
+  
+  println("Sent OSC message: " + address + " with value " + value);
 }
