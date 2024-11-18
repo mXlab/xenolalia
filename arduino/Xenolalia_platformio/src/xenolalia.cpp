@@ -121,12 +121,17 @@ namespace xenolalia{
     }
 
     void setColor(int r, int g, int b) {
-      RgbColor color(r, g, b);
-      pixel_ring::set_color(color);
+      if (!isGlowing) { // ignore if glowing
+        RgbColor color(r, g, b);
+        pixel_ring::set_color(color);
+      }
     }
 
     void glow(bool on) {
       isGlowing = on;
+      // When switching back to not glowing, clear light.
+      if (!isGlowing)
+        pixel_ring::set_color(pixel_ring::black);
     }
 
     void test(){
