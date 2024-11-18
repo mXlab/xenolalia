@@ -61,9 +61,15 @@ namespace xenolalia{
 
    /**
     * @brief Get the petridish current level
+    * @param nReadings number of readings of the sensor
     * @return int liquid level
     */
-   int get_petridish_level();
+   int get_petridish_level(int nReadings=20);
+
+   /**
+    * @brief Check if the petridish is full
+    */
+   bool petridish_full(int nReadings=20);
    
 
 }//namespace xenolalia
