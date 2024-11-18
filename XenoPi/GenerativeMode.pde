@@ -39,7 +39,8 @@ class GenerativeMode extends AbstractMode {
   Timer exposureTimer;
   Timer stateTimer;
 
-  final int FLASH_TIME = 6000;
+  final int FLASH_TIME = 8000;
+  final int GLOW_STOP_BEFORE_SNAPSHOT_TIME = 3000; // should be smaller than FLASH_TIME
   final int HANDSHAKE_TIMEOUT = 5000;
   final int SNAPSHOT_BASE_TIME = 10000;
   final int SNAPSHOT_INTER_SHOT_TIME = 2000;
@@ -50,7 +51,7 @@ class GenerativeMode extends AbstractMode {
   final int POST_REFRESH_TIME = 120000; // 2 minutes
   
   // At the end of a cycle, wait for this time to present the result.
-  final int PRESENTATION_TIME = 180000; // 3 minutes
+  final int PRESENTATION_TIME = 300000; // 5 minutes
 
   State state;
 
@@ -103,6 +104,9 @@ class GenerativeMode extends AbstractMode {
         stateTimer.start();
 
         exposureTimer = new Timer(settings.exposureTimeMs());
+
+        // Make sure to stop glow.
+        glow(false);
       }
 
       // Send handshakes and wait for response.
@@ -193,6 +197,7 @@ class GenerativeMode extends AbstractMode {
         // Start timer.
         stateTimer = new Timer(FLASH_TIME);
         stateTimer.start();
+        glow(true);
       }
 
       // Set color to flash.
@@ -201,6 +206,11 @@ class GenerativeMode extends AbstractMode {
       // Keep on emptying camera buffer.
       if (cam.available())
         cam.read();
+
+      // Stop glow early to prevent it from affecting snapshots.
+      if (stateTimer.countdownTime() <= GLOW_STOP_BEFORE_SNAPSHOT_TIME) {
+        glow(false);
+      }
 
       // When finished: transit to snapshot mode.
       if (stateTimer.isFinished()) {
@@ -217,14 +227,21 @@ class GenerativeMode extends AbstractMode {
         stateTimer.start();
       }
 
+      // Set color to flash.
+      background(FLASH_COLOR);
+
+      // Attempt to take a snapshot, discarding images containing lines artifacts.
       if (cam.available()) {
         cam.read();
         if (stateTimer.isFinished()) {
           println("Trying to take snapshot.");
           PImage img = cam.getImage();
+          // If no lines detected, save image.
           if (!imageLineDetected(img)) {
             snapshot = img;
-          } else {
+          }
+          // Otherwise save image to disk and retry.
+          else {
             float confidence = imageLineDetectConfidence(img);
             println("Detected line with confidence: " + confidence);
             img.save(savePath(experiment.experimentDir() + "/lined_image_" + millis() + "_" + confidence + ".png"));
@@ -234,6 +251,7 @@ class GenerativeMode extends AbstractMode {
         }
       }
 
+      // Process snapshot.
       if (snapshot != null) {
         println("Snapshot taken without lines");
         if (newExperimentStarted) {
@@ -333,6 +351,7 @@ class GenerativeMode extends AbstractMode {
       if (enteredState()) {
         stateTimer = new Timer(PRESENTATION_TIME);
         stateTimer.start();
+        glow(true); // start glow
       }
 
       background(FLASH_COLOR);
@@ -341,6 +360,7 @@ class GenerativeMode extends AbstractMode {
         transitionTo(State.NEW);
         newExperimentRequested = false;
         experiment.updateServer("end"); // tell server current experiment is over
+        glow(false); // stop glow
       }
 
     }
@@ -443,5 +463,13 @@ class GenerativeMode extends AbstractMode {
     oscP5.send(msg, remoteLocationApparatus);
     
     log("Sent call for refreshing");
+  }
+
+  void glow(boolean on) {
+    OscMessage msg = new OscMessage("/xeno/glow");
+    msg.add(on ? 1 : 0);
+    oscP5.send(msg, remoteLocationApparatus);
+
+    log("Sent call to " + on ? "start" : "stop" + "glow.");
   }
 }
