@@ -23,7 +23,6 @@ namespace xenolalia{
     RgbColor glowColorB(255, 255, 255);
 
     void init(){
-    
         in_pump.init();
         out_pump.init();
         pixel_ring::init();
@@ -34,12 +33,16 @@ namespace xenolalia{
 
     void update() {
       pq::Plaquette.step();
+
+      // Prevent overflowing.
+      if (out_pump.is_running() && petridish_full())
+        out_pump.stop();
+
+      // Glowing: adjust color according to LFO.
       if (isGlowing) {
         RgbColor color = RgbColor::LinearBlend(glowColorA, glowColorB, glowLfo);
         pixel_ring::set_color(color);
       }
-      else
-        pixel_ring::set_color(pixel_ring::black);
     }
 
     void cycle(){
@@ -118,12 +121,17 @@ namespace xenolalia{
     }
 
     void setColor(int r, int g, int b) {
-      RgbColor color(r, g, b);
-      pixel_ring::set_color(color);
+      if (!isGlowing) { // ignore if glowing
+        RgbColor color(r, g, b);
+        pixel_ring::set_color(color);
+      }
     }
 
     void glow(bool on) {
       isGlowing = on;
+      // When switching back to not glowing, clear light.
+      if (!isGlowing)
+        pixel_ring::set_color(pixel_ring::black);
     }
 
     void test(){
@@ -160,43 +168,41 @@ namespace xenolalia{
 
     void fill(bool on)
     {
-      if(on)
+      if (petridish_full())
+      {
+        out_pump.stop();
+      }
+      else if(on)
       {
         out_pump.start();
-      }else
+      }
+      else
       {
         out_pump.stop();
       }
     }
   
-    int get_petridish_level()
+    int get_petridish_level(int nReadings)
     {
       int liquidLevel{0};
-      int myLevel{0};
 
       pixel_ring::set_color(pixel_ring::black);
-      for(int i=1; i<=20; ++i)
-      {
-        liquidLevel=liquid_sensor.get_level();
-        myLevel += liquidLevel;
-        delay(10);
+      liquidLevel = liquid_sensor.get_level(nReadings);
+      
+      if(liquidLevel >= threshold)
+      { 
+        pixel_ring::set_color(pixel_ring::red);
       }
-      
-      liquidLevel = int(myLevel/20);
-      
-        
-        if(liquidLevel < threshold)
-        { 
-          pixel_ring::set_color(pixel_ring::green);
-          //  delay(100);
-          //  pixel_ring::set_color(pixel_ring::black);
-        }
-        else
-        {
-          pixel_ring::set_color(pixel_ring::red);
-          delay(100);
-        }
-        return liquidLevel;
+      else
+      {
+        pixel_ring::set_color(pixel_ring::green);
+      }
+
+      return liquidLevel;
+    }
+
+    bool petridish_full(int nReadings) {
+      return get_petridish_level(nReadings) >= threshold;
     }
 
 }//namespace xenolalia

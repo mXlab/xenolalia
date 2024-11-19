@@ -28,4 +28,9 @@ class Pump{
     /** @brief Pump initialization routine
      */
     void init();
+
+    /**
+     * @brief Is pump currently running.
+     */
+    bool is_running() const { return running; }
 };
