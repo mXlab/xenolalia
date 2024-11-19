@@ -41,4 +41,3 @@ echo "Launching XenoPi"
 
 # Cleanup on exit.
 eval $cleanup
-deactivate # deactivate python venv
