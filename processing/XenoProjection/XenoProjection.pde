@@ -78,7 +78,7 @@ void setup() {
     currentExperimentScenes.add(scene);
   }
 
-  // Side-by-side animation of current experiment.
+  // Side-by-side animation of last experiment.
   if (true)
   {
     Scene scene = new Scene(2, 1, doubleVignetteRect);
@@ -98,8 +98,8 @@ void setup() {
     previousExperimentScenes.add(scene);
   }
 
-  // Single animation of alternating images from current experiment.
-  if (true)
+  // Single animation of alternating images from last experiment.
+  if (false)
   {
     Scene scene = new Scene(1, 1, singleVignetteRect);
     scene.setOscAddress("/retina");
@@ -117,7 +117,7 @@ void setup() {
     previousExperimentScenes.add(scene);    
   }
 
-  // Stepwise alternating sequence of images from current experiment.
+  // Stepwise alternating sequence of images from last experiment.
   if (true)
   {
     SequentialScene scene = createSequentialScene(previousExperiment);
