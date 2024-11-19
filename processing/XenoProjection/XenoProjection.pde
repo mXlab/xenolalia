@@ -30,6 +30,8 @@ Scene recentGlyphsScene;
 float midpointY = 0;//-0.15;
 float sequentialSceneRelativeWidth = 0.99;
 
+boolean initialState = true;
+
 /////////////////////////////////////
 void setup() {
   fullScreen(P2D);
@@ -59,7 +61,7 @@ void setup() {
 
   // Load starting experiments.
   ExperimentData[] allExperiments = loadExperiments(sketchPath("") + "contents/experiments.txt");
-  previousExperiment = allExperiments[0];
+  previousExperiment = allExperiments[0].copy();
 
   // Create first experiment.
   currentExperiment = new ExperimentData("2022-10-13_14:53:52_hexagram-uqam-2022_nodepi-02");
@@ -198,14 +200,18 @@ void refreshScenes(ArrayList<Scene> scenesToRefresh) {
 
 boolean newExperimentStarted = false;
 void experimentNew(String uid) {
-  println("NEW experiment " + uid);
+  println("NEW experiment " + uid); //<>//
+  if (initialState) {
+    experimentEnd(currentExperiment.getUid());
+    initialState = false;
+  }
   newExperimentStarted = true;
 }
 
 void experimentStep(String uid) {
   println("STEP experiment " + uid);
   // First step: update currentExperiment with new UID.
-  if (newExperimentStarted) {
+  if (newExperimentStarted) { //<>//
     currentExperiment.reload(uid);
     newExperimentStarted = false;
   }
@@ -216,7 +222,7 @@ void experimentStep(String uid) {
 }
 
 void experimentEnd(String uid) {
-  println("END experiment " + uid);
+  try {
   previousExperiment.reload(currentExperiment.getUid());
 
   refreshScenes(previousExperimentScenes);
@@ -231,6 +237,9 @@ void experimentEnd(String uid) {
   }
 
   recentGlyphsScene.requestRefresh();
+  } catch (Exception e) {
+    e.printStackTrace();
+  }
 }
 
 SequentialScene createSequentialScene(ExperimentData exp) {
