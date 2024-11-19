@@ -27,7 +27,8 @@ SequentialScene sequentialScene;
 SequentialScene nextSequentialScene; // sequential scene that will be loaded next
 Scene recentGlyphsScene;
 
-float midpointY = -0.15;
+float midpointY = 0;//-0.15;
+float sequentialSceneRelativeWidth = 0.99;
 
 /////////////////////////////////////
 void setup() {
@@ -54,7 +55,7 @@ void setup() {
   // Create vignette rectangles.
   Rect singleVignetteRect = createRect(0, midpointY, 1, 0.53);
   Rect doubleVignetteRect = createRect(0, midpointY, 1, 0.4);
-  Rect gridVignetteRect   = createRect(0, midpointY, 1, 0.4);
+  Rect gridVignetteRect   = createRect(0, midpointY, 1, 0.8);
 
   // Load starting experiments.
   ExperimentData[] allExperiments = loadExperiments(sketchPath("") + "contents/experiments.txt");
@@ -233,7 +234,7 @@ void experimentEnd(String uid) {
 }
 
 SequentialScene createSequentialScene(ExperimentData exp) {
-  return new SequentialScene( exp.nImages()-1, 50, createRect(0, midpointY, 1, 1));
+  return new SequentialScene( exp.nImages()-1, 50, createRect(0, midpointY, sequentialSceneRelativeWidth, 1));
 }
 
 ////////////////////////////////////////////////////
