@@ -5,6 +5,9 @@ xeno_dir="$bin_dir/.."
 xeno_env_dir="$xeno_dir/xeno-env"
 xeno_logs_dir="$xeno_dir/logs"
 
+# Ensure logs directory exists.
+mkdir -p $xeno_logs_dir
+
 # Prevent sleep.
 /bin/bash $bin_dir/prevent_sleep.sh &
 prevent_sleep_pid=$!
