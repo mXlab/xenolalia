@@ -95,7 +95,7 @@ def simplify(image):
     # Deal with different versions of scikit-image.
     if version.parse(skimage_version) >= version.parse("0.20.0"):
         img = thin(img, max_num_iter=5)
-    else
+    else:
         img = thin(img, max_iter=5)
     img = img_as_ubyte(img)
 
