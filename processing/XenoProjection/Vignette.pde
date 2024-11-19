@@ -130,4 +130,10 @@ abstract class Vignette {
 
   void doDisplay() {
   }
+  
+  String toString() {
+    return exp.getUid();
+  }
+
+  ExperimentData getExperimentData() { return exp; }
 }
