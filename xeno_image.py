@@ -15,6 +15,10 @@ from skimage import img_as_bool, img_as_ubyte
 
 from collections import namedtuple
 
+from skimage import __version__ as skimage_version
+from skimage.morphology import thin
+from packaging import version
+
 # equalizes levels to a certain average accross points
 def equalize(arr, average=0.5):
     return arr * (average * arr.size) / arr.sum()
@@ -88,7 +92,11 @@ def simplify(image):
 
     # Thin image: this will turn small "speckles" into single-pixel lines.
     img = img_as_bool(img)
-    img = thin(img, max_iter=5)
+    # Deal with different versions of scikit-image.
+    if version.parse(skimage_version) >= version.parse("0.20.0"):
+        img = thin(img, max_num_iter=5)
+    else
+        img = thin(img, max_iter=5)
     img = img_as_ubyte(img)
 
     # Erode image: further reduce speckles to obtain more pure image.
