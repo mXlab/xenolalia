@@ -201,10 +201,6 @@ void refreshScenes(ArrayList<Scene> scenesToRefresh) {
 boolean newExperimentStarted = false;
 void experimentNew(String uid) {
   println("NEW experiment " + uid); //<>//
-  if (initialState) {
-    experimentEnd(currentExperiment.getUid());
-    initialState = false;
-  }
   newExperimentStarted = true;
 }
 
@@ -212,6 +208,11 @@ void experimentStep(String uid) {
   println("STEP experiment " + uid);
   // First step: update currentExperiment with new UID.
   if (newExperimentStarted) { //<>//
+    if (initialState) {
+      experimentEnd(currentExperiment.getUid());
+      initialState = false;
+    }
+    
     currentExperiment.reload(uid);
     newExperimentStarted = false;
   }
@@ -223,20 +224,20 @@ void experimentStep(String uid) {
 
 void experimentEnd(String uid) {
   try {
-  previousExperiment.reload(currentExperiment.getUid());
-
-  refreshScenes(previousExperimentScenes);
-  sequentialScene.requestRefresh();
-
-  nextSequentialScene = createSequentialScene(previousExperiment);
-  for (int i=0; i<previousExperiment.nImages()-1; i++) {
-    GlyphVignette v = new GlyphVignette(previousExperiment);
-    v.setIndex(i);
-    v.noBorder();
-    nextSequentialScene.putVignette(i, v);
-  }
-
-  recentGlyphsScene.requestRefresh();
+    previousExperiment.reload(currentExperiment.getUid());
+  
+    refreshScenes(previousExperimentScenes);
+    sequentialScene.requestRefresh();
+  
+    nextSequentialScene = createSequentialScene(previousExperiment);
+    for (int i=0; i<previousExperiment.nImages()-1; i++) {
+      GlyphVignette v = new GlyphVignette(previousExperiment);
+      v.setIndex(i);
+      v.noBorder();
+      nextSequentialScene.putVignette(i, v);
+    }
+  
+    recentGlyphsScene.requestRefresh();
   } catch (Exception e) {
     e.printStackTrace();
   }
