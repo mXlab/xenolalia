@@ -5,6 +5,8 @@ import numpy as np
 
 import argparse
 
+import os
+
 from PIL import Image, ImageOps, ImageFilter, ImageChops
 
 from squircle import to_square, to_circle
@@ -31,7 +33,10 @@ def array_to_image(arr, width, height):
     return Image.fromarray(arr.reshape((width, height)) * 255.0).convert('L')
 
 def create_mask(image, invert=False):
-    return Image.open("xeno_mask.png").convert('RGBA').resize(image.size)
+    script_path = os.path.abspath(__file__) # i.e. /path/to/dir/xeno_image.py
+    script_dir = os.path.split(script_path)[0] #i.e. /path/to/dir/
+    absolute_file_mask_path = os.path.join(script_dir, "xeno_mask.png")
+    return Image.open(absolute_file_mask_path).convert('RGBA').resize(image.size)
 
 # Returns image resulting from subtraction of image from base_image.
 def remove_base(image, base_image):
