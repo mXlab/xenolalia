@@ -105,7 +105,7 @@ void setup() {
   }
 
   // Single animation of alternating images from last experiment.
-  if (false)
+  if (true)
   {
     Scene scene = new Scene(1, 1, singleVignetteRect);
     scene.setOscAddress("/retina");
