@@ -32,6 +32,10 @@ float sequentialSceneRelativeWidth = 0.99;
 
 boolean initialState = true;
 
+boolean takingSnapshot = false;
+Timer snapshotFadeTimer = new Timer(1000);
+float snapshotFadeTarget = 0;
+
 /////////////////////////////////////
 void setup() {
   fullScreen(P2D);
@@ -48,9 +52,11 @@ void setup() {
   // Setup OSC.
   oscP5 = new OscP5(this, OSC_RECEIVE_PORT);
 
-  oscP5.plug(this, "experimentNew", "/xeno/server/new");
+  oscP5.plug(this, "experimentNew",  "/xeno/server/new");
   oscP5.plug(this, "experimentStep", "/xeno/server/step");
-  oscP5.plug(this, "experimentEnd", "/xeno/server/end");
+  oscP5.plug(this, "experimentEnd",  "/xeno/server/end");
+
+  oscP5.plug(this, "snapshot",  "/xeno/server/snapshot");
 
   sonoscope = new NetAddress("127.0.0.1", OSC_SEND_PORT);
 
@@ -99,7 +105,7 @@ void setup() {
   }
 
   // Single animation of alternating images from last experiment.
-  if (false)
+  if (true)
   {
     Scene scene = new Scene(1, 1, singleVignetteRect);
     scene.setOscAddress("/retina");
@@ -160,7 +166,7 @@ void draw() {
   // Clear background.
   // Clear background.
   background(0);
-
+  
   // If current scene has ended, cleanup and go to next scene.
   if (scenes.currentScene().isFinished()) {
 
@@ -191,35 +197,48 @@ void draw() {
 
   // Display current scene.
   scenes.currentScene().display();
+
+  // Apply mask.
+  if (takingSnapshot) {
+    float maskOpacity = map(snapshotFadeTimer.progress(), 0, 1, 1-snapshotFadeTarget, snapshotFadeTarget) * 255;
+    noStroke();
+    fill(0, maskOpacity); 
+    rect(width/2, height/2, width, height);
+  }
 }
 
 void refreshScenes(ArrayList<Scene> scenesToRefresh) {
   for (Scene s : scenesToRefresh)
     s.requestRefresh();
-}
+} 
 
 boolean newExperimentStarted = false;
 void experimentNew(String uid) {
-  println("NEW experiment " + uid); //<>//
+  println("NEW experiment " + uid); 
   newExperimentStarted = true;
 }
 
 void experimentStep(String uid) {
   println("STEP experiment " + uid);
   // First step: update currentExperiment with new UID.
-  if (newExperimentStarted) { //<>//
+  if (newExperimentStarted) { 
     if (initialState) {
       experimentEnd(currentExperiment.getUid());
       initialState = false;
     }
     
-    currentExperiment.reload(uid);
+    currentExperiment.reload(uid); 
     newExperimentStarted = false;
   }
 
   // Refresh current experiment.
   currentExperiment.refresh();
   refreshScenes(currentExperimentScenes);
+  
+  // Go to first scene.
+  takingSnapshot = false;
+  scenes.setCurrentScene(0);
+  scenes.currentScene().build();
 }
 
 void experimentEnd(String uid) {
@@ -240,6 +259,14 @@ void experimentEnd(String uid) {
     recentGlyphsScene.requestRefresh();
   } catch (Exception e) {
     e.printStackTrace();
+  }
+}
+
+void snapshot() {
+  if (!takingSnapshot) {
+    snapshotFadeTimer.start();
+    snapshotFadeTarget = 1;
+    takingSnapshot = true;
   }
 }
 

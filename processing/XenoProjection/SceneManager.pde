@@ -22,4 +22,11 @@ class SceneManager extends ArrayList<Scene> {
     set(currentSceneIdx, scene);
     scene.reset();
   }
+  
+  void setCurrentScene(int idx) {
+    currentScene().end();
+    currentSceneIdx = idx;
+    currentScene().reset();
+    currentScene().start();
+  }
 }
