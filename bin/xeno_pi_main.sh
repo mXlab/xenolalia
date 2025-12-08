@@ -2,6 +2,8 @@
 
 bin_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 xeno_dir="$bin_dir/.."
+xeno_logs_dir="$xeno_dir/logs"
+cd $xeno_dir
 
 # Prevent sleep.
 /bin/bash $bin_dir/prevent_sleep.sh &
@@ -9,12 +11,12 @@ prevent_sleep_pid=$!
 echo "Launching prevent_sleep (PID=$prevent_sleep_pid)"
 
 # Launch xeno_osc.
-/usr/bin/python3 $xeno_dir/xeno_osc.py &
+/usr/bin/python3 $xeno_dir/xeno_osc.py > $xeno_logs_dir/xeno_osc.log 2>&1 </dev/null &
 xeno_osc_pid=$!
 echo "Launching xeno_osc (PID=$xeno_osc_pid)"
 
 # Launch xeno_orbiter.
-/usr/bin/python3 $xeno_dir/xeno_orbiter.py &
+/usr/bin/python3 $xeno_dir/xeno_orbiter.py > $xeno_logs_dir/xeno_orbiter.log 2>&1 &
 xeno_orbiter_pid=$!
 echo "Launching xeno_orbiter (PID=$xeno_orbiter_pid)"
 
@@ -32,7 +34,7 @@ sleep 20
 
 # Launch processing sketch.
 echo "Launching XenoPi"
-/usr/local/bin/processing-java --sketch=$xeno_dir/XenoPi --run
+/usr/local/bin/processing-java --sketch=$xeno_dir/XenoPi --run > $xeno_logs_dir/xeno_pi.log 2>&1
 
 # Cleanup on exit.
 eval $cleanup

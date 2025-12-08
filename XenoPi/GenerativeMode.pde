@@ -46,6 +46,7 @@ class GenerativeMode extends AbstractMode {
   final int SNAPSHOT_INTER_SHOT_TIME = 2000;
   
   final int N_SNAPSHOTS_PER_EXPERIMENT = 12;
+  //final int N_SNAPSHOTS_PER_EXPERIMENT = 3;
   
   // Time to wait for liquid to settle after refresh.
   final int POST_REFRESH_TIME = 120000; // 2 minutes
@@ -214,6 +215,7 @@ class GenerativeMode extends AbstractMode {
 
       // When finished: transit to snapshot mode.
       if (stateTimer.isFinished()) {
+        glow(false);
         transitionTo(State.SNAPSHOT);
       }
     }
@@ -275,6 +277,8 @@ class GenerativeMode extends AbstractMode {
 
     // WAIT_FOR_GLYPH : Wait for response from server to get glyph.
     else if (state == State.WAIT_FOR_GLYPH) {
+      if (enteredState()) // this is just to print a message
+      {} // nothing to do here
       if (nextGlyphReceived)
         transitionTo(State.MAIN);
     }
@@ -364,8 +368,6 @@ class GenerativeMode extends AbstractMode {
       }
 
     }
-    
-    
   }
 
   void transitionTo(State nextState) {
@@ -379,8 +381,13 @@ class GenerativeMode extends AbstractMode {
 
   boolean enteredState() {
     boolean isEntering = newState;
-    if (isEntering)
+    if (isEntering) {
       println("Entering state: " + state);
+      // Update server.
+      OscMessage msg = new OscMessage("/xeno/exp/state");
+      msg.add(state.toString());
+      oscP5.send(msg, remoteLocationServer);
+    }
     newState = false;
     return isEntering;
   }
@@ -470,6 +477,6 @@ class GenerativeMode extends AbstractMode {
     msg.add(on ? 1 : 0);
     oscP5.send(msg, remoteLocationApparatus);
 
-    log("Sent call to " + on ? "start" : "stop" + "glow.");
+    log("Sent call to " + (on ? "start" : "stop") + "glow.");
   }
 }
