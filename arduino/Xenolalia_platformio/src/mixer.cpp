@@ -8,8 +8,9 @@ namespace euglena_mixer{
     Servo servo;  // Create object for servo motor
 
     int pos {0};    // variable to store the servo position
-    int maxrotation {95}; //max rotation of the servo in degree
-    int zpeed {10}; // pause in MS between each step took by the servo
+    int maxrotation {60}; //max rotation of the servo in degree
+    int minrotation {20};
+    int zpeed {15}; // pause in MS between each step took by the servo
     int restime {100}; //rest time between certain steps in the cycle. in MS
     int shaketimes {3}; //number of time the tube is shaked in a complete cycle
 
@@ -59,9 +60,9 @@ namespace euglena_mixer{
         for(int i=1; i<=7; i++)
         {  
             pixel_ring::set_color(pixel_ring::blue);
-            rotate(maxrotation,50,false);
+            rotate(maxrotation,minrotation,false);
             pixel_ring::set_color(pixel_ring::white);
-            rotate(50,maxrotation,true);
+            rotate(minrotation,maxrotation,true);
         }
   
         pixel_ring::set_color(pixel_ring::blue); 

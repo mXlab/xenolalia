@@ -11,6 +11,7 @@
   OSC ADRESS YOU CAN USE
        "/xeno/test_hardware" -> test_hardware();
        "/xeno/refresh" -> start_cycle();
+       "/xeno/mix" -> mix();
        "/xeno/drain" -> drain();
        "/xeno/fill" -> fill();
 */
@@ -44,22 +45,19 @@ void start_cycle(OSCMessage &msg){
 
   osc::send("/xeno/handshake");
   
-  if (is_float_or_int(msg))
-  {
-    osc::send("/debug", "Started refresh cycle");
-    xenolalia::cycle();
-    osc::send("/xeno/apparatus/refreshed");
-  }
- 
+  osc::send("/debug", "Started refresh cycle");
+  xenolalia::cycle();
+  osc::send("/xeno/apparatus/refreshed");
 }
 
 void test_hardware(OSCMessage &msg){
   
   osc::send("/xeno/handshake");
-  if (is_float_or_int(msg))
-  {
+
     osc::send("/debug", "Testing all the hardware");
     xenolalia::test();
+  if (is_float_or_int(msg))
+  {
   }
 }
 
@@ -77,6 +75,31 @@ void fill(OSCMessage &msg){
   osc::send("/debug", "Filling tube");
   bool val = msg.getInt(0);
   xenolalia::fill(val);
+}
+
+void mix(OSCMessage &msg){
+  osc::send("/xeno/handshake");
+  osc::send("/debug" , "Mixing");
+
+  xenolalia::mix();
+}
+
+void setColor(OSCMessage &msg){
+
+  osc::send("/xeno/handshake");
+  osc::send("/debug", "Setting color");
+  int r = msg.getInt(0);
+  int g = msg.getInt(1);
+  int b = msg.getInt(2);
+  xenolalia::setColor(r, g, b);
+}
+
+void glow(OSCMessage &msg){
+
+  osc::send("/xeno/handshake");
+  osc::send("/debug", "Glowing");
+  bool on = msg.getInt(0);
+  xenolalia::glow(on);
 }
 
 namespace osc
@@ -109,7 +132,6 @@ namespace osc
       }
 
       WiFi.begin(ssid, pwd);
-
       
       while (WiFi.status() != WL_CONNECTED) {
           delay(500);
@@ -186,9 +208,12 @@ void send( const char* adress ){
       if (!msg.hasError()) {
        
         msg.dispatch("/xeno/test_hardware", test_hardware);
-        msg.dispatch("/xeno/refresh",start_cycle);
+        msg.dispatch("/xeno/refresh", start_cycle);
         msg.dispatch("/xeno/drain", drain);
         msg.dispatch("/xeno/fill", fill);
+        msg.dispatch("/xeno/mix", mix);
+        msg.dispatch("/xeno/color", setColor);
+        msg.dispatch("/xeno/glow", glow);
       }
       else
       {

@@ -5,15 +5,19 @@ import numpy as np
 
 import argparse
 
-from PIL import Image, ImageOps, ImageFilter, ImageChops
+import os
 
-#from squircle import to_square, to_circle
+from PIL import Image, ImageOps, ImageFilter, ImageChops
 
 import cv2
 from skimage.morphology import thin
 from skimage import img_as_bool, img_as_ubyte
 
 from collections import namedtuple
+
+from skimage import __version__ as skimage_version
+from skimage.morphology import thin
+from packaging import version
 
 # equalizes levels to a certain average accross points
 def equalize(arr, average=0.5):
@@ -31,7 +35,10 @@ def array_to_image(arr, width, height):
     return Image.fromarray(arr.reshape((width, height)) * 255.0).convert('L')
 
 def create_mask(image, invert=False):
-    return Image.open("xeno_mask.png").convert('RGBA').resize(image.size)
+    script_path = os.path.abspath(__file__) # i.e. /path/to/dir/xeno_image.py
+    script_dir = os.path.split(script_path)[0] #i.e. /path/to/dir/
+    absolute_file_mask_path = os.path.join(script_dir, "xeno_mask.png")
+    return Image.open(absolute_file_mask_path).convert('RGBA').resize(image.size)
 
 # Returns image resulting from subtraction of image from base_image.
 def remove_base(image, base_image):
@@ -85,7 +92,11 @@ def simplify(image):
 
     # Thin image: this will turn small "speckles" into single-pixel lines.
     img = img_as_bool(img)
-    img = thin(img, max_iter=5)
+    # Deal with different versions of scikit-image.
+    if version.parse(skimage_version) >= version.parse("0.20.0"):
+        img = thin(img, max_num_iter=5)
+    else:
+        img = thin(img, max_iter=5)
     img = img_as_ubyte(img)
 
     # Erode image: further reduce speckles to obtain more pure image.

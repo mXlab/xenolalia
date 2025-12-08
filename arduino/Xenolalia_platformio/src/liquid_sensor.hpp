@@ -5,7 +5,7 @@ class Liquid_level_sensor{
     int _pin;
     int level{0};
 
-    public:
+public:
 
     Liquid_level_sensor(const int& pin);
 
@@ -17,5 +17,5 @@ class Liquid_level_sensor{
      * @brief return current liquid level 
      * @return level 
      */
-    int get_level();
+    int get_level(int nReadings=1);
 };

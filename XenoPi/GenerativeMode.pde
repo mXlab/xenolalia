@@ -53,7 +53,6 @@ class GenerativeMode extends AbstractMode {
   
   // At the end of a cycle, wait for this time to present the result.
   final int PRESENTATION_TIME = 300000; // 5 minutes
-//  final int PRESENTATION_TIME = 2000; // 5 minutes
 
   State state;
 
@@ -230,14 +229,21 @@ class GenerativeMode extends AbstractMode {
         stateTimer.start();
       }
 
+      // Set color to flash.
+      background(FLASH_COLOR);
+
+      // Attempt to take a snapshot, discarding images containing lines artifacts.
       if (cam.available()) {
         cam.read();
         if (stateTimer.isFinished()) {
           println("Trying to take snapshot.");
           PImage img = cam.getImage();
+          // If no lines detected, save image.
           if (!imageLineDetected(img)) {
             snapshot = img;
-          } else {
+          }
+          // Otherwise save image to disk and retry.
+          else {
             float confidence = imageLineDetectConfidence(img);
             println("Detected line with confidence: " + confidence);
             img.save(savePath(experiment.experimentDir() + "/lined_image_" + millis() + "_" + confidence + ".png"));
@@ -247,6 +253,7 @@ class GenerativeMode extends AbstractMode {
         }
       }
 
+      // Process snapshot.
       if (snapshot != null) {
         println("Snapshot taken without lines");
         if (newExperimentStarted) {
