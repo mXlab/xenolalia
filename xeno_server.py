@@ -119,6 +119,11 @@ def handle_end(addr, uid):
     fetch_experiment(uid)
     send_message("/xeno/server/end", uid)
 
+def handle_state(addr, state):
+    print("** Received STATE {}".format(state))
+    if (state == "FLASH"):
+        send_message("/xeno/server/snapshot")
+
 # # Handler for one image step.
 # def handle_step(addr, image_path, base_image_path):
 #     next_image(image_path, base_image_path, False)
@@ -149,6 +154,7 @@ dispatcher.map("/xeno/exp/new", handle_new)
 # dispatcher.map("/xeno/exp/begin", handle_begin)
 dispatcher.map("/xeno/exp/step", handle_step)
 dispatcher.map("/xeno/exp/end", handle_end)
+dispatcher.map("/xeno/exp/state", handle_state)
 # dispatcher.map("/xeno/exp/handshake", handle_handshake)
 
 # Launch OSC server & client.

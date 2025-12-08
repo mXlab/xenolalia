@@ -199,7 +199,7 @@ class Scene {
     return timer.progress();
   }
   float runProgress() {
-    return min(timer.passedTime() / (float)RUN_DURATION, 1.0);
+    return constrain(timer.passedTime() / (float)RUN_DURATION, 0.0, 1.0);
   }
   float endProgress() {
     return constrain((timer.passedTime() - RUN_DURATION) / END_DURATION, 0.0, 1.0);

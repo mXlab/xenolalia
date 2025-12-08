@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Exec=/home/xeno/xenolalia/bin/xeno_pc_main.sh
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name=XenoPC
+Comment=XenoPC startup program
