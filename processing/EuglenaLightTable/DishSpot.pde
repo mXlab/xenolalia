@@ -2,13 +2,30 @@
  * DishSpot
  *
  * Represents a single dish spot on the light table.
- * Can display white, black, or magenta X pattern.
+ * Can display white, black, or a configurable symbol pattern.
+ * Symbol properties: shape, color, and stroke width.
  */
 class DishSpot {
   // State constants
   static final int STATE_WHITE = 0;
   static final int STATE_BLACK = 1;
-  static final int STATE_X = 2;
+  static final int STATE_SYMBOL = 2;
+
+  // Shape constants
+  static final int SHAPE_X = 0;
+  static final int SHAPE_CIRCLE = 1;
+  static final int SHAPE_BARS = 2;
+
+  // Color constants
+  static final int COLOR_MAGENTA = 0;
+  static final int COLOR_CYAN = 1;
+  static final int COLOR_YELLOW = 2;
+  static final int COLOR_WHITE = 3;
+
+  // Width constants
+  static final int WIDTH_THIN = 0;
+  static final int WIDTH_MEDIUM = 1;
+  static final int WIDTH_LARGE = 2;
 
   // Position and size
   float x, y;
@@ -18,10 +35,21 @@ class DishSpot {
   // Current state
   int state = STATE_WHITE;
 
-  // Colors
-  color colorWhite = color(255);
-  color colorBlack = color(0);
-  color colorMagenta = color(255, 0, 255);
+  // Symbol properties
+  int shape = SHAPE_X;
+  int symbolColor = COLOR_MAGENTA;
+  int strokeWidth = WIDTH_THIN;
+
+  // Predefined colors
+  color[] colors = {
+    color(255, 0, 255),   // Magenta
+    color(0, 255, 255),   // Cyan
+    color(255, 255, 0),   // Yellow
+    color(255, 255, 255)  // White
+  };
+
+  // Width multipliers (relative to diameter)
+  float[] widthMultipliers = {0.05, 0.10, 0.18};
 
   DishSpot(float x, float y, float diameter, int number) {
     this.x = x;
@@ -31,20 +59,24 @@ class DishSpot {
   }
 
   void draw() {
+    draw(false);
+  }
+
+  void draw(boolean selected) {
     pushMatrix();
     translate(x, y);
 
-    // Draw background circle (always needed for clipping)
+    // Draw background circle
     noStroke();
 
     switch (state) {
       case STATE_WHITE:
-        fill(colorWhite);
+        fill(255);
         ellipse(0, 0, diameter, diameter);
         break;
 
       case STATE_BLACK:
-        fill(colorBlack);
+        fill(0);
         ellipse(0, 0, diameter, diameter);
         // Draw subtle border to show dish location
         stroke(30);
@@ -53,17 +85,25 @@ class DishSpot {
         ellipse(0, 0, diameter, diameter);
         break;
 
-      case STATE_X:
+      case STATE_SYMBOL:
         // Black background
-        fill(colorBlack);
+        fill(0);
         ellipse(0, 0, diameter, diameter);
-        // Draw magenta X pattern using masking
-        drawXPattern();
+        // Draw the configured symbol
+        drawSymbol();
         break;
     }
 
+    // Draw selection highlight
+    if (selected) {
+      stroke(255, 150, 0);  // Orange highlight
+      strokeWeight(4);
+      noFill();
+      ellipse(0, 0, diameter + 10, diameter + 10);
+    }
+
     // Draw dish number (small, for reference)
-    fill(state == STATE_BLACK ? 40 : 200);
+    fill(state == STATE_WHITE ? 180 : 60);
     textAlign(CENTER, CENTER);
     textSize(diameter * 0.1);
     text(number, 0, diameter * 0.35);
@@ -71,27 +111,43 @@ class DishSpot {
     popMatrix();
   }
 
-  void drawXPattern() {
-    // Create X pattern with magenta on black background
-    // Use a graphics buffer for proper circular clipping
+  void drawSymbol() {
+    color c = colors[symbolColor];
+    float strokeW = diameter * widthMultipliers[strokeWidth];
 
-    float strokeW = diameter * 0.075;  // X stroke width (thinner)
-
-    // Draw X using quads for proper thickness
-    fill(colorMagenta);
+    fill(c);
     noStroke();
 
-    // Calculate X dimensions
-    float halfDiag = diameter * 0.5;
+    switch (shape) {
+      case SHAPE_X:
+        drawX(strokeW);
+        break;
+      case SHAPE_CIRCLE:
+        drawCircleShape(strokeW);
+        break;
+      case SHAPE_BARS:
+        drawBars(strokeW);
+        break;
+    }
+
+    // Redraw circular mask border to clean up edges
+    float borderWeight = diameter * 0.1;
+    stroke(0);
+    strokeWeight(borderWeight);
+    noFill();
+    ellipse(0, 0, diameter + borderWeight * 0.5, diameter + borderWeight * 0.5);
+    noStroke();
+  }
+
+  void drawX(float strokeW) {
     float halfStroke = strokeW * 0.5;
+    float len = diameter * 0.7;
 
     // First diagonal (top-left to bottom-right)
     pushMatrix();
     rotate(QUARTER_PI);
     rectMode(CENTER);
-    // Clip to circle by drawing only within bounds
     beginShape();
-    float len = diameter * 0.7;
     vertex(-halfStroke, -len/2);
     vertex(halfStroke, -len/2);
     vertex(halfStroke, len/2);
@@ -110,18 +166,40 @@ class DishSpot {
     vertex(-halfStroke, len/2);
     endShape(CLOSE);
     popMatrix();
+  }
 
-    // Redraw circular mask border to clean up edges
-    float borderWeight = diameter * 0.1;
-    stroke(0);
-    strokeWeight(borderWeight);
+  void drawCircleShape(float strokeW) {
+    // Draw a ring/circle outline
     noFill();
-    ellipse(0, 0, diameter + borderWeight * 0.5, diameter + borderWeight * 0.5);
+    stroke(colors[symbolColor]);
+    strokeWeight(strokeW);
+    float ringDiameter = diameter * 0.55;
+    ellipse(0, 0, ringDiameter, ringDiameter);
     noStroke();
   }
 
+  void drawBars(float strokeW) {
+    float halfStroke = strokeW * 0.5;
+    float len = diameter * 0.7;
+    float spacing = diameter * 0.2;
+
+    rectMode(CENTER);
+
+    // Three vertical bars
+    for (int i = -1; i <= 1; i++) {
+      beginShape();
+      float xPos = i * spacing;
+      vertex(xPos - halfStroke, -len/2);
+      vertex(xPos + halfStroke, -len/2);
+      vertex(xPos + halfStroke, len/2);
+      vertex(xPos - halfStroke, len/2);
+      endShape(CLOSE);
+    }
+  }
+
+  // State methods
   void setState(int newState) {
-    state = constrain(newState, STATE_WHITE, STATE_X);
+    state = constrain(newState, STATE_WHITE, STATE_SYMBOL);
   }
 
   int getState() {
@@ -132,11 +210,84 @@ class DishSpot {
     state = (state + 1) % 3;
   }
 
+  // Shape methods
+  void setShape(int newShape) {
+    shape = constrain(newShape, SHAPE_X, SHAPE_BARS);
+    if (state != STATE_SYMBOL) state = STATE_SYMBOL;
+  }
+
+  int getShape() {
+    return shape;
+  }
+
+  void cycleShape() {
+    shape = (shape + 1) % 3;
+    if (state != STATE_SYMBOL) state = STATE_SYMBOL;
+  }
+
+  String getShapeName() {
+    switch (shape) {
+      case SHAPE_X: return "X";
+      case SHAPE_CIRCLE: return "Circle";
+      case SHAPE_BARS: return "Bars";
+      default: return "?";
+    }
+  }
+
+  // Color methods
+  void setSymbolColor(int newColor) {
+    symbolColor = constrain(newColor, COLOR_MAGENTA, COLOR_WHITE);
+    if (state != STATE_SYMBOL) state = STATE_SYMBOL;
+  }
+
+  int getSymbolColor() {
+    return symbolColor;
+  }
+
+  void cycleColor() {
+    symbolColor = (symbolColor + 1) % 4;
+    if (state != STATE_SYMBOL) state = STATE_SYMBOL;
+  }
+
+  String getColorName() {
+    switch (symbolColor) {
+      case COLOR_MAGENTA: return "Magenta";
+      case COLOR_CYAN: return "Cyan";
+      case COLOR_YELLOW: return "Yellow";
+      case COLOR_WHITE: return "White";
+      default: return "?";
+    }
+  }
+
+  // Width methods
+  void setStrokeWidth(int newWidth) {
+    strokeWidth = constrain(newWidth, WIDTH_THIN, WIDTH_LARGE);
+    if (state != STATE_SYMBOL) state = STATE_SYMBOL;
+  }
+
+  int getStrokeWidth() {
+    return strokeWidth;
+  }
+
+  void cycleWidth() {
+    strokeWidth = (strokeWidth + 1) % 3;
+    if (state != STATE_SYMBOL) state = STATE_SYMBOL;
+  }
+
+  String getWidthName() {
+    switch (strokeWidth) {
+      case WIDTH_THIN: return "Thin";
+      case WIDTH_MEDIUM: return "Medium";
+      case WIDTH_LARGE: return "Large";
+      default: return "?";
+    }
+  }
+
   String getStateName() {
     switch (state) {
       case STATE_WHITE: return "WHITE";
       case STATE_BLACK: return "BLACK";
-      case STATE_X: return "X-PATTERN";
+      case STATE_SYMBOL: return getShapeName() + "/" + getColorName() + "/" + getWidthName();
       default: return "UNKNOWN";
     }
   }
