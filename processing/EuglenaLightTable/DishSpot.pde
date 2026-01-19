@@ -49,7 +49,7 @@ class DishSpot {
   };
 
   // Width multipliers (relative to diameter)
-  float[] widthMultipliers = {0.05, 0.10, 0.18};
+  float[] widthMultipliers = {0.0125, 0.025, 0.05};
 
   DishSpot(float x, float y, float diameter, int number) {
     this.x = x;
