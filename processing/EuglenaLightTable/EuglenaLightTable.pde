@@ -166,6 +166,7 @@ void drawHelp() {
         "QUICK CONTROLS:",
         "  w - Set ALL dishes to WHITE",
         "  b - Set ALL dishes to BLACK",
+        "  x - Set ALL dishes to SYMBOL",
         "  1-6 - Cycle individual dish state",
         "",
         "MODE SWITCHING:",
@@ -266,10 +267,17 @@ void handleExperimentKeys() {
       setAllDishesState(DishSpot.STATE_BLACK);
       break;
 
+    case 'x':
+    case 'X':
+      setAllDishesState(DishSpot.STATE_SYMBOL);
+      break;
+
     case 'e':
     case 'E':
       currentMode = MODE_SYMBOL_EDIT;
       selectedDish = -1;  // Start with all selected
+      // Show symbols on all dishes when entering edit mode
+      setAllDishesState(DishSpot.STATE_SYMBOL);
       break;
 
     case 'm':
