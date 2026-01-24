@@ -102,11 +102,13 @@ class DishSpot {
       ellipse(0, 0, diameter + 10, diameter + 10);
     }
 
-    // Draw dish number (small, for reference)
-    fill(state == STATE_WHITE ? 180 : 60);
-    textAlign(CENTER, CENTER);
-    textSize(diameter * 0.1);
-    text(number, 0, diameter * 0.35);
+    // Draw dish number (small, for reference) - hide when showing symbol
+    if (state != STATE_SYMBOL) {
+      fill(state == STATE_WHITE ? 180 : 60);
+      textAlign(CENTER, CENTER);
+      textSize(diameter * 0.1);
+      text(number, 0, diameter * 0.35);
+    }
 
     popMatrix();
   }
