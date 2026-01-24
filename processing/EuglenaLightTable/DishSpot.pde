@@ -49,7 +49,7 @@ class DishSpot {
   };
 
   // Width multipliers (relative to diameter)
-  float[] widthMultipliers = {0.0125, 0.025, 0.05};
+  float[] widthMultipliers = {0.025, 0.05, 0.075};
 
   DishSpot(float x, float y, float diameter, int number) {
     this.x = x;
@@ -179,20 +179,22 @@ class DishSpot {
   }
 
   void drawBars(float strokeW) {
-    float halfStroke = strokeW * 0.5;
     float len = diameter * 0.7;
     float spacing = diameter * 0.2;
 
+    // Three vertical bars with varying thickness: thin, medium, wide
+    float[] barWidths = {strokeW * 0.75, strokeW, strokeW * 1.25};
+
     rectMode(CENTER);
 
-    // Three vertical bars
-    for (int i = -1; i <= 1; i++) {
+    for (int i = 0; i < 3; i++) {
+      float xPos = (i - 1) * spacing;
+      float halfW = barWidths[i] * 0.5;
       beginShape();
-      float xPos = i * spacing;
-      vertex(xPos - halfStroke, -len/2);
-      vertex(xPos + halfStroke, -len/2);
-      vertex(xPos + halfStroke, len/2);
-      vertex(xPos - halfStroke, len/2);
+      vertex(xPos - halfW, -len/2);
+      vertex(xPos + halfW, -len/2);
+      vertex(xPos + halfW, len/2);
+      vertex(xPos - halfW, len/2);
       endShape(CLOSE);
     }
   }
