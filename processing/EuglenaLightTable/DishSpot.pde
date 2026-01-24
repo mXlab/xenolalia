@@ -78,9 +78,9 @@ class DishSpot {
       case STATE_BLACK:
         fill(0);
         ellipse(0, 0, diameter, diameter);
-        // Draw subtle border to show dish location
-        stroke(30);
-        strokeWeight(2);
+        // Draw border to show dish location
+        stroke(80);
+        strokeWeight(3);
         noFill();
         ellipse(0, 0, diameter, diameter);
         break;
