@@ -31,6 +31,11 @@ Settings settings;
 // Symbol edit state
 int selectedDish = -1;  // -1 = all dishes, 0-5 = individual dish
 
+// Flash state (temporary white with auto-return to symbol)
+boolean flashActive = false;
+int flashEndTime = 0;
+final int FLASH_DURATION = 15000;  // 15 seconds per press
+
 void setup() {
   fullScreen();
   // size(1200, 800);  // Uncomment for windowed testing
@@ -99,6 +104,12 @@ void draw() {
 }
 
 void drawExperimentMode() {
+  // Check flash timer
+  if (flashActive && millis() >= flashEndTime) {
+    flashActive = false;
+    setAllDishesState(DishSpot.STATE_SYMBOL);
+  }
+
   for (DishSpot dish : dishes) {
     dish.draw();
   }
@@ -106,7 +117,12 @@ void drawExperimentMode() {
   fill(50);
   textAlign(LEFT, BOTTOM);
   textSize(12);
-  text("EXPERIMENT MODE - Press 'e' for Symbol Edit, 'm' for Color Reference, 'h' for help", 10, height - 10);
+  if (flashActive) {
+    int remaining = ceil((flashEndTime - millis()) / 1000.0);
+    text("FLASH - returning to symbol in " + remaining + "s", 10, height - 10);
+  } else {
+    text("EXPERIMENT MODE - Press 'e' for Symbol Edit, 'm' for Color Reference, 'h' for help", 10, height - 10);
+  }
 }
 
 void drawSymbolEditMode() {
@@ -167,6 +183,7 @@ void drawHelp() {
         "  w - Set ALL dishes to WHITE",
         "  b - Set ALL dishes to BLACK",
         "  x - Set ALL dishes to SYMBOL",
+        "  f - Flash WHITE (auto-return to SYMBOL in 15s, stacks)",
         "  1-6 - Cycle individual dish state",
         "",
         "MODE SWITCHING:",
@@ -259,17 +276,31 @@ void handleExperimentKeys() {
   switch (key) {
     case 'w':
     case 'W':
+      flashActive = false;
       setAllDishesState(DishSpot.STATE_WHITE);
       break;
 
     case 'b':
     case 'B':
+      flashActive = false;
       setAllDishesState(DishSpot.STATE_BLACK);
       break;
 
     case 'x':
     case 'X':
+      flashActive = false;
       setAllDishesState(DishSpot.STATE_SYMBOL);
+      break;
+
+    case 'f':
+    case 'F':
+      if (flashActive) {
+        flashEndTime += FLASH_DURATION;
+      } else {
+        flashActive = true;
+        flashEndTime = millis() + FLASH_DURATION;
+        setAllDishesState(DishSpot.STATE_WHITE);
+      }
       break;
 
     case 'e':
