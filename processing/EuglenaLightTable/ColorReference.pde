@@ -248,13 +248,19 @@ class ColorReference {
     float instrY = labelY + 30;
     text("Click a variation to refine further", fineTuneX + gridSize / 2, instrY);
 
-    // Show current hex code prominently
+    // Show current hex code and HSB values
     fill(0);
     textSize(20);
     text(colorToHex(selectedColor), fineTuneX + gridSize / 2, instrY + 35);
 
+    colorMode(HSB, 360, 100, 100);
+    text(String.format("H: %.0f  S: %.0f  B: %.0f",
+      hue(selectedColor), saturation(selectedColor), brightness(selectedColor)),
+      fineTuneX + gridSize / 2, instrY + 65);
+    colorMode(RGB, 255);
+
     // Saturation adjustment buttons
-    float satBtnY = instrY + 80;
+    float satBtnY = instrY + 110;
     float btnWidth = 80;
     float btnHeight = 30;
     float satCenterX = fineTuneX + gridSize / 2;
@@ -285,15 +291,6 @@ class ColorReference {
     fill(200);
     text("Sat +", satCenterX + btnWidth/2 + 10, satBtnY + btnHeight/2);
 
-    // Show current HSB values
-    colorMode(HSB, 360, 100, 100);
-    fill(120);
-    textSize(11);
-    textAlign(CENTER, TOP);
-    text(String.format("H: %.0f  S: %.0f  B: %.0f",
-      hue(selectedColor), saturation(selectedColor), brightness(selectedColor)),
-      satCenterX, satBtnY + btnHeight + 10);
-    colorMode(RGB, 255);
   }
 
   void selectColor(color c) {
