@@ -11,10 +11,11 @@ class ColorReference {
 
   // Layout for main grid
   int cols = 8;
-  int rows = 8;
+  int rows = 4;
   float swatchSize;
   float marginX, marginY;
-  float spacing = 10;
+  float spacingX = 10;
+  float spacingY = 40;
 
   // Fine-tuning panel
   color selectedColor;
@@ -50,28 +51,16 @@ class ColorReference {
       int hueMin = hueRanges[rangeIdx][0];
       int hueMax = hueRanges[rangeIdx][1];
 
-      // Two rows per hue range - pale colors for dilute euglena medium
-      for (int rowOffset = 0; rowOffset < 2; rowOffset++) {
-        for (int col = 0; col < cols; col++) {
-          float hue = map(col, 0, cols - 1, hueMin, hueMax);
+      for (int col = 0; col < cols; col++) {
+        float hue = map(col, 0, cols - 1, hueMin, hueMax);
+        float sat = map(col, 0, cols - 1, 14, 35);
+        float bri = map(col, 0, cols - 1, 96, 84);
 
-          float sat, bri;
-          if (rowOffset == 0) {
-            // Very pale row
-            sat = map(col, 0, cols - 1, 8, 25);
-            bri = map(col, 0, cols - 1, 98, 88);
-          } else {
-            // Slightly more saturated row
-            sat = map(col, 0, cols - 1, 20, 45);
-            bri = map(col, 0, cols - 1, 95, 80);
-          }
+        colorMode(HSB, 360, 100, 100);
+        color c = color(hue, sat, bri);
+        colorMode(RGB, 255);
 
-          colorMode(HSB, 360, 100, 100);
-          color c = color(hue, sat, bri);
-          colorMode(RGB, 255);
-
-          swatches.add(new ColorSwatch(c));
-        }
+        swatches.add(new ColorSwatch(c));
       }
     }
   }
@@ -125,18 +114,18 @@ class ColorReference {
   void draw() {
     // Calculate layout - leave room on right for fine-tuning panel
     float mainAreaWidth = width * 0.65;
-    float totalSpacingX = (cols - 1) * spacing;
-    float totalSpacingY = (rows - 1) * spacing;
+    float totalSpacingX = (cols - 1) * spacingX;
     float availableWidth = mainAreaWidth * 0.9;
     float availableHeight = height * 0.70;
 
+    // Size swatches as if 8 rows to preserve original size
     swatchSize = min(
       (availableWidth - totalSpacingX) / cols,
-      (availableHeight - totalSpacingY) / rows
+      (availableHeight - 7 * spacingX) / 8
     );
 
     float gridWidth = cols * swatchSize + totalSpacingX;
-    float gridHeight = rows * swatchSize + totalSpacingY;
+    float gridHeight = rows * swatchSize + (rows - 1) * spacingY;
 
     marginX = (mainAreaWidth - gridWidth) / 2;
     marginY = (height - gridHeight) / 2 + 20;
@@ -158,7 +147,7 @@ class ColorReference {
 
     String[] labels = {"Green", "Yellow-Green", "Olive", "Brown"};
     for (int i = 0; i < 4; i++) {
-      float y = marginY + (i * 2 + 0.5) * (swatchSize + spacing);
+      float y = marginY + i * (swatchSize + spacingY) + swatchSize / 2;
       text(labels[i], marginX - 15, y);
     }
 
@@ -167,8 +156,8 @@ class ColorReference {
     for (int row = 0; row < rows; row++) {
       for (int col = 0; col < cols; col++) {
         if (idx < swatches.size()) {
-          float x = marginX + col * (swatchSize + spacing);
-          float y = marginY + row * (swatchSize + spacing);
+          float x = marginX + col * (swatchSize + spacingX);
+          float y = marginY + row * (swatchSize + spacingY);
           swatches.get(idx).draw(x, y, swatchSize);
           idx++;
         }
@@ -305,8 +294,8 @@ class ColorReference {
     for (int row = 0; row < rows; row++) {
       for (int col = 0; col < cols; col++) {
         if (idx < swatches.size()) {
-          float x = marginX + col * (swatchSize + spacing);
-          float y = marginY + row * (swatchSize + spacing);
+          float x = marginX + col * (swatchSize + spacingX);
+          float y = marginY + row * (swatchSize + spacingY);
 
           if (mx >= x && mx <= x + swatchSize && my >= y && my <= y + swatchSize) {
             selectColor(swatches.get(idx).c);
