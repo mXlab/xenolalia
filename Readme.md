@@ -320,41 +320,41 @@ Then save (CTRL-X). You should now be able to run Pd as sudo without having to t
 
 ## OSC Message Reference
 
-| Receiver Program | Sender Program(s) | Address | Param Types | Parameters | Purpose |
-|---|---|---|---|---|---|
-| `xeno_osc.py` | XenoPi.pde | `/xeno/euglenas/handshake` | — | — | Request readiness confirmation from neural network |
-| `xeno_osc.py` | XenoPi.pde | `/xeno/euglenas/new` | — | — | Signal start of new experiment |
-| `xeno_osc.py` | XenoPi.pde | `/xeno/euglenas/begin` | `ss` | raw\_image\_path, base\_image\_path | First snapshot: use random seed for autoencoder generation |
-| `xeno_osc.py` | XenoPi.pde | `/xeno/euglenas/step` | `ss` | raw\_image\_path, base\_image\_path | Subsequent snapshot: use captured image as autoencoder seed |
-| `xeno_osc.py` | XenoPi.pde | `/xeno/euglenas/settings-updated` | — | — | Notify neural network to reload `settings.json` |
-| `xeno_osc.py` | XenoPi.pde | `/xeno/euglenas/test-camera` | `s` | raw\_image\_path | Request perspective-corrected preview of test image |
-| XenoPi.pde | `xeno_osc.py` | `/xeno/neurons/handshake` | — | — | Confirm neural network is ready |
-| XenoPi.pde | `xeno_osc.py` | `/xeno/neurons/begin` | — | — | Neural network server has started |
-| XenoPi.pde | `xeno_osc.py` | `/xeno/neurons/end` | — | — | Neural network server is shutting down |
-| XenoPi.pde | `xeno_osc.py` | `/xeno/neurons/new` | — | — | Neural network acknowledged new experiment |
-| XenoPi.pde | `xeno_osc.py` | `/xeno/neurons/step` | `s` | nn\_image\_path | Path to autoencoder-generated image |
-| XenoPi.pde | `xeno_osc.py` | `/xeno/neurons/test-camera` | `s` | transformed\_image\_path | Return perspective-corrected test image path |
-| XenoPi.pde | XenolaliaApparatus | `/xeno/apparatus/refreshed` | — | — | Liquid refresh cycle completed |
-| XenoPi.pde | XenolaliaApparatus | `/xeno/handshake` | — | — | Apparatus acknowledged a command |
-| XenoPi.pde | any | `/xeno/control/begin` | — | — | Start generative mode |
-| `xeno_orbiter.py` | `xeno_osc.py` | `/xeno/neurons/new` | — | — | Reset OLED display for new experiment |
-| `xeno_orbiter.py` | `xeno_osc.py` | `/xeno/neurons/step` | `s` | nn\_image\_path | Display generated image on OLED |
-| `xeno_orbiter.py` | `xeno_osc.py` | `/xeno/neurons/end` | — | — | Stop OLED display animation |
-| `xeno_server.py` | XenoPi.pde | `/xeno/exp/new` | `s` | uid | New experiment started; rsync and prepare data |
-| `xeno_server.py` | XenoPi.pde | `/xeno/exp/step` | `s` | uid | New image in current experiment; rsync and prepare data |
-| `xeno_server.py` | XenoPi.pde | `/xeno/exp/end` | `s` | uid | Experiment ended; rsync and prepare data |
-| `xeno_server.py` | XenoPi.pde | `/xeno/exp/state` | `s` | state | Current FSM state name (e.g. `FLASH`, `SNAPSHOT`) |
-| XenoProjection | `xeno_server.py` | `/xeno/server/new` | `s` | uid | New experiment started |
-| XenoProjection | `xeno_server.py` | `/xeno/server/step` | `s` | uid | New image added to current experiment |
-| XenoProjection | `xeno_server.py` | `/xeno/server/end` | `s` | uid | Experiment ended |
-| XenoProjection | `xeno_server.py` | `/xeno/server/snapshot` | — | — | Trigger snapshot visual effect (fired when state = `FLASH`) |
-| XenolaliaApparatus | XenoPi.pde | `/xeno/refresh` | `i` | 1 | Trigger full liquid refresh cycle |
-| XenolaliaApparatus | XenoPi.pde | `/xeno/glow` | `i` | on (0 or 1) | Turn LED ring on or off |
-| XenolaliaApparatus | any | `/xeno/test_hardware` | — | — | Test all hardware components |
-| XenolaliaApparatus | any | `/xeno/mix` | — | — | Activate mixing pump |
-| XenolaliaApparatus | any | `/xeno/drain` | `i` | value | Drain tube |
-| XenolaliaApparatus | any | `/xeno/fill` | `i` | value | Fill tube |
-| XenolaliaApparatus | any | `/xeno/color` | `iii` | r, g, b | Set NeoPixel ring color |
+| Receiver Program | Sender Program(s) | Address | Param Types | Purpose |
+|---|---|---|---|---|
+| `xeno_osc.py` | XenoPi.pde | `/xeno/euglenas/handshake` | — | Request readiness confirmation from neural network |
+| `xeno_osc.py` | XenoPi.pde | `/xeno/euglenas/new` | — | Signal start of new experiment |
+| `xeno_osc.py` | XenoPi.pde | `/xeno/euglenas/begin` | `ss` | First snapshot of an experiment: provide `raw_image_path` and `base_image_path`; neural network uses a random seed for generation |
+| `xeno_osc.py` | XenoPi.pde | `/xeno/euglenas/step` | `ss` | Subsequent snapshot: provide `raw_image_path` and `base_image_path`; neural network uses the captured image as seed |
+| `xeno_osc.py` | XenoPi.pde | `/xeno/euglenas/settings-updated` | — | Notify neural network to reload `settings.json` |
+| `xeno_osc.py` | XenoPi.pde | `/xeno/euglenas/test-camera` | `s` | Request a perspective-corrected preview; provides `raw_image_path` of the test capture |
+| XenoPi.pde | `xeno_osc.py` | `/xeno/neurons/handshake` | — | Confirm neural network is ready |
+| XenoPi.pde | `xeno_osc.py` | `/xeno/neurons/begin` | — | Neural network server has started |
+| XenoPi.pde | `xeno_osc.py` | `/xeno/neurons/end` | — | Neural network server is shutting down |
+| XenoPi.pde | `xeno_osc.py` | `/xeno/neurons/new` | — | Neural network acknowledged new experiment |
+| XenoPi.pde | `xeno_osc.py` | `/xeno/neurons/step` | `s` | Delivers `nn_image_path`, the path to the autoencoder-generated image for this step |
+| XenoPi.pde | `xeno_osc.py` | `/xeno/neurons/test-camera` | `s` | Returns `transformed_image_path`, the perspective-corrected version of the test capture |
+| XenoPi.pde | XenolaliaApparatus | `/xeno/apparatus/refreshed` | — | Liquid refresh cycle completed |
+| XenoPi.pde | XenolaliaApparatus | `/xeno/handshake` | — | Apparatus acknowledged a command |
+| XenoPi.pde | any | `/xeno/control/begin` | — | Start generative mode |
+| `xeno_orbiter.py` | `xeno_osc.py` | `/xeno/neurons/new` | — | Reset OLED display for new experiment |
+| `xeno_orbiter.py` | `xeno_osc.py` | `/xeno/neurons/step` | `s` | Display the image at `nn_image_path` on the OLED screen |
+| `xeno_orbiter.py` | `xeno_osc.py` | `/xeno/neurons/end` | — | Stop OLED display animation |
+| `xeno_server.py` | XenoPi.pde | `/xeno/exp/new` | `s` | New experiment started; `uid` identifies the experiment; triggers rsync and data preparation |
+| `xeno_server.py` | XenoPi.pde | `/xeno/exp/step` | `s` | New image added to the experiment identified by `uid`; triggers rsync and data preparation |
+| `xeno_server.py` | XenoPi.pde | `/xeno/exp/end` | `s` | Experiment identified by `uid` has ended; triggers final rsync and data preparation |
+| `xeno_server.py` | XenoPi.pde | `/xeno/exp/state` | `s` | Current FSM state name (e.g. `FLASH`, `SNAPSHOT`); used internally to derive downstream messages |
+| XenoProjection | `xeno_server.py` | `/xeno/server/new` | `s` | New experiment identified by `uid` has started |
+| XenoProjection | `xeno_server.py` | `/xeno/server/step` | `s` | New image added to experiment identified by `uid` |
+| XenoProjection | `xeno_server.py` | `/xeno/server/end` | `s` | Experiment identified by `uid` has ended |
+| XenoProjection | `xeno_server.py` | `/xeno/server/snapshot` | — | Trigger snapshot visual effect (fired when state = `FLASH`) |
+| XenolaliaApparatus | XenoPi.pde | `/xeno/refresh` | `i` | Trigger a full liquid refresh cycle (always sent with value `1`) |
+| XenolaliaApparatus | XenoPi.pde | `/xeno/glow` | `i` | Turn LED ring on (`1`) or off (`0`) |
+| XenolaliaApparatus | any | `/xeno/test_hardware` | — | Test all hardware components |
+| XenolaliaApparatus | any | `/xeno/mix` | — | Activate mixing pump |
+| XenolaliaApparatus | any | `/xeno/drain` | `i` | Drain tube; integer value controls duration or amount |
+| XenolaliaApparatus | any | `/xeno/fill` | `i` | Fill tube; integer value controls duration or amount |
+| XenolaliaApparatus | any | `/xeno/color` | `iii` | Set NeoPixel ring color; three integers for red, green, blue (0–255) |
 
 **Notes:**
 
