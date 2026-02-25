@@ -82,7 +82,7 @@ class ShapeMode extends AbstractMode {
 
   void drawX(float strokeW, float diameter) {
     float halfStroke = strokeW * 0.5;
-    float len = diameter * 0.7;
+    float len = diameter * sqrt(2);
 
     pushMatrix();
     rotate(QUARTER_PI);
@@ -109,13 +109,13 @@ class ShapeMode extends AbstractMode {
     noFill();
     stroke(colors[symbolColor]);
     strokeWeight(strokeW);
-    ellipse(0, 0, diameter * 0.55, diameter * 0.55);
+    ellipse(0, 0, diameter, diameter);
     noStroke();
   }
 
   void drawBars(float strokeW, float diameter) {
-    float len     = diameter * 0.7;
-    float spacing = diameter * 0.2;
+    float len     = diameter;
+    float spacing = diameter / 3.0;
     float[] barWidths = {strokeW * 0.75, strokeW, strokeW * 1.25};
 
     rectMode(CENTER);
