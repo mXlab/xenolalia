@@ -28,9 +28,6 @@ class CameraCalibrationMode extends AbstractMode {
   PImage transformedTestImage = null;
   
   void setup() {
-    // Load points if they exist.
-    settings.load();
-    
     // Reference image.
     referenceImg = loadImage(REFERENCE_IMAGE);
 
