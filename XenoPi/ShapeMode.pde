@@ -60,11 +60,13 @@ class ShapeMode extends AbstractMode {
     float cy       = topLeft.y + h / 2;
     float diameter = min(w, h);
 
-    pushMatrix();
-    translate(cx, cy);
-    scale(w / diameter, h / diameter);
-    drawSymbol(diameter);
-    popMatrix();
+    if (!flashEnabled) {
+      pushMatrix();
+      translate(cx, cy);
+      scale(w / diameter, h / diameter);
+      drawSymbol(diameter);
+      popMatrix();
+    }
 
     if (helpEnabled)
       drawHelp();
