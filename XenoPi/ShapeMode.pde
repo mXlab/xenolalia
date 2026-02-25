@@ -38,16 +38,18 @@ class ShapeMode extends AbstractMode {
   int symbolColor;
   int strokeWidth;
   boolean helpEnabled;
+  boolean flashEnabled;
 
   void setup() {
-    shapeType   = SHAPE_X;
-    symbolColor = COLOR_WHITE;
-    strokeWidth = WIDTH_MEDIUM;
-    helpEnabled = true;
+    shapeType    = SHAPE_X;
+    symbolColor  = COLOR_WHITE;
+    strokeWidth  = WIDTH_MEDIUM;
+    helpEnabled  = true;
+    flashEnabled = false;
   }
 
   void draw() {
-    background(0);
+    background(flashEnabled ? 255 : 0);
     noCursor();
 
     PVector topLeft     = settings.getImageRectPoint(0);
@@ -139,6 +141,7 @@ class ShapeMode extends AbstractMode {
     text("Shape: " + shapeNames[shapeType] + " (TAB)" +
          "  Color: " + colorNames[symbolColor] + " (c)" +
          "  Thickness: " + widthNames[strokeWidth] + " (t)" +
+         "  Flash: " + (flashEnabled ? "ON" : "off") + " (f)" +
          "  s: calibration  h: hide",
          10, 10);
   }
@@ -148,7 +151,8 @@ class ShapeMode extends AbstractMode {
       case TAB: shapeType   = (shapeType   + 1) % N_SHAPES; break;
       case 'c': symbolColor = (symbolColor + 1) % N_COLORS; break;
       case 't': strokeWidth = (strokeWidth + 1) % N_WIDTHS; break;
-      case 'h': helpEnabled = !helpEnabled;                  break;
+      case 'f': flashEnabled = !flashEnabled;                break;
+      case 'h': helpEnabled  = !helpEnabled;                break;
     }
   }
 }
