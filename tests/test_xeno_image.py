@@ -39,13 +39,13 @@ class TestPostprocessOutput(unittest.TestCase):
 
     def test_filled_circle_becomes_hollow(self):
         """Centre pixel of a large filled circle must be black after postprocessing
-        (boundary extraction hollows out filled shapes)."""
+        (thick components are hollowed out)."""
         img = _filled_circle_image(size=28, radius_frac=0.45)
-        result = xeno_image.postprocess_output(img, output_size=224, line_width=1)
+        result = xeno_image.postprocess_output(img, output_size=224)
         arr = np.array(result)
         cx, cy = 112, 112  # centre of 224×224
         self.assertEqual(arr[cy, cx], 0,
-            "Centre of a filled circle should be black (hollow) after boundary extraction.")
+            "Centre of a filled circle should be black (hollow) after postprocessing.")
 
     def test_solid_black_stays_black(self):
         """An all-black input must produce an all-black output (no boundary to extract)."""
@@ -56,14 +56,14 @@ class TestPostprocessOutput(unittest.TestCase):
             "All-black input should produce all-black output.")
 
     def test_solid_white_becomes_border_only(self):
-        """An all-white input: after boundary extraction, interior pixels are black."""
+        """An all-white input: thick component hollowed out, so interior is black."""
         img = _solid_white_image()
-        result = xeno_image.postprocess_output(img, output_size=65, line_width=1)
+        result = xeno_image.postprocess_output(img, output_size=65)
         arr = np.array(result)
         # The very centre must be black (65 is odd, so centre is unambiguous at index 32)
         cx, cy = 32, 32
         self.assertEqual(arr[cy, cx], 0,
-            "Centre of all-white input must be black after boundary extraction.")
+            "Centre of all-white input must be black after postprocessing.")
 
     def test_area_max_constrains_lit_pixels(self):
         """area_max limits the fraction of pixels that pass binarisation.
@@ -82,15 +82,15 @@ class TestPostprocessOutput(unittest.TestCase):
         self.assertLessEqual(lit_fraction, 0.10,
             "area_max=0.1 should keep final lit fraction at or below 10 %.")
 
-    def test_line_width_zero_produces_thinner_result_than_line_width_four(self):
-        """Larger line_width must produce more lit pixels than line_width=0."""
-        img = _filled_circle_image()
-        r0 = xeno_image.postprocess_output(img, output_size=112, line_width=0)
-        r4 = xeno_image.postprocess_output(img, output_size=112, line_width=4)
-        lit0 = np.count_nonzero(np.array(r0))
-        lit4 = np.count_nonzero(np.array(r4))
-        self.assertLess(lit0, lit4,
-            "line_width=4 must produce more lit pixels than line_width=0.")
+    def test_larger_boundary_px_produces_more_lit_pixels(self):
+        """A larger boundary_px must produce more lit pixels for a thick shape."""
+        img = _filled_circle_image(size=28, radius_frac=0.45)
+        r_small = xeno_image.postprocess_output(img, output_size=224, boundary_px=5)
+        r_large = xeno_image.postprocess_output(img, output_size=224, boundary_px=20)
+        lit_small = np.count_nonzero(np.array(r_small))
+        lit_large = np.count_nonzero(np.array(r_large))
+        self.assertLess(lit_small, lit_large,
+            "boundary_px=20 must produce more lit pixels than boundary_px=5.")
 
     def test_threshold_controls_binarisation(self):
         """A lower threshold value should produce more lit pixels than a higher one.
@@ -103,8 +103,8 @@ class TestPostprocessOutput(unittest.TestCase):
         arr = np.full((28, 28), 128, dtype=np.uint8)
         img = Image.fromarray(arr, mode='L')
 
-        result_low = xeno_image.postprocess_output(img, output_size=112, threshold=0.4)
-        result_high = xeno_image.postprocess_output(img, output_size=112, threshold=0.6)
+        result_low = xeno_image.postprocess_output(img, output_size=112, threshold=0.4, stroke_width=5)
+        result_high = xeno_image.postprocess_output(img, output_size=112, threshold=0.6, stroke_width=5)
 
         lit_low = np.count_nonzero(np.array(result_low))
         lit_high = np.count_nonzero(np.array(result_high))

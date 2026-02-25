@@ -112,62 +112,67 @@ def simplify(image):
 def resize(image, image_side):
     return image.resize((image_side, image_side), resample=Image.LANCZOS)
 
-def postprocess_output(image, output_size=224, threshold=0.5, line_width=2, area_max=None):
+def postprocess_output(image, output_size=224, threshold=0.5, stroke_width=20, boundary_px=22, area_max=None):
     """Post-process an autoencoder output image for projection.
 
     Transforms the raw 28x28 (or any size) grayscale PIL image into a
     higher-resolution binary image suitable for projection:
       1. Upscale to output_size x output_size.
       2. Threshold to binary (using area_max or fixed threshold).
-      3. Extract boundary: filled regions become hollow loops.
-      4. Dilate to control stroke width.
+      3. Classify each connected component as thin or thick via morphological
+         opening with radius stroke_width.
+      4. Thin components (opening produces nothing) are kept solid.
+         Thick components are drawn as an inward contour of width boundary_px,
+         hollowing out their interior without growing beyond the original shape.
 
     Args:
-        image:       Grayscale PIL Image (autoencoder output).
-        output_size: Side length of the returned image in pixels.
-        threshold:   Binary threshold in [0, 1), used when area_max is None.
-                     Values ≥ 1.0 produce all-black output (no pixel can exceed 255).
-        line_width:  Dilation radius in pixels. 0 = no dilation (raw boundary).
-        area_max:    If set (0–1), overrides threshold: keeps at most this
-                     fraction of pixels above the binarisation threshold,
-                     before boundary extraction removes interiors. The
-                     actual lit fraction in the output will be much lower.
+        image:        Grayscale PIL Image (autoencoder output).
+        output_size:  Side length of the returned image in pixels.
+        threshold:    Binary threshold in [0, 1), used when area_max is None.
+                      Values >= 1.0 produce all-black output.
+        stroke_width: Opening-kernel radius (pixels). Components where the
+                      opening kernel fits (max inscribed radius > stroke_width)
+                      are treated as thick and hollowed out.
+        boundary_px:  Width of the inward contour drawn for thick components.
+        area_max:     If set (0-1), overrides threshold: keeps at most this
+                      fraction of pixels above the binarisation threshold.
 
     Returns:
         Grayscale PIL Image of size output_size x output_size.
     """
     # 1. Upscale.
-    img = image.convert('L').resize((output_size, output_size), resample=Image.LANCZOS)
-    arr = np.array(img, dtype=np.uint8)
+    arr = np.array(image.convert('L').resize((output_size, output_size), Image.LANCZOS), dtype=np.uint8)
 
     # 2. Threshold to binary.
     if area_max is not None:
-        # Percentile threshold: keep at most area_max fraction of pixels "on".
         thresh_val = np.percentile(arr, (1.0 - float(area_max)) * 100.0)
-        thresh_val = max(1, int(thresh_val))  # avoid all-white on flat images
+        thresh_val = max(1, int(thresh_val))
         _, binary = cv2.threshold(arr, thresh_val, 255, cv2.THRESH_BINARY)
     else:
-        thresh_val = int(float(threshold) * 255)
-        _, binary = cv2.threshold(arr, thresh_val, 255, cv2.THRESH_BINARY)
+        _, binary = cv2.threshold(arr, int(float(threshold) * 255), 255, cv2.THRESH_BINARY)
 
-    # 3. Boundary extraction: boundary = image - erosion(image).
-    #    Filled regions become outlines (loops); thin lines have no interior
-    #    to subtract so they are preserved as-is.
-    #    BORDER_CONSTANT with value 0 ensures image-edge pixels are treated as
-    #    having black neighbours, so the boundary ring at the image border is
-    #    correctly extracted even for images that fill the entire canvas.
-    kernel_3x3 = np.ones((3, 3), np.uint8)
-    eroded = cv2.erode(binary, kernel_3x3, iterations=1,
-                       borderType=cv2.BORDER_CONSTANT, borderValue=0)
-    boundary = cv2.subtract(binary, eroded)
+    # 3. Morphological opening to classify thick vs thin components.
+    k_open = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * stroke_width + 1, 2 * stroke_width + 1))
+    opened = cv2.morphologyEx(binary, cv2.MORPH_OPEN, k_open)
 
-    # 4. Dilate to desired line width.
-    if line_width > 0:
-        k = line_width * 2 + 1
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k, k))
-        boundary = cv2.dilate(boundary, kernel, iterations=1)
+    # 4. Per-component processing.
+    num_labels, labels = cv2.connectedComponents(binary)
+    result = np.zeros_like(binary)
+    for label_id in range(1, num_labels):
+        comp = (labels == label_id)
+        comp_u8 = comp.astype(np.uint8) * 255
+        if opened[comp].any():
+            # Thick: draw inward contour of width boundary_px.
+            # Draw 2x thickness centered on contour, then clip to inside the shape.
+            contours, _ = cv2.findContours(comp_u8, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            layer = np.zeros_like(binary)
+            cv2.drawContours(layer, contours, -1, 255, thickness=boundary_px * 2)
+            result = cv2.add(result, cv2.bitwise_and(layer, comp_u8))
+        else:
+            # Thin: keep all pixels solid.
+            result[comp] = 255
 
-    return Image.fromarray(boundary, mode='L')
+    return Image.fromarray(result, mode='L')
 
 # Processes raw image.
 def process_image(image, base_image=False, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0]):
