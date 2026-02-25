@@ -167,16 +167,24 @@ void generativeMode() {
   mode = new GenerativeMode();
 }
 
+void shapeMode() {
+  mode = new ShapeMode();
+}
+
 void draw() {
   mode.draw();
 }
 
 void keyPressed() {
   // Switch mode.
-  if (key == 'c')
-    cameraCalibrationMode();
-  else if (key == 'g')
+  if (key == 'g')
     generativeMode();
+  else if (key == 's') {
+    if (mode instanceof ShapeMode)
+      cameraCalibrationMode();
+    else
+      shapeMode();
+  }
   //
   else if (key == CODED && keyCode == SHIFT)
     shiftPressed = true;
