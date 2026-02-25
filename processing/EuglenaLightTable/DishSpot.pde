@@ -114,6 +114,7 @@ class DishSpot {
   }
 
   void drawSymbol() {
+    pushStyle();  // Save style so rectMode/stroke/fill changes don't leak out
     color c = colors[symbolColor];
     float strokeW = diameter * widthMultipliers[strokeWidth];
 
@@ -139,6 +140,7 @@ class DishSpot {
     noFill();
     ellipse(0, 0, diameter + borderWeight * 0.5, diameter + borderWeight * 0.5);
     noStroke();
+    popStyle();  // Restore style (rectMode, stroke, fill, etc.)
   }
 
   void drawX(float strokeW) {

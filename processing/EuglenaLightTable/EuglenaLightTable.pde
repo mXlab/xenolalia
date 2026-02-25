@@ -36,6 +36,15 @@ boolean flashActive = false;
 int flashEndTime = 0;
 final int FLASH_DURATION = 15000;  // 15 seconds per press
 
+// Timer / overlay state
+boolean timerRunning = false;
+boolean timerPaused = false;
+boolean timerPausedByFlash = false;
+int timerStartMillis = 0;    // millis() when current run segment started
+int timerElapsedMs = 0;      // accumulated ms before current segment
+boolean showOverlay = false;      // manually toggled with 'T'
+boolean flashShowsOverlay = false; // auto-shown during flash, cleared when flash ends
+
 void setup() {
   fullScreen();
   // size(1200, 800);  // Uncomment for windowed testing
@@ -107,11 +116,20 @@ void drawExperimentMode() {
   // Check flash timer
   if (flashActive && millis() >= flashEndTime) {
     flashActive = false;
+    flashShowsOverlay = false;
     setAllDishesState(DishSpot.STATE_SYMBOL);
+    if (timerPausedByFlash) {
+      timerPausedByFlash = false;
+      resumeTimer();
+    }
   }
 
   for (DishSpot dish : dishes) {
     dish.draw();
+  }
+
+  if (showOverlay || flashShowsOverlay) {
+    drawTimerOverlay();
   }
 
   fill(50);
@@ -121,7 +139,74 @@ void drawExperimentMode() {
     int remaining = ceil((flashEndTime - millis()) / 1000.0);
     text("FLASH - returning to symbol in " + remaining + "s", 10, height - 10);
   } else {
-    text("EXPERIMENT MODE - Press 'e' for Symbol Edit, 'm' for Color Reference, 'h' for help", 10, height - 10);
+    text("EXPERIMENT MODE - 'r'=Start timer  'p'=Pause/Resume  't'=Toggle display  'e'=Edit  'm'=Color Ref  'h'=Help", 10, height - 10);
+  }
+}
+
+void drawTimerOverlay() {
+  rectMode(CORNER);  // Reset in case drawSymbol() left rectMode as CENTER
+
+  // --- Top bar: date and time ---
+  float barH = 60;
+  fill(0, 210);
+  noStroke();
+  rect(0, 0, width, barH);
+
+  String dateStr = String.format("%04d-%02d-%02d", year(), month(), day());
+  String timeStr = String.format("%02d:%02d:%02d", hour(), minute(), second());
+
+  // Date on the left, time on the right, both large
+  textAlign(LEFT, CENTER);
+  textSize(30);
+  fill(180);
+  text(dateStr, 30, barH / 2);
+
+  textAlign(RIGHT, CENTER);
+  fill(255);
+  text(timeStr, width - 30, barH / 2);
+
+  // --- Bottom-right panel: experiment timer ---
+  float panelW = 330;
+  float panelH = 110;
+  float panelX = width - panelW - 20;
+  float panelY = height - panelH - 40;
+
+  fill(0, 210);
+  noStroke();
+  rect(panelX, panelY, panelW, panelH, 8);
+
+  fill(120);
+  textAlign(LEFT, TOP);
+  textSize(13);
+  text("EXPERIMENT TIMER", panelX + 14, panelY + 10);
+
+  String timerStr;
+  if (!timerRunning) {
+    timerStr = "--:--";
+    fill(90);
+  } else {
+    int elapsed = getTimerElapsedMs();
+    int totalSec = elapsed / 1000;
+    int mins = totalSec / 60;
+    int secs = totalSec % 60;
+    if (mins >= 60) {
+      int hours = mins / 60;
+      mins = mins % 60;
+      timerStr = String.format("%02d:%02d:%02d", hours, mins, secs);
+    } else {
+      timerStr = String.format("%02d:%02d", mins, secs);
+    }
+    fill(timerPaused ? color(255, 200, 60) : color(255));
+  }
+  textSize(52);
+  textAlign(LEFT, TOP);
+  text(timerStr, panelX + 14, panelY + 28);
+
+  if (timerPaused) {
+    fill(255, 200, 60);
+    textSize(13);
+    textAlign(RIGHT, TOP);
+    text("PAUSED", panelX + panelW - 14, panelY + 10);
   }
 }
 
@@ -183,8 +268,13 @@ void drawHelp() {
         "  w - Set ALL dishes to WHITE",
         "  b - Set ALL dishes to BLACK",
         "  x - Set ALL dishes to SYMBOL",
+        "  r - Start/restart experiment timer + set dishes to SYMBOL",
+        "  p - Pause / resume timer",
         "  f - Flash WHITE (auto-return to SYMBOL in 15s, stacks)",
+        "  t - Toggle timer/clock display",
         "  1-6 - Cycle individual dish state",
+        "",
+        "NOTE: Timer pauses automatically during flash, resumes on return",
         "",
         "MODE SWITCHING:",
         "  e - Symbol Edit mode (configure patterns)",
@@ -289,7 +379,39 @@ void handleExperimentKeys() {
     case 'x':
     case 'X':
       flashActive = false;
+      flashShowsOverlay = false;
       setAllDishesState(DishSpot.STATE_SYMBOL);
+      if (timerPausedByFlash) {
+        timerPausedByFlash = false;
+        resumeTimer();
+      }
+      break;
+
+    case 'r':
+    case 'R':
+      timerRunning = true;
+      timerPaused = false;
+      timerPausedByFlash = false;
+      timerElapsedMs = 0;
+      timerStartMillis = millis();
+      setAllDishesState(DishSpot.STATE_SYMBOL);
+      break;
+
+    case 'p':
+    case 'P':
+      if (timerRunning) {
+        if (timerPaused) {
+          timerPausedByFlash = false;
+          resumeTimer();
+        } else {
+          pauseTimer();
+        }
+      }
+      break;
+
+    case 't':
+    case 'T':
+      showOverlay = !showOverlay;
       break;
 
     case 'f':
@@ -300,7 +422,12 @@ void handleExperimentKeys() {
         flashActive = true;
         flashEndTime = millis() + FLASH_DURATION;
         setAllDishesState(DishSpot.STATE_WHITE);
+        if (timerRunning && !timerPaused) {
+          pauseTimer();
+          timerPausedByFlash = true;
+        }
       }
+      flashShowsOverlay = true;
       break;
 
     case 'e':
@@ -428,6 +555,26 @@ void applyToSelected(DishOperation op) {
 void setAllDishesState(int state) {
   for (DishSpot dish : dishes) {
     dish.setState(state);
+  }
+}
+
+int getTimerElapsedMs() {
+  if (!timerRunning) return 0;
+  if (timerPaused) return timerElapsedMs;
+  return timerElapsedMs + (millis() - timerStartMillis);
+}
+
+void pauseTimer() {
+  if (timerRunning && !timerPaused) {
+    timerElapsedMs += millis() - timerStartMillis;
+    timerPaused = true;
+  }
+}
+
+void resumeTimer() {
+  if (timerRunning && timerPaused) {
+    timerStartMillis = millis();
+    timerPaused = false;
   }
 }
 
