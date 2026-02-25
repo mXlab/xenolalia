@@ -129,7 +129,9 @@ def postprocess_output(image, output_size=224, threshold=0.5, line_width=2, area
                      Values ≥ 1.0 produce all-black output (no pixel can exceed 255).
         line_width:  Dilation radius in pixels. 0 = no dilation (raw boundary).
         area_max:    If set (0–1), overrides threshold: keeps at most this
-                     fraction of pixels lit before boundary extraction.
+                     fraction of pixels above the binarisation threshold,
+                     before boundary extraction removes interiors. The
+                     actual lit fraction in the output will be much lower.
 
     Returns:
         Grayscale PIL Image of size output_size x output_size.

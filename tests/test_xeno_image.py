@@ -66,13 +66,21 @@ class TestPostprocessOutput(unittest.TestCase):
             "Centre of all-white input must be black after boundary extraction.")
 
     def test_area_max_constrains_lit_pixels(self):
-        """With output_area_max=0.1, at most ~10 % of pixels should be non-zero."""
-        img = _filled_circle_image()
+        """area_max limits the fraction of pixels that pass binarisation.
+
+        Uses a gradient image so the percentile threshold must reason over a
+        real distribution, not a degenerate binary one.
+        """
+        # Horizontal gradient 0–255: a genuine spread of values for percentile threshold.
+        arr = np.tile(np.linspace(0, 255, 28, dtype=np.uint8), (28, 1))
+        img = Image.fromarray(arr, mode='L')
+        # With area_max=0.1 only the top 10 % of pixel values should pass before
+        # boundary extraction, so final lit fraction must be well below that.
         result = xeno_image.postprocess_output(img, output_size=112, area_max=0.1)
-        arr = np.array(result)
-        lit_fraction = np.count_nonzero(arr) / arr.size
-        self.assertLessEqual(lit_fraction, 0.15,
-            "output_area_max=0.1 should keep lit pixels well below 15 %.")
+        out_arr = np.array(result)
+        lit_fraction = np.count_nonzero(out_arr) / out_arr.size
+        self.assertLessEqual(lit_fraction, 0.10,
+            "area_max=0.1 should keep final lit fraction at or below 10 %.")
 
     def test_line_width_zero_produces_thinner_result_than_line_width_four(self):
         """Larger line_width must produce more lit pixels than line_width=0."""

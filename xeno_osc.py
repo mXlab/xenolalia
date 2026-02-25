@@ -7,7 +7,6 @@ import signal
 import time
 import math
 import argparse
-import json
 
 from pythonosc import dispatcher
 from pythonosc import osc_server
@@ -115,7 +114,7 @@ def generate_random():
 # Generates frame from starting frame mixed with previous frame.
 def generate_merge(n_steps, starting_frame, prev_frame):
     if n_steps <= 0:
-        return prev_frame
+        return None, prev_frame
     else:
         frame = np.maximum(starting_frame, prev_frame)
         for t in range(n_steps-1):
@@ -244,8 +243,9 @@ def next_image(image_path, base_image_path, starting_frame_random):
     # Save image to path.
     nn_image_path = "{}/{}_3ann.png".format(dirname, basename)
     image.save(nn_image_path)
-    # Save encoded data.
-    save_encoded_json(encoded, "{}/{}_code.json".format(dirname, basename))
+    # Save encoded data (only when encoder output is available).
+    if encoded is not None:
+        save_encoded_json(encoded, "{}/{}_code.json".format(dirname, basename))
     # Return back OSC message.
     send_message("/xeno/neurons/step", [nn_image_path])
 
