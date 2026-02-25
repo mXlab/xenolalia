@@ -63,6 +63,9 @@ boolean cameraRunning = true;
 // Global variable that is true iff the SHIFT key is pressed.
 boolean shiftPressed = false;
 
+// Persistent ShapeMode instance so its state survives mode switches.
+ShapeMode _shapeMode = null;
+
 void setup() {
   //2592x1944
   size(1184, 624, P2D);
@@ -168,7 +171,9 @@ void generativeMode() {
 }
 
 void shapeMode() {
-  mode = new ShapeMode();
+  if (_shapeMode == null)
+    _shapeMode = new ShapeMode();
+  mode = _shapeMode;
 }
 
 void draw() {
@@ -179,12 +184,8 @@ void keyPressed() {
   // Switch mode.
   if (key == 'g')
     generativeMode();
-  else if (key == 's') {
-    if (mode instanceof ShapeMode)
-      cameraCalibrationMode();
-    else
-      shapeMode();
-  }
+  else if (key == 's' && !(mode instanceof ShapeMode))
+    shapeMode();
   //
   else if (key == CODED && keyCode == SHIFT)
     shiftPressed = true;

@@ -39,13 +39,15 @@ class ShapeMode extends AbstractMode {
   int strokeWidth;
   boolean helpEnabled;
   boolean flashEnabled;
+  boolean symbolEnabled;
 
   void setup() {
-    shapeType    = SHAPE_X;
-    symbolColor  = COLOR_WHITE;
-    strokeWidth  = WIDTH_MEDIUM;
-    helpEnabled  = true;
-    flashEnabled = false;
+    shapeType     = SHAPE_X;
+    symbolColor   = COLOR_WHITE;
+    strokeWidth   = WIDTH_MEDIUM;
+    helpEnabled   = true;
+    flashEnabled  = false;
+    symbolEnabled = true;
   }
 
   void draw() {
@@ -60,7 +62,7 @@ class ShapeMode extends AbstractMode {
     float cy       = topLeft.y + h / 2;
     float diameter = min(w, h);
 
-    if (!flashEnabled) {
+    if (!flashEnabled && symbolEnabled) {
       pushMatrix();
       translate(cx, cy);
       scale(w / diameter, h / diameter);
@@ -140,21 +142,23 @@ class ShapeMode extends AbstractMode {
     noStroke();
     textSize(14);
     textAlign(LEFT, TOP);
-    text("Shape: " + shapeNames[shapeType] + " (TAB)" +
+    text("Symbol: " + (symbolEnabled ? "ON" : "off") + " (x)" +
+         "  Shape: " + shapeNames[shapeType] + " (s)" +
          "  Color: " + colorNames[symbolColor] + " (c)" +
          "  Thickness: " + widthNames[strokeWidth] + " (t)" +
          "  Flash: " + (flashEnabled ? "ON" : "off") + " (f)" +
-         "  s: calibration  h: hide",
+         "  h: hide",
          10, 10);
   }
 
   void keyPressed() {
     switch (key) {
-      case TAB: shapeType   = (shapeType   + 1) % N_SHAPES; break;
-      case 'c': symbolColor = (symbolColor + 1) % N_COLORS; break;
-      case 't': strokeWidth = (strokeWidth + 1) % N_WIDTHS; break;
-      case 'f': flashEnabled = !flashEnabled;                break;
-      case 'h': helpEnabled  = !helpEnabled;                break;
+      case 's': shapeType    = (shapeType   + 1) % N_SHAPES; break;
+      case 'c': symbolColor  = (symbolColor + 1) % N_COLORS; break;
+      case 't': strokeWidth  = (strokeWidth + 1) % N_WIDTHS; break;
+      case 'x': case 'X': symbolEnabled = !symbolEnabled;    break;
+      case 'f': flashEnabled = !flashEnabled;                 break;
+      case 'h': helpEnabled  = !helpEnabled;                  break;
     }
   }
 }
