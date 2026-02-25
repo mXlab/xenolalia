@@ -147,7 +147,7 @@ void drawTimerOverlay() {
   rectMode(CORNER);  // Reset in case drawSymbol() left rectMode as CENTER
 
   // --- Top bar: date and time ---
-  float barH = 60;
+  float barH = 120;
   fill(0, 210);
   noStroke();
   rect(0, 0, width, barH);
@@ -157,13 +157,13 @@ void drawTimerOverlay() {
 
   // Date on the left, time on the right, both large
   textAlign(LEFT, CENTER);
-  textSize(30);
+  textSize(60);
   fill(180);
-  text(dateStr, 30, barH / 2);
+  text(dateStr, 60, barH / 2);
 
   textAlign(RIGHT, CENTER);
   fill(255);
-  text(timeStr, width - 30, barH / 2);
+  text(timeStr, width - 60, barH / 2);
 
   // --- Bottom-right panel: experiment timer ---
   float panelW = 330;
@@ -176,9 +176,9 @@ void drawTimerOverlay() {
   rect(panelX, panelY, panelW, panelH, 8);
 
   fill(120);
-  textAlign(LEFT, TOP);
-  textSize(13);
-  text("EXPERIMENT TIMER", panelX + 14, panelY + 10);
+  textAlign(RIGHT, TOP);
+  textSize(26);
+  text("EXPERIMENT TIMER", width - 60, panelY + 10);
 
   String timerStr;
   if (!timerRunning) {
@@ -198,16 +198,16 @@ void drawTimerOverlay() {
     }
     fill(timerPaused ? color(255, 200, 60) : color(255));
   }
-  textSize(52);
-  textAlign(LEFT, TOP);
-  text(timerStr, panelX + 14, panelY + 28);
+  textSize(72);
+  textAlign(RIGHT, TOP);
+  text(timerStr, width - 60, panelY + 36);
 
-  if (timerPaused) {
-    fill(255, 200, 60);
-    textSize(13);
-    textAlign(RIGHT, TOP);
-    text("PAUSED", panelX + panelW - 14, panelY + 10);
-  }
+  //if (timerPaused) {
+  //  fill(255, 200, 60);
+  //  textSize(26);
+  //  textAlign(RIGHT, TOP);
+  //  text("PAUSED", width - 60, panelY + 56);
+  //}
 }
 
 void drawSymbolEditMode() {
