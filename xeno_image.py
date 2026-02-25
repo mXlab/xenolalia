@@ -125,7 +125,8 @@ def postprocess_output(image, output_size=224, threshold=0.5, line_width=2, area
     Args:
         image:       Grayscale PIL Image (autoencoder output).
         output_size: Side length of the returned image in pixels.
-        threshold:   Binary threshold in [0, 1], used when area_max is None.
+        threshold:   Binary threshold in [0, 1), used when area_max is None.
+                     Values ≥ 1.0 produce all-black output (no pixel can exceed 255).
         line_width:  Dilation radius in pixels. 0 = no dilation (raw boundary).
         area_max:    If set (0–1), overrides threshold: keeps at most this
                      fraction of pixels lit before boundary extraction.
@@ -134,7 +135,7 @@ def postprocess_output(image, output_size=224, threshold=0.5, line_width=2, area
         Grayscale PIL Image of size output_size x output_size.
     """
     # 1. Upscale.
-    img = image.resize((output_size, output_size), resample=Image.LANCZOS)
+    img = image.convert('L').resize((output_size, output_size), resample=Image.LANCZOS)
     arr = np.array(img, dtype=np.uint8)
 
     # 2. Threshold to binary.
