@@ -98,4 +98,4 @@ urllib3==1.26.6
 Werkzeug==0.15.5
 wrapt==1.11.2
 yarg==0.1.9
-squircle
+squircle==0.2.2
