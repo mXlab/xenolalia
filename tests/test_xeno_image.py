@@ -149,5 +149,45 @@ class TestProcessImageSquircle(unittest.TestCase):
         )
 
 
+class TestSquircleOutside(unittest.TestCase):
+
+    def test_to_circle_outside_all_corners_populated(self):
+        """to_circle_outside must populate all four canvas corners (circumscribed disc)."""
+        arr = np.full((224, 224), 255, dtype=np.uint8)
+        img = Image.fromarray(arr, mode='L')
+        result = np.array(xeno_image.to_circle_outside(img))
+        for corner in [(0, 0), (0, 223), (223, 0), (223, 223)]:
+            self.assertGreater(result[corner], 0,
+                f"Corner {corner} is black — disc is not circumscribing the square")
+
+    def test_to_circle_outside_output_shape(self):
+        """to_circle_outside must return an image of the same size as input."""
+        img = Image.fromarray(np.full((112, 112), 200, dtype=np.uint8), mode='L')
+        result = xeno_image.to_circle_outside(img)
+        self.assertEqual(np.array(result).shape, (112, 112))
+
+    def test_to_circle_outside_differs_from_inside(self):
+        """to_circle_outside must produce a different result than squircle.to_circle."""
+        import squircle
+        arr = np.full((224, 224), 200, dtype=np.uint8)
+        img = Image.fromarray(arr, mode='L')
+        outside = np.array(xeno_image.to_circle_outside(img))
+        inside = squircle.to_circle(arr)
+        self.assertFalse(np.array_equal(outside, inside))
+
+    def test_to_square_outside_output_shape(self):
+        """to_square_outside must return an image of the same size as input."""
+        img = Image.fromarray(np.full((112, 112), 200, dtype=np.uint8), mode='L')
+        result = xeno_image.to_square_outside(img)
+        self.assertEqual(np.array(result).shape, (112, 112))
+
+    def test_to_square_outside_center_populated(self):
+        """to_square_outside on a white image must populate the centre pixel."""
+        arr = np.full((224, 224), 255, dtype=np.uint8)
+        img = Image.fromarray(arr, mode='L')
+        result = np.array(xeno_image.to_square_outside(img))
+        self.assertGreater(result[112, 112], 0)
+
+
 if __name__ == '__main__':
     unittest.main()

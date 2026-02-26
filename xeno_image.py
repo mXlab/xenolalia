@@ -58,6 +58,76 @@ def add_mask(image, invert=False):
     else:
         return Image.alpha_composite(image.convert('RGBA'), create_mask(image)).convert('RGB')
 
+def to_circle_outside(image):
+    """Map a square image to its circumscribed disc (squircle outside mode).
+
+    The output disc circumscribes the input square: its radius equals the
+    half-diagonal (side * sqrt(2) / 2), so all four canvas corners are
+    populated — no black corners. Uses inverse FGS mapping via cv2.remap.
+
+    Args:
+        image: Grayscale PIL Image (must be square).
+    Returns:
+        Grayscale PIL Image of the same size.
+    """
+    arr = np.array(image.convert('L'), dtype=np.uint8)
+    n = arr.shape[0]
+    # Destination coords in scaled-disc space: canvas spans [-1, 1],
+    # disc radius = sqrt(2) so all canvas pixels lie within the disc.
+    coords = (np.arange(n, dtype=np.float32) + 0.5) / n * 2.0 - 1.0
+    uu, vv = np.meshgrid(coords, coords)
+    # Scale to unit-disc space for FGS inverse
+    u = uu / np.sqrt(2)
+    v = vv / np.sqrt(2)
+    u2, v2 = u * u, v * v
+    r2 = u2 + v2
+    uv = u * v
+    fouru2v2 = 4.0 * uv * uv
+    rad = np.maximum(r2 * (r2 - fouru2v2), 0.0)
+    sgnuv = np.sign(uv)
+    sqrto = np.sqrt(np.maximum(0.5 * (r2 - np.sqrt(rad)), 0.0))
+    # Avoid division by zero: replace zero denominators with 1 (result overridden by where)
+    safe_v = np.where(np.abs(v) > 1e-10, v, 1.0)
+    safe_u = np.where(np.abs(u) > 1e-10, u, 1.0)
+    x = np.where(np.abs(v) > 1e-10, sgnuv / safe_v * sqrto, uu / np.sqrt(2))
+    y = np.where(np.abs(u) > 1e-10, sgnuv / safe_u * sqrto, vv / np.sqrt(2))
+    x = np.clip(x, -1.0, 1.0)
+    y = np.clip(y, -1.0, 1.0)
+    map_x = ((x + 1.0) * 0.5 * n).astype(np.float32)
+    map_y = ((y + 1.0) * 0.5 * n).astype(np.float32)
+    result = cv2.remap(arr, map_x, map_y, cv2.INTER_LINEAR, borderValue=0)
+    return Image.fromarray(result, mode='L')
+
+
+def to_square_outside(image):
+    """Map from a circumscribed disc back to a square (inverse of to_circle_outside).
+
+    All canvas pixels lie within the circumscribed disc, so the full square
+    is covered with no holes.
+
+    Args:
+        image: Grayscale PIL Image (must be square).
+    Returns:
+        Grayscale PIL Image of the same size.
+    """
+    arr = np.array(image.convert('L'), dtype=np.uint8)
+    n = arr.shape[0]
+    # Source coords in square space [-1, 1]
+    coords = (np.arange(n, dtype=np.float32) + 0.5) / n * 2.0 - 1.0
+    xx, yy = np.meshgrid(coords, coords)
+    x2, y2 = xx * xx, yy * yy
+    r2 = x2 + y2
+    rad = np.sqrt(np.maximum(r2 - x2 * y2, 0.0))
+    inv_sqrt_r2 = np.where(r2 > 1e-10, 1.0 / np.sqrt(r2), 0.0)
+    # FGS square-to-disc, then scale output by sqrt(2) for circumscribed disc
+    u = xx * rad * inv_sqrt_r2 * np.sqrt(2)
+    v = yy * rad * inv_sqrt_r2 * np.sqrt(2)
+    map_x = ((u + 1.0) * 0.5 * n).astype(np.float32)
+    map_y = ((v + 1.0) * 0.5 * n).astype(np.float32)
+    result = cv2.remap(arr, map_x, map_y, cv2.INTER_LINEAR, borderValue=0)
+    return Image.fromarray(result, mode='L')
+
+
 # Apply different kinds of filterings to image in order to enhance its shape.
 def enhance(image):
     w, h = image.size
