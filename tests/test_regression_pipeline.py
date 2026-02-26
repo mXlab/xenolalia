@@ -1,11 +1,12 @@
-import unittest
+# tests/test_regression_pipeline.py
 import glob
 import json
 import os
+import unittest
+
 import numpy as np
 from PIL import Image
-import sys
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
 import xeno_image
 
 SNAPSHOTS_BASE = os.path.join(os.path.dirname(__file__), '..', 'XenoPi', 'snapshots')
@@ -14,6 +15,7 @@ SNAPSHOTS_BASE = os.path.join(os.path.dirname(__file__), '..', 'XenoPi', 'snapsh
 def _collect_cases():
     """Return list of (raw_path, ref_path, camera_quad, base_image_path) for all sessions."""
     cases = []
+    # NOTE: "eisode" is the actual spelling used in data directory names (typo in session names).
     pattern = os.path.join(SNAPSHOTS_BASE, '*eisode-preparation-2026*')
     for session_dir in sorted(glob.glob(pattern)):
         settings_path = os.path.join(session_dir, 'settings.json')
