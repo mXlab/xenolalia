@@ -175,7 +175,7 @@ def postprocess_output(image, output_size=224, threshold=0.5, stroke_width=20, b
     return Image.fromarray(result, mode='L')
 
 # Processes raw image.
-def process_image(image, base_image=False, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0]):
+def process_image(image, base_image=False, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0], use_squircle=False):
     # Transform image using input quad.
     raw_transformed = transform(image.convert('RGB'), input_quad)
 
@@ -191,6 +191,10 @@ def process_image(image, base_image=False, image_side=28, input_quad=[0, 0, 0, 1
     # Apply mask to alleviate border flares / artefacts.
     masked = add_mask(transformed)
 
+    if use_squircle:
+        import squircle
+        masked = Image.fromarray(squircle.to_square(np.array(masked)))
+
     # Image filters to enhance contrasts.
     enhanced = enhance(masked)
 
@@ -204,14 +208,14 @@ def process_image(image, base_image=False, image_side=28, input_quad=[0, 0, 0, 1
 
 # Loads image_path file, applies perspective transforms and returns it as
 # a numpy array formatted for the autoencoder.
-def load_image(image_path, base_image_path=False, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0]):
+def load_image(image_path, base_image_path=False, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0], use_squircle=False):
     # Open image as grayscale.
     image = Image.open(image_path)
     if base_image_path:
         base_image = Image.open(base_image_path)
     else:
         base_image = False
-    return process_image(image, base_image, image_side, input_quad)
+    return process_image(image, base_image, image_side, input_quad, use_squircle)
 
 if __name__ == "__main__":
 

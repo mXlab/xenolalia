@@ -120,5 +120,34 @@ class TestPostprocessOutput(unittest.TestCase):
         self.assertIsInstance(result, Image.Image)
 
 
+def _semicircle_image(size=224):
+    """White top-half disc on black background, simulating petri dish content."""
+    arr = np.zeros((size, size, 3), dtype=np.uint8)
+    y_idx, x_idx = np.ogrid[:size, :size]
+    disc = (x_idx - size//2)**2 + (y_idx - size//2)**2 <= (size//2 - 2)**2
+    top = y_idx < size // 2
+    arr[disc & top] = 255
+    return Image.fromarray(arr, 'RGB')
+
+
+class TestProcessImageSquircle(unittest.TestCase):
+
+    def test_process_image_squircle_output_shape(self):
+        """use_squircle=True must not change the output shape."""
+        img = _semicircle_image()
+        resized, _, _, _, _, _ = xeno_image.process_image(img, use_squircle=True)
+        self.assertEqual(resized.size, (28, 28))
+
+    def test_process_image_squircle_changes_output(self):
+        """use_squircle=True must produce a different 28x28 result than False."""
+        img = _semicircle_image()
+        sq, _, _, _, _, _ = xeno_image.process_image(img, use_squircle=True)
+        no, _, _, _, _, _ = xeno_image.process_image(img, use_squircle=False)
+        self.assertFalse(
+            np.array_equal(np.array(sq), np.array(no)),
+            "squircle remapping should change the output image"
+        )
+
+
 if __name__ == '__main__':
     unittest.main()
