@@ -191,6 +191,7 @@ def process_image(image, base_image=False, image_side=28, input_quad=[0, 0, 0, 1
     # Apply mask to alleviate border flares / artefacts.
     masked = add_mask(transformed)
 
+    # Squircle remapping: map circular disc content to fill the square.
     if use_squircle:
         import squircle
         masked = Image.fromarray(squircle.to_square(np.array(masked)))
