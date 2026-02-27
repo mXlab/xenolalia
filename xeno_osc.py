@@ -53,7 +53,7 @@ def load_settings():
     global args, data, input_quad, n_feedback_steps, use_base_image, \
            use_convolutional, model_name, encoder_layer, \
            output_size, output_stroke_width, output_boundary_px, output_threshold, output_area_max, \
-           use_squircle
+           squircle_mode
     print("Loading settings")
     with open(args.configuration_file, "r") as f:
         data = json.load(f)
@@ -73,7 +73,12 @@ def load_settings():
         output_area_max     = data.get('output_area_max', None)
         if output_area_max is not None:
             output_area_max = float(output_area_max)
-        use_squircle        = bool(data.get('use_squircle', False))
+        if 'squircle_mode' in data:
+            squircle_mode = str(data['squircle_mode'])
+        elif data.get('use_squircle', False):
+            squircle_mode = "inside"
+        else:
+            squircle_mode = "none"
 
 # Defaults — overwritten by load_settings().
 output_size         = 224
@@ -81,7 +86,7 @@ output_stroke_width = 20
 output_boundary_px  = 22
 output_threshold    = 0.5
 output_area_max     = None
-use_squircle        = False
+squircle_mode       = "none"
 
 # Load settings.
 load_settings()
@@ -218,7 +223,7 @@ def save_encoded_json(
 def next_image(image_path, base_image_path, starting_frame_random):
     global n_feedback_steps, input_quad, input_shape, image_side, use_base_image, prev_frame, \
            output_size, output_stroke_width, output_boundary_px, output_threshold, output_area_max, \
-           use_squircle
+           squircle_mode
 
     dirname = os.path.dirname(image_path)
     basename = os.path.splitext(os.path.basename(image_path))[0]
@@ -230,7 +235,7 @@ def next_image(image_path, base_image_path, starting_frame_random):
         if not use_base_image:
             base_image_path = False
 
-        starting_image, filtered_image, ___, ___, transformed_image, ___ = xeno_image.load_image(image_path, base_image_path, image_side, input_quad, use_squircle=use_squircle)
+        starting_image, filtered_image, ___, ___, transformed_image, ___ = xeno_image.load_image(image_path, base_image_path, image_side, input_quad, squircle_mode=squircle_mode)
         starting_frame = xeno_image.image_to_array(starting_image, input_shape)
         transformed_image.save("{}/{}_0trn.png".format(dirname, basename))
         filtered_image.save("{}/{}_1fil.png".format(dirname, basename))
@@ -248,9 +253,11 @@ def next_image(image_path, base_image_path, starting_frame_random):
         area_max=output_area_max,
     )
     # Squircle remapping: map square output to circular disc for projection.
-    if use_squircle:
-        import squircle
-        image = Image.fromarray(squircle.to_circle(np.array(image)), mode='L')
+    if squircle_mode == "inside":
+        import squircle as _squircle
+        image = Image.fromarray(_squircle.to_circle(np.array(image)), mode='L')
+    elif squircle_mode == "outside":
+        image = xeno_image.to_circle_outside(image)
     # Save image to path.
     nn_image_path = "{}/{}_3ann.png".format(dirname, basename)
     image.save(nn_image_path)
@@ -282,10 +289,10 @@ def handle_settings_updated(addr):
 
 # Handler for camera test.
 def handle_test_camera(addr, image_path):
-    global input_quad, image_side, use_squircle
+    global input_quad, image_side, squircle_mode
     dirname = os.path.dirname(image_path)
     basename = os.path.splitext(os.path.basename(image_path))[0]
-    starting_image, filtered_image, ___, ___, transformed_image, ___ = xeno_image.load_image(image_path, False, image_side, input_quad, use_squircle=use_squircle)
+    starting_image, filtered_image, ___, ___, transformed_image, ___ = xeno_image.load_image(image_path, False, image_side, input_quad, squircle_mode=squircle_mode)
     transformed_image_path = "{}/{}_0trn.png".format(dirname, basename)
     transformed_image.save(transformed_image_path.format(dirname, basename))
     filtered_image.save("{}/{}_1fil.png".format(dirname, basename))
