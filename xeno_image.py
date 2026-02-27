@@ -83,9 +83,9 @@ def to_circle_outside(image):
     r2 = u2 + v2
     uv = u * v
     fouru2v2 = 4.0 * uv * uv
-    rad = np.maximum(r2 * (r2 - fouru2v2), 0.0)
+    discriminant = np.maximum(r2 * (r2 - fouru2v2), 0.0)
     sgnuv = np.sign(uv)
-    sqrto = np.sqrt(np.maximum(0.5 * (r2 - np.sqrt(rad)), 0.0))
+    sqrto = np.sqrt(np.maximum(0.5 * (r2 - np.sqrt(discriminant)), 0.0))
     # Avoid division by zero: replace zero denominators with 1 (result overridden by where)
     safe_v = np.where(np.abs(v) > 1e-10, v, 1.0)
     safe_u = np.where(np.abs(u) > 1e-10, u, 1.0)
