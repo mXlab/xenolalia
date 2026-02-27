@@ -152,8 +152,9 @@ void drawTimerOverlay() {
   noStroke();
   rect(0, 0, width, barH);
 
-  String dateStr = String.format("%04d-%02d-%02d", year(), month(), day());
-  String timeStr = String.format("%02d:%02d:%02d", hour(), minute(), second());
+  java.time.LocalDateTime _now = java.time.LocalDateTime.now();
+  String dateStr = String.format("%04d-%02d-%02d", _now.getYear(), _now.getMonthValue(), _now.getDayOfMonth());
+  String timeStr = String.format("%02d:%02d:%02d", _now.getHour(), _now.getMinute(), _now.getSecond());
 
   // Date on the left, time on the right, both large
   textAlign(LEFT, CENTER);
