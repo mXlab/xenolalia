@@ -169,10 +169,10 @@ class TestSquircleOutside(unittest.TestCase):
     def test_to_circle_outside_differs_from_inside(self):
         """to_circle_outside must produce a different result than squircle.to_circle."""
         import squircle
-        arr = np.full((224, 224), 200, dtype=np.uint8)
-        img = Image.fromarray(arr, mode='L')
+        ramp = np.tile(np.arange(224, dtype=np.uint8), (224, 1))
+        img = Image.fromarray(ramp, mode='L')
         outside = np.array(xeno_image.to_circle_outside(img))
-        inside = squircle.to_circle(arr)
+        inside = squircle.to_circle(ramp)
         self.assertFalse(np.array_equal(outside, inside))
 
     def test_to_square_outside_output_shape(self):
@@ -181,12 +181,22 @@ class TestSquircleOutside(unittest.TestCase):
         result = xeno_image.to_square_outside(img)
         self.assertEqual(np.array(result).shape, (112, 112))
 
-    def test_to_square_outside_center_populated(self):
-        """to_square_outside on a white image must populate the centre pixel."""
-        arr = np.full((224, 224), 255, dtype=np.uint8)
+    def test_to_square_outside_full_square_covered(self):
+        """to_square_outside maps the full circumscribed disc into the square — corners included.
+
+        Pixels 5 inset from each corner are checked rather than the exact corner
+        pixels: the FGS inverse maps output corners to source coords at the very
+        edge of the image (map_x ~ n-1 + epsilon), which cv2.remap bilinearly
+        blends with borderValue=0 to near-zero. Five pixels inset, all four
+        near-corner regions are solidly populated.
+        """
+        n = 224
+        inset = 5
+        arr = np.full((n, n), 100, dtype=np.uint8)
         img = Image.fromarray(arr, mode='L')
         result = np.array(xeno_image.to_square_outside(img))
-        self.assertGreater(result[112, 112], 0)
+        for r, c in [(inset, inset), (inset, n-1-inset), (n-1-inset, inset), (n-1-inset, n-1-inset)]:
+            self.assertGreater(result[r, c], 0, f"Near-corner ({r},{c}) is black — square not fully covered")
 
 
 if __name__ == '__main__':

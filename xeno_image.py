@@ -75,22 +75,21 @@ def to_circle_outside(image):
     # Destination coords in scaled-disc space: canvas spans [-1, 1],
     # disc radius = sqrt(2) so all canvas pixels lie within the disc.
     coords = (np.arange(n, dtype=np.float32) + 0.5) / n * 2.0 - 1.0
-    uu, vv = np.meshgrid(coords, coords)
+    cx, cy = np.meshgrid(coords, coords)
     # Scale to unit-disc space for FGS inverse
-    u = uu / np.sqrt(2)
-    v = vv / np.sqrt(2)
+    u = cx / np.sqrt(2)
+    v = cy / np.sqrt(2)
     u2, v2 = u * u, v * v
     r2 = u2 + v2
     uv = u * v
-    fouru2v2 = 4.0 * uv * uv
-    discriminant = np.maximum(r2 * (r2 - fouru2v2), 0.0)
     sgnuv = np.sign(uv)
+    discriminant = np.maximum(r2 * (r2 - 4.0 * u2 * v2), 0.0)
     sqrto = np.sqrt(np.maximum(0.5 * (r2 - np.sqrt(discriminant)), 0.0))
     # Avoid division by zero: replace zero denominators with 1 (result overridden by where)
     safe_v = np.where(np.abs(v) > 1e-10, v, 1.0)
     safe_u = np.where(np.abs(u) > 1e-10, u, 1.0)
-    x = np.where(np.abs(v) > 1e-10, sgnuv / safe_v * sqrto, uu / np.sqrt(2))
-    y = np.where(np.abs(u) > 1e-10, sgnuv / safe_u * sqrto, vv / np.sqrt(2))
+    x = np.where(np.abs(v) > 1e-10, sgnuv / safe_v * sqrto, cx / np.sqrt(2))
+    y = np.where(np.abs(u) > 1e-10, sgnuv / safe_u * sqrto, cy / np.sqrt(2))
     x = np.clip(x, -1.0, 1.0)
     y = np.clip(y, -1.0, 1.0)
     map_x = ((x + 1.0) * 0.5 * n).astype(np.float32)
@@ -114,14 +113,14 @@ def to_square_outside(image):
     n = arr.shape[0]
     # Source coords in square space [-1, 1]
     coords = (np.arange(n, dtype=np.float32) + 0.5) / n * 2.0 - 1.0
-    xx, yy = np.meshgrid(coords, coords)
-    x2, y2 = xx * xx, yy * yy
+    cx, cy = np.meshgrid(coords, coords)
+    x2, y2 = cx * cx, cy * cy
     r2 = x2 + y2
     rad = np.sqrt(np.maximum(r2 - x2 * y2, 0.0))
     inv_sqrt_r2 = np.where(r2 > 1e-10, 1.0 / np.sqrt(r2), 0.0)
     # FGS square-to-disc, then scale output by sqrt(2) for circumscribed disc
-    u = xx * rad * inv_sqrt_r2 * np.sqrt(2)
-    v = yy * rad * inv_sqrt_r2 * np.sqrt(2)
+    u = cx * rad * inv_sqrt_r2 * np.sqrt(2)
+    v = cy * rad * inv_sqrt_r2 * np.sqrt(2)
     map_x = ((u + 1.0) * 0.5 * n).astype(np.float32)
     map_y = ((v + 1.0) * 0.5 * n).astype(np.float32)
     result = cv2.remap(arr, map_x, map_y, cv2.INTER_LINEAR, borderValue=0)
