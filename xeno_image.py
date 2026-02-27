@@ -244,7 +244,7 @@ def postprocess_output(image, output_size=224, threshold=0.5, stroke_width=20, b
     return Image.fromarray(result, mode='L')
 
 # Processes raw image.
-def process_image(image, base_image=False, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0], use_squircle=False):
+def process_image(image, base_image=False, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0], squircle_mode="none"):
     # Transform image using input quad.
     raw_transformed = transform(image.convert('RGB'), input_quad)
 
@@ -261,9 +261,11 @@ def process_image(image, base_image=False, image_side=28, input_quad=[0, 0, 0, 1
     masked = add_mask(transformed)
 
     # Squircle remapping: map circular disc content to fill the square.
-    if use_squircle:
-        import squircle
-        masked = Image.fromarray(squircle.to_square(np.array(masked)))
+    if squircle_mode == "inside":
+        import squircle as _squircle
+        masked = Image.fromarray(_squircle.to_square(np.array(masked)))
+    elif squircle_mode == "outside":
+        masked = to_square_outside(masked)
 
     # Image filters to enhance contrasts.
     enhanced = enhance(masked)
@@ -278,14 +280,14 @@ def process_image(image, base_image=False, image_side=28, input_quad=[0, 0, 0, 1
 
 # Loads image_path file, applies perspective transforms and returns it as
 # a numpy array formatted for the autoencoder.
-def load_image(image_path, base_image_path=False, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0], use_squircle=False):
+def load_image(image_path, base_image_path=False, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0], squircle_mode="none"):
     # Open image as grayscale.
     image = Image.open(image_path)
     if base_image_path:
         base_image = Image.open(base_image_path)
     else:
         base_image = False
-    return process_image(image, base_image, image_side, input_quad, use_squircle)
+    return process_image(image, base_image, image_side, input_quad, squircle_mode=squircle_mode)
 
 if __name__ == "__main__":
 

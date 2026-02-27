@@ -39,7 +39,7 @@ def _collect_cases():
 class TestRegressionPipeline(unittest.TestCase):
 
     def test_no_squircle_matches_stored_outputs(self):
-        """use_squircle=False must reproduce stored _2res.png exactly for all sessions."""
+        """squircle_mode='none' must reproduce stored _2res.png exactly for all sessions."""
         cases = _collect_cases()
         self.assertGreater(len(cases), 0, "No regression cases found — check SNAPSHOTS_BASE path")
         failures = []
@@ -47,7 +47,7 @@ class TestRegressionPipeline(unittest.TestCase):
             resized, _, _, _, _, _ = xeno_image.load_image(
                 raw_path, base_image_path,
                 image_side=28, input_quad=camera_quad,
-                use_squircle=False
+                squircle_mode="none"
             )
             ref = Image.open(ref_path).convert('L')
             if not np.array_equal(np.array(resized), np.array(ref)):

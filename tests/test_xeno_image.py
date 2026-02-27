@@ -133,19 +133,35 @@ def _semicircle_image(size=224):
 class TestProcessImageSquircle(unittest.TestCase):
 
     def test_process_image_squircle_output_shape(self):
-        """use_squircle=True must not change the output shape."""
+        """squircle_mode='inside' must not change the output shape."""
         img = _semicircle_image()
-        resized, _, _, _, _, _ = xeno_image.process_image(img, use_squircle=True)
+        resized, _, _, _, _, _ = xeno_image.process_image(img, squircle_mode="inside")
         self.assertEqual(resized.size, (28, 28))
 
     def test_process_image_squircle_changes_output(self):
-        """use_squircle=True must produce a different 28x28 result than False."""
+        """squircle_mode='inside' must produce a different 28x28 result than 'none'."""
         img = _semicircle_image()
-        sq, _, _, _, _, _ = xeno_image.process_image(img, use_squircle=True)
-        no, _, _, _, _, _ = xeno_image.process_image(img, use_squircle=False)
+        sq, _, _, _, _, _ = xeno_image.process_image(img, squircle_mode="inside")
+        no, _, _, _, _, _ = xeno_image.process_image(img, squircle_mode="none")
         self.assertFalse(
             np.array_equal(np.array(sq), np.array(no)),
             "squircle remapping should change the output image"
+        )
+
+    def test_process_image_outside_output_shape(self):
+        """squircle_mode='outside' must not change the output shape."""
+        img = _semicircle_image()
+        resized, _, _, _, _, _ = xeno_image.process_image(img, squircle_mode="outside")
+        self.assertEqual(resized.size, (28, 28))
+
+    def test_process_image_outside_differs_from_inside(self):
+        """squircle_mode='outside' must produce a different result than 'inside'."""
+        img = _semicircle_image()
+        out, _, _, _, _, _ = xeno_image.process_image(img, squircle_mode="outside")
+        ins, _, _, _, _, _ = xeno_image.process_image(img, squircle_mode="inside")
+        self.assertFalse(
+            np.array_equal(np.array(out), np.array(ins)),
+            "squircle_mode='outside' should differ from 'inside'"
         )
 
 
