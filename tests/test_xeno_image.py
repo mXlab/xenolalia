@@ -255,5 +255,21 @@ class TestSquircleOutside(unittest.TestCase):
             self.assertGreater(result[r, c], 0, f"Near-corner ({r},{c}) is black — square not fully covered")
 
 
+    def test_to_square_outside_all_corners_not_zero(self):
+        """to_square_outside must not produce near-zero exact corner pixels.
+        Before clamping, the FGS mapping sends 3 of 4 corners to source coords
+        at pixel n (out of bounds), blending with borderValue=0 to near-zero.
+        After clamping, all corners use the nearest valid source pixel.
+        """
+        arr = np.full((224, 224), 255, dtype=np.uint8)
+        img = Image.fromarray(arr, mode='L')
+        result = np.array(xeno_image.to_square_outside(img))
+        n = result.shape[0]
+        threshold = 200  # well above near-zero (~0.8) from unclamped OOB blending
+        for r, c in [(0, 0), (0, n-1), (n-1, 0), (n-1, n-1)]:
+            self.assertGreater(result[r, c], threshold,
+                f"Corner ({r},{c})={result[r,c]} is near-zero — source coords not clamped")
+
+
 if __name__ == '__main__':
     unittest.main()

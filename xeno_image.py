@@ -121,8 +121,8 @@ def to_square_outside(image):
     # FGS square-to-disc, then scale output by sqrt(2) for circumscribed disc
     u = cx * rad * inv_sqrt_r2 * np.sqrt(2)
     v = cy * rad * inv_sqrt_r2 * np.sqrt(2)
-    map_x = ((u + 1.0) * 0.5 * n).astype(np.float32)
-    map_y = ((v + 1.0) * 0.5 * n).astype(np.float32)
+    map_x = np.clip((u + 1.0) * 0.5 * n, 0, n - 1).astype(np.float32)
+    map_y = np.clip((v + 1.0) * 0.5 * n, 0, n - 1).astype(np.float32)
     result = cv2.remap(arr, map_x, map_y, cv2.INTER_LINEAR, borderValue=0)
     return Image.fromarray(result, mode='L')
 
