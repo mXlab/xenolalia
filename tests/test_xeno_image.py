@@ -164,6 +164,46 @@ class TestProcessImageSquircle(unittest.TestCase):
             "squircle_mode='outside' should differ from 'inside'"
         )
 
+    def test_process_image_outside_preserves_corner_content(self):
+        """squircle_mode='outside' should skip add_mask, preserving outer annulus content.
+
+        The xeno_mask.png is a white radial vignette: it whitens (makes near-255)
+        the outer border of the image.  When add_mask IS applied before
+        to_square_outside, the annulus content is whitened, so output corners end
+        up near 255 regardless of the original pixel value.  When add_mask is
+        SKIPPED, the output corners reflect the original source content.
+
+        Test strategy: use a mid-gray source (100) and assert that the near-corner
+        pixels of the output are NOT near-white (i.e., < 200). This can only hold
+        if the mask was skipped; if the mask ran first, the annulus would be
+        near-white and the corners would be > 200.
+        """
+        arr = np.full((224, 224, 3), 100, dtype=np.uint8)
+        img = Image.fromarray(arr, mode='RGB')
+        _, _, _, masked, _, _ = xeno_image.process_image(img, squircle_mode="outside")
+        result = np.array(masked)
+        inset = 5
+        n = result.shape[0]
+        for r, c in [(inset, inset), (inset, n-1-inset), (n-1-inset, inset), (n-1-inset, n-1-inset)]:
+            self.assertLess(result[r, c], 200,
+                f"Corner ({r},{c})={result[r,c]} is near-white — mask was applied before "
+                f"to_square_outside, whitening the annulus. Expected original content (~100).")
+
+    def test_process_image_none_still_masks_corners(self):
+        """squircle_mode='none' should still apply add_mask, whitening outer corners.
+
+        The xeno_mask.png is a white radial vignette with near-opaque alpha at the
+        border, so corners are whitened (near 255) after compositing.
+        """
+        arr = np.full((224, 224, 3), 100, dtype=np.uint8)
+        img = Image.fromarray(arr, mode='RGB')
+        _, _, _, masked, _, _ = xeno_image.process_image(img, squircle_mode="none")
+        result = np.array(masked)
+        # masked is RGB; sample the red channel for each corner pixel
+        for r, c in [(0, 0), (0, 223), (223, 0), (223, 223)]:
+            self.assertGreater(result[r, c, 0], 200,
+                f"Corner ({r},{c}) R={result[r,c,0]} should be near-white after add_mask vignette")
+
 
 class TestSquircleOutside(unittest.TestCase):
 

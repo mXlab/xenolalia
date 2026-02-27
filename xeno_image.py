@@ -258,7 +258,11 @@ def process_image(image, base_image=False, image_side=28, input_quad=[0, 0, 0, 1
     transformed = transform(prefiltered, input_quad).convert('L')
 
     # Apply mask to alleviate border flares / artefacts.
-    masked = add_mask(transformed)
+    # Outside mode captures the full circumscribed disc, so masking is skipped.
+    if squircle_mode != "outside":
+        masked = add_mask(transformed)
+    else:
+        masked = transformed
 
     # Squircle remapping: map circular disc content to fill the square.
     if squircle_mode == "inside":
