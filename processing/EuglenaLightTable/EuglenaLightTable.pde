@@ -235,13 +235,13 @@ void drawSymbolEditMode() {
   // Show current properties of selected dish(es)
   DishSpot refDish = (selectedDish == -1) ? dishes[0] : dishes[selectedDish];
   textSize(12);
-  text("Shape: " + refDish.getShapeName() + "  |  Color: " + refDish.getColorName() + "  |  Width: " + refDish.getWidthName(), width/2, 58);
+  text("Shape: " + refDish.getShapeName() + "  |  Color: " + refDish.getColorName() + "  |  Width: " + refDish.getWidthName() + "  |  Lightness: " + refDish.getLightnessName(), width/2, 58);
 
   // Draw controls reminder at bottom
   fill(50);
   textAlign(LEFT, BOTTOM);
   textSize(12);
-  text("0/a=All  1-6=Select dish  s=Shape  c=Color  t=Thickness  w=White  b=Black  ESC/e=Done  h=Help", 10, height - 10);
+  text("0/a=All  1-6=Select dish  s=Shape  c=Color  t=Thickness  l=Lightness  w=White  b=Black  ESC/e=Done  h=Help", 10, height - 10);
 }
 
 void drawHelp() {
@@ -301,6 +301,7 @@ void drawHelp() {
         "  s - Cycle shape (X → Circle → Bars)",
         "  c - Cycle color (Magenta → Cyan → Yellow → White)",
         "  t - Cycle thickness (Thin → Medium → Large)",
+        "  l - Cycle lightness (25% -> 50% -> 75% -> 100%)",
         "",
         "QUICK SET:",
         "  w - Set to white (no symbol)",
@@ -496,6 +497,12 @@ void handleSymbolEditKeys() {
     case 't':
     case 'T':
       applyToSelected(d -> d.cycleWidth());
+      break;
+
+    // Brightness (lightness)
+    case 'l':
+    case 'L':
+      applyToSelected(d -> d.cycleLightness());
       break;
 
     // Quick set to white

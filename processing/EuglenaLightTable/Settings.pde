@@ -8,19 +8,21 @@ class Settings {
   String filepath;
 
   // Saved settings for each dish
-  int[] dishStates = new int[6];
-  int[] dishShapes = new int[6];
-  int[] dishColors = new int[6];
-  int[] dishWidths = new int[6];
+  int[] dishStates      = new int[6];
+  int[] dishShapes      = new int[6];
+  int[] dishColors      = new int[6];
+  int[] dishWidths      = new int[6];
+  int[] dishLightness  = new int[6];
 
   Settings(String filepath) {
     this.filepath = filepath;
     // Initialize to defaults
     for (int i = 0; i < 6; i++) {
-      dishStates[i] = DishSpot.STATE_WHITE;
-      dishShapes[i] = DishSpot.SHAPE_X;
-      dishColors[i] = DishSpot.COLOR_MAGENTA;
-      dishWidths[i] = DishSpot.WIDTH_THIN;
+      dishStates[i]     = DishSpot.STATE_WHITE;
+      dishShapes[i]     = DishSpot.SHAPE_X;
+      dishColors[i]     = DishSpot.COLOR_MAGENTA;
+      dishWidths[i]     = DishSpot.WIDTH_THIN;
+      dishLightness[i] = DishSpot.LIGHTNESS_100;
     }
   }
 
@@ -66,6 +68,14 @@ class Settings {
         }
       }
 
+      // Load dish brightness
+      if (json.hasKey("dishLightness")) {
+        JSONArray arr = json.getJSONArray("dishLightness");
+        for (int i = 0; i < min(arr.size(), 6); i++) {
+          dishLightness[i] = arr.getInt(i);
+        }
+      }
+
       println("Settings loaded from: " + filepath);
     } catch (Exception e) {
       println("Error loading settings: " + e.getMessage());
@@ -104,6 +114,13 @@ class Settings {
       }
       json.setJSONArray("dishWidths", widths);
 
+      // Save dish brightness
+      JSONArray brightness = new JSONArray();
+      for (int i = 0; i < 6; i++) {
+        brightness.setInt(i, dishLightness[i]);
+      }
+      json.setJSONArray("dishLightness", brightness);
+
       saveJSONObject(json, filepath);
       println("Settings saved to: " + filepath);
     } catch (Exception e) {
@@ -118,6 +135,7 @@ class Settings {
       dishes[i].setShape(dishShapes[i]);
       dishes[i].setSymbolColor(dishColors[i]);
       dishes[i].setStrokeWidth(dishWidths[i]);
+      dishes[i].setLightnessLevel(dishLightness[i]);
       // Reset state after setting properties (setShape etc. force STATE_SYMBOL)
       dishes[i].setState(dishStates[i]);
     }
@@ -126,10 +144,11 @@ class Settings {
   // Save settings from all dishes
   void saveFromDishes(DishSpot[] dishes) {
     for (int i = 0; i < min(dishes.length, 6); i++) {
-      dishStates[i] = dishes[i].getState();
-      dishShapes[i] = dishes[i].getShape();
-      dishColors[i] = dishes[i].getSymbolColor();
-      dishWidths[i] = dishes[i].getStrokeWidth();
+      dishStates[i]     = dishes[i].getState();
+      dishShapes[i]     = dishes[i].getShape();
+      dishColors[i]     = dishes[i].getSymbolColor();
+      dishWidths[i]     = dishes[i].getStrokeWidth();
+      dishLightness[i] = dishes[i].getLightnessLevel();
     }
     save();
   }

@@ -27,6 +27,13 @@ class DishSpot {
   static final int WIDTH_MEDIUM = 1;
   static final int WIDTH_LARGE = 2;
 
+  // Lightness constants
+  static final int N_LIGHTNESS = 4;
+  static final int LIGHTNESS_25  = 0;
+  static final int LIGHTNESS_50  = 1;
+  static final int LIGHTNESS_75  = 2;
+  static final int LIGHTNESS_100 = 3;
+
   // Position and size
   float x, y;
   float diameter;
@@ -39,6 +46,7 @@ class DishSpot {
   int shape = SHAPE_X;
   int symbolColor = COLOR_MAGENTA;
   int strokeWidth = WIDTH_THIN;
+  int lightnessLevel = LIGHTNESS_100;
 
   // Predefined colors
   color[] colors = {
@@ -50,6 +58,9 @@ class DishSpot {
 
   // Width multipliers (relative to diameter)
   float[] widthMultipliers = {0.025, 0.05, 0.075};
+
+  // Lightness multipliers
+  float[] lightnessMultipliers = {0.25, 0.5, 0.75, 1.0};
 
   DishSpot(float x, float y, float diameter, int number) {
     this.x = x;
@@ -115,7 +126,9 @@ class DishSpot {
 
   void drawSymbol() {
     pushStyle();  // Save style so rectMode/stroke/fill changes don't leak out
-    color c = colors[symbolColor];
+    color base = colors[symbolColor];
+    float b = lightnessMultipliers[lightnessLevel];
+    color c = color(red(base) * b, green(base) * b, blue(base) * b);
     float strokeW = diameter * widthMultipliers[strokeWidth];
 
     fill(c);
@@ -289,11 +302,36 @@ class DishSpot {
     }
   }
 
+  // Lightness methods
+  void setLightnessLevel(int newLevel) {
+    lightnessLevel = constrain(newLevel, 0, N_LIGHTNESS - 1);
+    if (state != STATE_SYMBOL) state = STATE_SYMBOL;
+  }
+
+  int getLightnessLevel() {
+    return lightnessLevel;
+  }
+
+  void cycleLightness() {
+    lightnessLevel = (lightnessLevel + 1) % N_LIGHTNESS;
+    if (state != STATE_SYMBOL) state = STATE_SYMBOL;
+  }
+
+  String getLightnessName() {
+    switch (lightnessLevel) {
+      case LIGHTNESS_25:  return "25%";
+      case LIGHTNESS_50:  return "50%";
+      case LIGHTNESS_75:  return "75%";
+      case LIGHTNESS_100: return "100%";
+      default: return "?";
+    }
+  }
+
   String getStateName() {
     switch (state) {
       case STATE_WHITE: return "WHITE";
       case STATE_BLACK: return "BLACK";
-      case STATE_SYMBOL: return getShapeName() + "/" + getColorName() + "/" + getWidthName();
+      case STATE_SYMBOL: return getShapeName() + "/" + getColorName() + "/" + getWidthName() + "/" + getLightnessName();
       default: return "UNKNOWN";
     }
   }
