@@ -34,15 +34,15 @@ class ShapeMode extends AbstractMode {
   float[] widthMultipliers = {0.025, 0.05, 0.075};
   String[] widthNames = {"Thin", "Medium", "Large"};
 
-  // Brightness levels
-  final int N_BRIGHTNESS   = 4;
-  float[] brightnessLevels = {0.25, 0.5, 0.75, 1.0};
-  String[] brightnessNames = {"25%", "50%", "75%", "100%"};
+  // Lightness levels
+  final int N_LIGHTNESS    = 4;
+  float[] lightnessLevels  = {0.25, 0.5, 0.75, 1.0};
+  String[] lightnessNames  = {"25%", "50%", "75%", "100%"};
 
   int shapeType;
   int symbolColor;
   int strokeWidth;
-  int brightnessLevel;
+  int lightnessLevel;
   boolean helpEnabled;
   boolean flashEnabled;
   boolean symbolEnabled;
@@ -51,14 +51,14 @@ class ShapeMode extends AbstractMode {
     shapeType      = SHAPE_X;
     symbolColor    = COLOR_WHITE;
     strokeWidth    = WIDTH_MEDIUM;
-    brightnessLevel = N_BRIGHTNESS - 1;  // 100%
+    lightnessLevel = N_LIGHTNESS - 1;  // 100%
     helpEnabled    = true;
     flashEnabled   = false;
     symbolEnabled  = true;
   }
 
   color currentColor() {
-    float b = brightnessLevels[brightnessLevel];
+    float b = lightnessLevels[lightnessLevel];
     color c = colors[symbolColor];
     return color(red(c) * b, green(c) * b, blue(c) * b);
   }
@@ -159,7 +159,7 @@ class ShapeMode extends AbstractMode {
          "  Shape: " + shapeNames[shapeType] + " (s)" +
          "  Color: " + colorNames[symbolColor] + " (c)" +
          "  Thickness: " + widthNames[strokeWidth] + " (t)" +
-         "  Brightness: " + brightnessNames[brightnessLevel] + " (b)" +
+         "  Lightness: " + lightnessNames[lightnessLevel] + " (l)" +
          "  Flash: " + (flashEnabled ? "ON" : "off") + " (f)" +
          "  h: hide",
          10, 10);
@@ -170,7 +170,7 @@ class ShapeMode extends AbstractMode {
       case 's': shapeType    = (shapeType   + 1) % N_SHAPES; break;
       case 'c': symbolColor  = (symbolColor + 1) % N_COLORS; break;
       case 't': strokeWidth     = (strokeWidth     + 1) % N_WIDTHS;     break;
-      case 'b': brightnessLevel = (brightnessLevel + 1) % N_BRIGHTNESS; break;
+      case 'l': lightnessLevel = (lightnessLevel + 1) % N_LIGHTNESS; break;
       case 'x': case 'X': symbolEnabled = !symbolEnabled;    break;
       case 'f': flashEnabled = !flashEnabled;                 break;
       case 'h': helpEnabled  = !helpEnabled;                  break;
