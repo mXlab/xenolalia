@@ -188,9 +188,10 @@ void drawTimerOverlay() {
   float brTop    = row1CenterY + hexDiam / 2;    // bottom edge of row 1 dishes
   float brBottom = hexY0 + hexS * sqrt(3) + hexDiam / 2;  // bottom edge of row 2
 
-  float textRightX = width - 30;
-  float panelLeft  = rightEdge + 10;
-  float panelRight = width - 10;
+  float rightBorder = 50;
+  float textRightX  = width - rightBorder;
+  float panelLeft   = rightEdge + 10;
+  float panelRight  = textRightX;
 
   noStroke();
 
@@ -219,9 +220,9 @@ void drawTimerOverlay() {
   rect(panelLeft, panelY, panelW, panelH, 8);
 
   fill(120);
-  textAlign(LEFT, TOP);
+  textAlign(RIGHT, TOP);
   textSize(hexDiam * 0.07);
-  text("EXPERIMENT TIMER", panelLeft + 10, panelY + 8);
+  text("EXPERIMENT TIMER", textRightX, panelY + 8);
 
   String timerStr;
   if (!timerRunning) {
@@ -242,8 +243,8 @@ void drawTimerOverlay() {
     fill(timerPaused ? color(255, 200, 60) : color(255));
   }
   textSize(hexDiam * 0.20);
-  textAlign(LEFT, TOP);
-  text(timerStr, panelLeft + 10, panelY + panelH * 0.35);
+  textAlign(RIGHT, TOP);
+  text(timerStr, textRightX, panelY + panelH * 0.35);
 }
 
 void drawSymbolEditMode() {
