@@ -31,6 +31,9 @@ Settings settings;
 // Symbol edit state
 boolean[] dishSelected;  // per-dish selection flags
 
+// Hex layout parameters — set in initializeDishes(), used for overlay positioning
+float hexX0, hexY0, hexS, hexDiam;
+
 // Modifier key tracking for mouse multi-select
 boolean shiftHeld = false;
 boolean ctrlHeld  = false;
@@ -75,7 +78,7 @@ void setup() {
 void initializeDishes() {
   int N_ROWS = 3;
   int N_COLS = 4;
-  float fill = 0.8;  // diameter / spacing ratio
+  float fill = 0.9;  // diameter / spacing ratio (0.9 = half the gap vs 0.8)
 
   float marginX = width  * 0.05;
   float marginY = height * 0.04;
@@ -95,6 +98,12 @@ void initializeDishes() {
   // Center the full arrangement on screen
   float x0 = width  / 2.0 - (N_COLS - 0.5) * S / 2.0;
   float y0 = height / 2.0 - (N_ROWS - 1) * S * sqrt(3) / 4.0;
+
+  // Store layout params for overlay positioning
+  hexX0   = x0;
+  hexY0   = y0;
+  hexS    = S;
+  hexDiam = diameter;
 
   int index = 0;
   for (int row = 0; row < N_ROWS; row++) {
@@ -161,42 +170,58 @@ void drawExperimentMode() {
 }
 
 void drawTimerOverlay() {
-  rectMode(CORNER);  // Reset in case drawSymbol() left rectMode as CENTER
-
-  // --- Top bar: date and time ---
-  float barH = 120;
-  fill(0, 210);
-  noStroke();
-  rect(0, 0, width, barH);
+  rectMode(CORNER);
 
   java.time.LocalDateTime _now = java.time.LocalDateTime.now();
   String dateStr = String.format("%04d-%02d-%02d", _now.getYear(), _now.getMonthValue(), _now.getDayOfMonth());
   String timeStr = String.format("%02d:%02d:%02d", _now.getHour(), _now.getMinute(), _now.getSecond());
 
-  // Date on the left, time on the right, both large
-  textAlign(LEFT, CENTER);
-  textSize(60);
-  fill(180);
-  text(dateStr, 60, barH / 2);
+  // Right edge of even rows (rows 0 and 2) — left boundary of the right-side empty areas
+  float rightEdge  = hexX0 + 3 * hexS + hexDiam / 2;  // (N_COLS-1)*S + D/2
+  float row1CenterY = hexY0 + hexS * sqrt(3) / 2;
 
-  textAlign(RIGHT, CENTER);
+  // Top-right empty area: right of even rows, above row 1 level
+  float trTop    = hexY0 - hexDiam / 2;          // top edge of row 0 dishes
+  float trBottom = row1CenterY - hexDiam / 2;    // top edge of row 1 dishes
+
+  // Bottom-right empty area: right of even rows, below row 1 level
+  float brTop    = row1CenterY + hexDiam / 2;    // bottom edge of row 1 dishes
+  float brBottom = hexY0 + hexS * sqrt(3) + hexDiam / 2;  // bottom edge of row 2
+
+  float textRightX = width - 30;
+  float panelLeft  = rightEdge + 10;
+  float panelRight = width - 10;
+
+  noStroke();
+
+  // --- Top-right: date (above) then time (below) ---
+  float trCenterY = (trTop + trBottom) / 2;
+  float dateSize  = hexDiam * 0.11;
+  float timeSize  = hexDiam * 0.16;
+  float gap       = hexDiam * 0.10;
+
+  textAlign(RIGHT, BOTTOM);
+  textSize(dateSize);
+  fill(150);
+  text(dateStr, textRightX, trCenterY - gap / 2);
+
+  textAlign(RIGHT, TOP);
+  textSize(timeSize);
   fill(255);
-  text(timeStr, width - 60, barH / 2);
+  text(timeStr, textRightX, trCenterY + gap / 2);
 
-  // --- Bottom-right panel: experiment timer ---
-  float panelW = 330;
-  float panelH = 110;
-  float panelX = width - panelW - 20;
-  float panelY = height - panelH - 40;
+  // --- Bottom-right: experiment timer (clears all dishes) ---
+  float panelW = panelRight - panelLeft;
+  float panelH = hexDiam * 0.35;
+  float panelY = (brTop + brBottom) / 2 - panelH / 2;
 
   fill(0, 210);
-  noStroke();
-  rect(panelX, panelY, panelW, panelH, 8);
+  rect(panelLeft, panelY, panelW, panelH, 8);
 
   fill(120);
-  textAlign(RIGHT, TOP);
-  textSize(26);
-  text("EXPERIMENT TIMER", width - 60, panelY + 10);
+  textAlign(LEFT, TOP);
+  textSize(hexDiam * 0.07);
+  text("EXPERIMENT TIMER", panelLeft + 10, panelY + 8);
 
   String timerStr;
   if (!timerRunning) {
@@ -216,9 +241,9 @@ void drawTimerOverlay() {
     }
     fill(timerPaused ? color(255, 200, 60) : color(255));
   }
-  textSize(72);
-  textAlign(RIGHT, TOP);
-  text(timerStr, width - 60, panelY + 36);
+  textSize(hexDiam * 0.20);
+  textAlign(LEFT, TOP);
+  text(timerStr, panelLeft + 10, panelY + panelH * 0.35);
 }
 
 void drawSymbolEditMode() {
