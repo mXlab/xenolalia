@@ -164,7 +164,7 @@ class DishSpot {
 
   void drawX(float strokeW) {
     float halfStroke = strokeW * 0.5;
-    float len = diameter * sqrt(2);
+    float len = diameter * 0.7;
 
     // First diagonal (top-left to bottom-right)
     pushMatrix();
@@ -193,13 +193,13 @@ class DishSpot {
     noFill();
     stroke(currentColor());
     strokeWeight(strokeW);
-    ellipse(0, 0, diameter, diameter);
+    ellipse(0, 0, diameter * 0.55, diameter * 0.55);
     noStroke();
   }
 
   void drawBars(float strokeW) {
-    float len     = diameter;
-    float spacing = diameter / 3.0;
+    float len     = diameter * 0.7;
+    float spacing = diameter * 0.2;
 
     // Three vertical bars with varying thickness: thin, medium, wide
     float[] barWidths = {strokeW * 0.75, strokeW, strokeW * 1.25};
