@@ -333,6 +333,14 @@ class DishSpot {
     }
   }
 
+  void resetToDefault() {
+    shape        = SHAPE_X;
+    strokeWidth  = WIDTH_MEDIUM;
+    symbolColor  = COLOR_MAGENTA;
+    lightnessLevel = LIGHTNESS_100;
+    state        = STATE_SYMBOL;
+  }
+
   String getStateName() {
     switch (state) {
       case STATE_WHITE: return "WHITE";
