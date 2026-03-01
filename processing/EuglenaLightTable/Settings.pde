@@ -20,8 +20,8 @@ class Settings {
     for (int i = 0; i < 6; i++) {
       dishStates[i]     = DishSpot.STATE_WHITE;
       dishShapes[i]     = DishSpot.SHAPE_X;
-      dishColors[i]     = DishSpot.COLOR_MAGENTA;
-      dishWidths[i]     = DishSpot.WIDTH_THIN;
+      dishColors[i]     = DishSpot.COLOR_WHITE;
+      dishWidths[i]     = DishSpot.WIDTH_MEDIUM;
       dishLightness[i] = DishSpot.LIGHTNESS_100;
     }
   }

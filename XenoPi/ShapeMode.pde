@@ -35,7 +35,11 @@ class ShapeMode extends AbstractMode {
   String[] widthNames = {"Thin", "Medium", "Large"};
 
   // Lightness levels
-  final int N_LIGHTNESS    = 4;
+  final int LIGHTNESS_25  = 0;
+  final int LIGHTNESS_50  = 1;
+  final int LIGHTNESS_75  = 2;
+  final int LIGHTNESS_100 = 3;
+  final int N_LIGHTNESS   = 4;
   float[] lightnessLevels  = {0.25, 0.5, 0.75, 1.0};
   String[] lightnessNames  = {"25%", "50%", "75%", "100%"};
 
@@ -51,7 +55,7 @@ class ShapeMode extends AbstractMode {
     shapeType      = SHAPE_X;
     symbolColor    = COLOR_WHITE;
     strokeWidth    = WIDTH_MEDIUM;
-    lightnessLevel = N_LIGHTNESS - 1;  // 100%
+    lightnessLevel = LIGHTNESS_100;
     helpEnabled    = true;
     flashEnabled   = false;
     symbolEnabled  = true;

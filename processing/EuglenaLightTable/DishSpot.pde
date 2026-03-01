@@ -15,17 +15,20 @@ class DishSpot {
   static final int SHAPE_X = 0;
   static final int SHAPE_CIRCLE = 1;
   static final int SHAPE_BARS = 2;
+  static final int N_SHAPES = 3;
 
   // Color constants
   static final int COLOR_MAGENTA = 0;
   static final int COLOR_CYAN = 1;
   static final int COLOR_YELLOW = 2;
   static final int COLOR_WHITE = 3;
+  static final int N_COLORS = 4;
 
   // Width constants
   static final int WIDTH_THIN = 0;
   static final int WIDTH_MEDIUM = 1;
   static final int WIDTH_LARGE = 2;
+  static final int N_WIDTHS = 3;
 
   // Lightness constants
   static final int N_LIGHTNESS = 4;
@@ -44,8 +47,8 @@ class DishSpot {
 
   // Symbol properties
   int shape = SHAPE_X;
-  int symbolColor = COLOR_MAGENTA;
-  int strokeWidth = WIDTH_THIN;
+  int symbolColor = COLOR_WHITE;
+  int strokeWidth = WIDTH_MEDIUM;
   int lightnessLevel = LIGHTNESS_100;
 
   // Predefined colors
@@ -59,14 +62,20 @@ class DishSpot {
   // Width multipliers (relative to diameter)
   float[] widthMultipliers = {0.025, 0.05, 0.075};
 
-  // Lightness multipliers
-  float[] lightnessMultipliers = {0.25, 0.5, 0.75, 1.0};
+  // Lightness levels
+  float[] lightnessLevels = {0.25, 0.5, 0.75, 1.0};
 
   DishSpot(float x, float y, float diameter, int number) {
     this.x = x;
     this.y = y;
     this.diameter = diameter;
     this.number = number;
+  }
+
+  color currentColor() {
+    float b = lightnessLevels[lightnessLevel];
+    color c = colors[symbolColor];
+    return color(red(c) * b, green(c) * b, blue(c) * b);
   }
 
   void draw() {
@@ -126,12 +135,9 @@ class DishSpot {
 
   void drawSymbol() {
     pushStyle();  // Save style so rectMode/stroke/fill changes don't leak out
-    color base = colors[symbolColor];
-    float b = lightnessMultipliers[lightnessLevel];
-    color c = color(red(base) * b, green(base) * b, blue(base) * b);
     float strokeW = diameter * widthMultipliers[strokeWidth];
 
-    fill(c);
+    fill(currentColor());
     noStroke();
 
     switch (shape) {
@@ -158,12 +164,11 @@ class DishSpot {
 
   void drawX(float strokeW) {
     float halfStroke = strokeW * 0.5;
-    float len = diameter * 0.7;
+    float len = diameter * sqrt(2);
 
     // First diagonal (top-left to bottom-right)
     pushMatrix();
     rotate(QUARTER_PI);
-    rectMode(CENTER);
     beginShape();
     vertex(-halfStroke, -len/2);
     vertex(halfStroke, -len/2);
@@ -175,7 +180,6 @@ class DishSpot {
     // Second diagonal (top-right to bottom-left)
     pushMatrix();
     rotate(-QUARTER_PI);
-    rectMode(CENTER);
     beginShape();
     vertex(-halfStroke, -len/2);
     vertex(halfStroke, -len/2);
@@ -186,23 +190,19 @@ class DishSpot {
   }
 
   void drawCircleShape(float strokeW) {
-    // Draw a ring/circle outline
     noFill();
-    stroke(colors[symbolColor]);
+    stroke(currentColor());
     strokeWeight(strokeW);
-    float ringDiameter = diameter * 0.55;
-    ellipse(0, 0, ringDiameter, ringDiameter);
+    ellipse(0, 0, diameter, diameter);
     noStroke();
   }
 
   void drawBars(float strokeW) {
-    float len = diameter * 0.7;
-    float spacing = diameter * 0.2;
+    float len     = diameter;
+    float spacing = diameter / 3.0;
 
     // Three vertical bars with varying thickness: thin, medium, wide
     float[] barWidths = {strokeW * 0.75, strokeW, strokeW * 1.25};
-
-    rectMode(CENTER);
 
     for (int i = 0; i < 3; i++) {
       float xPos = (i - 1) * spacing;
@@ -240,7 +240,7 @@ class DishSpot {
   }
 
   void cycleShape() {
-    shape = (shape + 1) % 3;
+    shape = (shape + 1) % N_SHAPES;
     if (state != STATE_SYMBOL) state = STATE_SYMBOL;
   }
 
@@ -264,7 +264,7 @@ class DishSpot {
   }
 
   void cycleColor() {
-    symbolColor = (symbolColor + 1) % 4;
+    symbolColor = (symbolColor + 1) % N_COLORS;
     if (state != STATE_SYMBOL) state = STATE_SYMBOL;
   }
 
@@ -289,7 +289,7 @@ class DishSpot {
   }
 
   void cycleWidth() {
-    strokeWidth = (strokeWidth + 1) % 3;
+    strokeWidth = (strokeWidth + 1) % N_WIDTHS;
     if (state != STATE_SYMBOL) state = STATE_SYMBOL;
   }
 
