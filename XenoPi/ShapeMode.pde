@@ -11,19 +11,23 @@ class ShapeMode extends AbstractMode {
   String[] shapeNames = {"X", "Circle", "Bars"};
 
   // Color constants (matching EuglenaLightTable)
-  final int COLOR_MAGENTA = 0;
-  final int COLOR_CYAN    = 1;
-  final int COLOR_YELLOW  = 2;
-  final int COLOR_WHITE   = 3;
-  final int N_COLORS      = 4;
+  final int COLOR_RED     = 0;
+  final int COLOR_MAGENTA = 1;
+  final int COLOR_BLUE    = 2;
+  final int COLOR_CYAN    = 3;
+  final int COLOR_YELLOW  = 4;
+  final int COLOR_WHITE   = 5;
+  final int N_COLORS      = 6;
 
   color[] colors = {
+    color(255,   0,   0),  // Red
     color(255,   0, 255),  // Magenta
+    color(  0,   0, 255),  // Blue
     color(  0, 255, 255),  // Cyan
     color(255, 255,   0),  // Yellow
     color(255, 255, 255)   // White
   };
-  String[] colorNames = {"Magenta", "Cyan", "Yellow", "White"};
+  String[] colorNames = {"Red", "Magenta", "Blue", "Cyan", "Yellow", "White"};
 
   // Thickness constants (matching EuglenaLightTable)
   final int WIDTH_THIN   = 0;

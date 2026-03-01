@@ -18,11 +18,13 @@ class DishSpot {
   static final int N_SHAPES = 3;
 
   // Color constants
-  static final int COLOR_MAGENTA = 0;
-  static final int COLOR_CYAN = 1;
-  static final int COLOR_YELLOW = 2;
-  static final int COLOR_WHITE = 3;
-  static final int N_COLORS = 4;
+  static final int COLOR_RED     = 0;
+  static final int COLOR_MAGENTA = 1;
+  static final int COLOR_BLUE    = 2;
+  static final int COLOR_CYAN    = 3;
+  static final int COLOR_YELLOW  = 4;
+  static final int COLOR_WHITE   = 5;
+  static final int N_COLORS      = 6;
 
   // Width constants
   static final int WIDTH_THIN = 0;
@@ -53,10 +55,12 @@ class DishSpot {
 
   // Predefined colors
   color[] colors = {
-    color(255, 0, 255),   // Magenta
-    color(0, 255, 255),   // Cyan
-    color(255, 255, 0),   // Yellow
-    color(255, 255, 255)  // White
+    color(255,   0,   0),  // Red
+    color(255,   0, 255),  // Magenta
+    color(  0,   0, 255),  // Blue
+    color(  0, 255, 255),  // Cyan
+    color(255, 255,   0),  // Yellow
+    color(255, 255, 255)   // White
   };
 
   // Width multipliers (relative to diameter)
@@ -255,7 +259,7 @@ class DishSpot {
 
   // Color methods
   void setSymbolColor(int newColor) {
-    symbolColor = constrain(newColor, COLOR_MAGENTA, COLOR_WHITE);
+    symbolColor = constrain(newColor, COLOR_RED, COLOR_WHITE);
     if (state != STATE_SYMBOL) state = STATE_SYMBOL;
   }
 
@@ -270,10 +274,12 @@ class DishSpot {
 
   String getColorName() {
     switch (symbolColor) {
+      case COLOR_RED:     return "Red";
       case COLOR_MAGENTA: return "Magenta";
-      case COLOR_CYAN: return "Cyan";
-      case COLOR_YELLOW: return "Yellow";
-      case COLOR_WHITE: return "White";
+      case COLOR_BLUE:    return "Blue";
+      case COLOR_CYAN:    return "Cyan";
+      case COLOR_YELLOW:  return "Yellow";
+      case COLOR_WHITE:   return "White";
       default: return "?";
     }
   }
