@@ -44,6 +44,9 @@ class DishSpot {
   float diameter;
   int number;  // 1-6 for display/control
 
+  // Enabled flag — disabled dishes emit no light
+  boolean enabled = true;
+
   // Current state
   int state = STATE_WHITE;
 
@@ -89,6 +92,21 @@ class DishSpot {
   void draw(boolean selected) {
     pushMatrix();
     translate(x, y);
+
+    if (!enabled) {
+      // Barely-visible placeholder so the dish can be found and re-enabled in edit mode
+      noStroke();
+      fill(20);
+      ellipse(0, 0, diameter, diameter);
+      if (selected) {
+        stroke(255, 150, 0);
+        strokeWeight(4);
+        noFill();
+        ellipse(0, 0, diameter + 10, diameter + 10);
+      }
+      popMatrix();
+      return;
+    }
 
     // Draw background circle
     noStroke();
@@ -333,6 +351,11 @@ class DishSpot {
     }
   }
 
+  // Enabled methods
+  void setEnabled(boolean val) { enabled = val; }
+  boolean isEnabled()          { return enabled; }
+  void toggleEnabled()         { enabled = !enabled; }
+
   void resetToDefault() {
     shape        = SHAPE_X;
     strokeWidth  = WIDTH_MEDIUM;
@@ -342,6 +365,7 @@ class DishSpot {
   }
 
   String getStateName() {
+    if (!enabled) return "DISABLED";
     switch (state) {
       case STATE_WHITE: return "WHITE";
       case STATE_BLACK: return "BLACK";

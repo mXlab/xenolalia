@@ -13,6 +13,7 @@ class Settings {
   int[] dishColors    = new int[12];
   int[] dishWidths    = new int[12];
   int[] dishLightness = new int[12];
+  int[] dishEnabled   = new int[12];  // 1 = enabled, 0 = disabled
 
   Settings(String filepath) {
     this.filepath = filepath;
@@ -23,6 +24,7 @@ class Settings {
       dishColors[i]    = DishSpot.COLOR_WHITE;
       dishWidths[i]    = DishSpot.WIDTH_MEDIUM;
       dishLightness[i] = DishSpot.LIGHTNESS_100;
+      dishEnabled[i]   = 1;
     }
   }
 
@@ -76,6 +78,14 @@ class Settings {
         }
       }
 
+      // Load dish enabled flags
+      if (json.hasKey("dishEnabled")) {
+        JSONArray arr = json.getJSONArray("dishEnabled");
+        for (int i = 0; i < min(arr.size(), 12); i++) {
+          dishEnabled[i] = arr.getInt(i);
+        }
+      }
+
       println("Settings loaded from: " + filepath);
     } catch (Exception e) {
       println("Error loading settings: " + e.getMessage());
@@ -111,6 +121,11 @@ class Settings {
       for (int i = 0; i < 12; i++) lightness.setInt(i, dishLightness[i]);
       json.setJSONArray("dishLightness", lightness);
 
+      // Save dish enabled flags
+      JSONArray enabled = new JSONArray();
+      for (int i = 0; i < 12; i++) enabled.setInt(i, dishEnabled[i]);
+      json.setJSONArray("dishEnabled", enabled);
+
       saveJSONObject(json, filepath);
       println("Settings saved to: " + filepath);
     } catch (Exception e) {
@@ -128,6 +143,7 @@ class Settings {
       dishes[i].setLightnessLevel(dishLightness[i]);
       // Reset state after setting properties (setShape etc. force STATE_SYMBOL)
       dishes[i].setState(dishStates[i]);
+      dishes[i].setEnabled(dishEnabled[i] != 0);
     }
   }
 
@@ -139,6 +155,7 @@ class Settings {
       dishColors[i]    = dishes[i].getSymbolColor();
       dishWidths[i]    = dishes[i].getStrokeWidth();
       dishLightness[i] = dishes[i].getLightnessLevel();
+      dishEnabled[i]   = dishes[i].isEnabled() ? 1 : 0;
     }
     save();
   }

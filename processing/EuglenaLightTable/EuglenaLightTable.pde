@@ -303,7 +303,7 @@ void drawSymbolEditMode() {
   textAlign(LEFT, BOTTOM);
   textSize(12);
   text("Click=Select  Shift+Click=Add  Ctrl+Click=Toggle  a=All  " +
-       "s=Shape  c=Color  t=Thickness  l=Lightness  d=Default  " +
+       "s=Shape  c=Color  t=Thickness  l=Lightness  n=Enable/Disable  d=Default  " +
        "w=White  b=Black  ESC/e=Done  h=Help",
        10, height - 10);
 }
@@ -367,6 +367,7 @@ void drawHelp() {
         "  c - Cycle color (Red -> Magenta -> Blue -> Cyan -> Yellow -> White)",
         "  t - Cycle thickness (Thin -> Medium -> Large)",
         "  l - Cycle lightness (25% -> 50% -> 75% -> 100%)",
+        "  n - Toggle enable/disable (disabled = no light emitted)",
         "  d - Reset to default (X / Medium / Magenta / 100%)",
         "",
         "QUICK SET:",
@@ -517,6 +518,11 @@ void handleSymbolEditKeys() {
     // Select all
     case 'a': case 'A':
       for (int i = 0; i < dishes.length; i++) dishSelected[i] = true;
+      break;
+
+    // Toggle enabled/disabled
+    case 'n': case 'N':
+      applyToSelected(d -> d.toggleEnabled());
       break;
 
     // Reset selected to default
