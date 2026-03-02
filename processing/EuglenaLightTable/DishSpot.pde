@@ -94,11 +94,18 @@ class DishSpot {
     translate(x, y);
 
     if (!enabled) {
-      // Barely-visible placeholder so the dish can be found and re-enabled in edit mode
+      // Black circle with a dark gray X to indicate disabled
       noStroke();
-      fill(20);
+      fill(0);
       ellipse(0, 0, diameter, diameter);
+      float xLen = diameter * 0.6;
+      stroke(55);
+      strokeWeight(diameter * 0.07);
+      strokeCap(ROUND);
+      line(-xLen/2, -xLen/2,  xLen/2,  xLen/2);
+      line( xLen/2, -xLen/2, -xLen/2,  xLen/2);
       if (selected) {
+        noStroke();  // reset before selection ring
         stroke(255, 150, 0);
         strokeWeight(4);
         noFill();
