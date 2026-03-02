@@ -53,7 +53,7 @@ def load_settings():
     global args, data, input_quad, n_feedback_steps, use_base_image, \
            use_convolutional, model_name, encoder_layer, \
            output_size, output_stroke_width, output_boundary_px, output_threshold, output_area_max, \
-           squircle_mode
+           squircle_mode, visibility_threshold_cv, visibility_threshold_human
     print("Loading settings")
     with open(args.configuration_file, "r") as f:
         data = json.load(f)
@@ -79,14 +79,18 @@ def load_settings():
             squircle_mode = "inside"
         else:
             squircle_mode = "none"
+        visibility_threshold_cv    = float(data.get('visibility_threshold_cv',    0.02))
+        visibility_threshold_human = float(data.get('visibility_threshold_human', 0.10))
 
 # Defaults — overwritten by load_settings().
-output_size         = 224
-output_stroke_width = 20
-output_boundary_px  = 22
-output_threshold    = 0.5
-output_area_max     = None
-squircle_mode       = "none"
+output_size                = 224
+output_stroke_width        = 20
+output_boundary_px         = 22
+output_threshold           = 0.5
+output_area_max            = None
+squircle_mode              = "none"
+visibility_threshold_cv    = 0.02
+visibility_threshold_human = 0.10
 
 # Load settings.
 load_settings()
@@ -223,7 +227,7 @@ def save_encoded_json(
 def next_image(image_path, base_image_path, starting_frame_random):
     global n_feedback_steps, input_quad, input_shape, image_side, use_base_image, prev_frame, \
            output_size, output_stroke_width, output_boundary_px, output_threshold, output_area_max, \
-           squircle_mode
+           squircle_mode, visibility_threshold_cv, visibility_threshold_human
 
     dirname = os.path.dirname(image_path)
     basename = os.path.splitext(os.path.basename(image_path))[0]
@@ -240,6 +244,13 @@ def next_image(image_path, base_image_path, starting_frame_random):
         transformed_image.save("{}/{}_0trn.png".format(dirname, basename))
         filtered_image.save("{}/{}_1fil.png".format(dirname, basename))
         starting_image.save("{}/{}_2res.png".format(dirname, basename))
+        # Compute and broadcast visibility class.
+        vis_class = xeno_image.compute_visibility(
+            starting_image,
+            threshold_cv=visibility_threshold_cv,
+            threshold_human=visibility_threshold_human,
+        )
+        send_message("/xeno/neurons/visibility", [vis_class], client=xenopi_client)
     # Generate new image.
     encoded, frame = generate(n_feedback_steps, starting_frame, prev_frame)
     prev_frame = np.copy(frame)
