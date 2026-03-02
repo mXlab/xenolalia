@@ -181,6 +181,11 @@ def simplify(image):
 def resize(image, image_side):
     return image.resize((image_side, image_side), resample=Image.LANCZOS)
 
+def _image_density(resized):
+    """Return fraction of non-zero pixels in a grayscale PIL Image."""
+    arr = np.array(resized.convert('L'), dtype=np.float32) / 255.0
+    return float(np.mean(arr > 0))
+
 def compute_visibility(resized, threshold_cv=0.02, threshold_human=0.10):
     """Classify glyph visibility from the 28x28 simplified-resized image.
 
@@ -189,8 +194,7 @@ def compute_visibility(resized, threshold_cv=0.02, threshold_human=0.10):
         1  – CV-visible only (density > threshold_cv)
         0  – invisible
     """
-    arr = np.array(resized.convert('L'), dtype=np.float32) / 255.0
-    density = float(np.mean(arr > 0))
+    density = _image_density(resized)
     if density > threshold_human:
         return 2
     if density > threshold_cv:
@@ -369,6 +373,5 @@ if __name__ == "__main__":
                                    threshold_cv=args.threshold_cv,
                                    threshold_human=args.threshold_human)
     labels = {0: "invisible (0)", 1: "cv-visible only (1)", 2: "human-visible (2)"}
-    arr = np.array(resized.convert('L'), dtype=np.float32) / 255.0
-    density = float(np.mean(arr > 0))
+    density = _image_density(resized)
     print(f"Visibility: {labels[vis_class]}  density={density:.4f}")
