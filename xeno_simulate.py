@@ -16,8 +16,6 @@ import sys
 import time
 from pathlib import Path
 
-import numpy as np
-from PIL import Image
 from pythonosc import udp_client
 
 import xeno_image
@@ -68,12 +66,14 @@ if __name__ == "__main__":
         print(f"  Step {i+1}/{len(ann_files)}: {ann_path.name}")
 
         # Compute visibility from raw image if possible.
-        raw_path = str(ann_path).replace("_raw_3ann.png", "_raw.png").replace("_processed_nn.png", "_raw.png")
+        raw_path = ann_path.with_name(
+            ann_path.name.replace("_raw_3ann.png", "_raw.png").replace("_processed_nn.png", "_raw.png")
+        )
         vis_class = args.vis_override
         if vis_class is None:
-            if Path(raw_path).exists():
+            if raw_path.exists():
                 try:
-                    resized, *_ = xeno_image.load_image(raw_path, False, 28, input_quad, squircle_mode)
+                    resized, *_ = xeno_image.load_image(str(raw_path), False, 28, input_quad, squircle_mode)
                     vis_class = xeno_image.compute_visibility(resized, threshold_cv, threshold_human)
                 except Exception as e:
                     print(f"    (visibility compute failed: {e})")
