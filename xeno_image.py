@@ -314,13 +314,15 @@ if __name__ == "__main__":
     # Load calibration settings from .json file.
     def load_settings():
         import json
-        global args, data, input_quad, n_steps
+        global args, data, input_quad, n_steps, squircle_mode
         print("Loading settings")
         with open(args.configuration_file, "r") as f:
             data = json.load(f)
             input_quad = tuple( data['camera_quad'] )
+            squircle_mode = str(data.get('squircle_mode', 'none'))
 
     # Load input quad
+    squircle_mode = "none"
     if args.raw_image:
         input_quad = (0, 0, 0, 1, 1, 1, 1, 1, 0)  # dummy
     elif (args.input_quad != None):
@@ -328,7 +330,7 @@ if __name__ == "__main__":
     else:
         load_settings()
 
-    resized, simplified, enhanced, masked, transformed, raw_transformed = load_image(args.input_image, args.base_image, input_quad=input_quad)#, apply_transforms=(not args.raw_image))
+    resized, simplified, enhanced, masked, transformed, raw_transformed = load_image(args.input_image, args.base_image, input_quad=input_quad, squircle_mode=squircle_mode)#, apply_transforms=(not args.raw_image))
     if args.show:
         single_image_side = transformed.size[0]
         print(single_image_side)
