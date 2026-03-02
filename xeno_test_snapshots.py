@@ -29,8 +29,8 @@ if __name__ == "__main__":
         cfg = json.load(f)
     input_quad    = tuple(cfg["camera_quad"])
     squircle_mode = cfg.get("squircle_mode", "none")
-    threshold_cv    = args.threshold_cv    or cfg.get("visibility_threshold_cv",    0.02)
-    threshold_human = args.threshold_human or cfg.get("visibility_threshold_human", 0.10)
+    threshold_cv    = args.threshold_cv    if args.threshold_cv    is not None else cfg.get("visibility_threshold_cv",    0.02)
+    threshold_human = args.threshold_human if args.threshold_human is not None else cfg.get("visibility_threshold_human", 0.10)
 
     # Collect raw images.
     root = Path(args.directory)
