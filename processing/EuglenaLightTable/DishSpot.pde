@@ -95,13 +95,11 @@ class DishSpot {
 
     if (!enabled) {
       // Black circle with a dark gray X to indicate disabled
-      noStroke();
-      fill(0);
-      ellipse(0, 0, diameter, diameter);
       float xLen = diameter * 0.6;
       stroke(55);
-      strokeWeight(diameter * 0.07);
-      strokeCap(ROUND);
+      strokeWeight(3);
+      fill(0);
+      ellipse(0, 0, diameter, diameter);
       line(-xLen/2, -xLen/2,  xLen/2,  xLen/2);
       line( xLen/2, -xLen/2, -xLen/2,  xLen/2);
       if (selected) {
