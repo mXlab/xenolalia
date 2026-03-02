@@ -74,34 +74,34 @@ void setup() {
   // Load configuration file.
   settings = new Settings();
 
-  String[] devices = GLCapture.list();
-  println("Devices:");
-  printArray(devices);
-  String[] configs = GLCapture.configs(devices[settings.cameraId()]);
-  if (devices.length > 0) {
-    println("Configs:");
-    printArray(configs);
+  try {
+    String[] devices = GLCapture.list();
+    println("Devices:");
+    printArray(devices);
+    String[] configs = GLCapture.configs(devices[settings.cameraId()]);
+    if (devices.length > 0) {
+      println("Configs:");
+      printArray(configs);
+    }
+
+    if (devices.length == 0) {
+      println("Camera not found. Verify that a camera is plugged in.");
+    }
+    else if (settings.cameraId() >= devices.length) {
+      println("Camera devices have been found but the device number ('camera_id' property) does not exist. Double-check the 'camera_id' property in settings.json.");
+    }
+
+    // this will use the first recognized camera by default
+    // NOTE: If you run into trouble you can try changing the object
+    cam = new GLCaptureCam(this, devices[settings.cameraId()], settings.cameraWidth(), settings.cameraHeight());
+    //cam = new GLCaptureCam(this, devices[0], configs[0]);
+
+    cam.start();
+  } catch (Throwable e) {
+    println("Camera initialization failed: " + e.getMessage());
+    println("Running without camera (calibration / symbol mode only).");
+    cam = new NullCam();
   }
-  
-  if (devices.length == 0) {
-    println("Camera not found. Verify that a camera is plugged in.");
-  }
-  else if (settings.cameraId() >= devices.length) {
-    println("Camera devices have been found but the device number ('camera_id' property) does not exist. Double-check the 'camera_id' property in settings.json.");
-  }    
-
-  // this will use the first recognized camera by default
-  // NOTE: If you run into trouble you can try changing the object
-  cam = new GLCaptureCam(this, devices[settings.cameraId()], settings.cameraWidth(), settings.cameraHeight());
-  //cam = new GLCaptureCam(this, devices[0], configs[0]);
-
-  // you could be more specific also, e.g.
-  //
-  //video = new GLCapture(this, devices[settings.cameraId()], configs[1]);
-  //video = new GLCapture(this, devices[0], 640, 480, 25);
-  //video = new GLCapture(this, devices[0], configs[0]);
-
-  cam.start();
 
   // Load configuration file.
   settings = new Settings();
