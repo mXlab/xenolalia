@@ -181,6 +181,22 @@ def simplify(image):
 def resize(image, image_side):
     return image.resize((image_side, image_side), resample=Image.LANCZOS)
 
+def compute_visibility(resized, threshold_cv=0.02, threshold_human=0.10):
+    """Classify glyph visibility from the 28x28 simplified-resized image.
+
+    Returns:
+        2  – human-visible  (density > threshold_human)
+        1  – CV-visible only (density > threshold_cv)
+        0  – invisible
+    """
+    arr = np.array(resized.convert('L'), dtype=np.float32) / 255.0
+    density = float(np.mean(arr > 0))
+    if density > threshold_human:
+        return 2
+    if density > threshold_cv:
+        return 1
+    return 0
+
 def postprocess_output(image, output_size=224, threshold=0.5, stroke_width=20, boundary_px=22, area_max=None):
     """Post-process an autoencoder output image for projection.
 
@@ -309,6 +325,11 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--enable-color", default=False, action='store_true', help="Enable color when taking snapshot")
     parser.add_argument("-s", "--show", default=False, action='store_true', help="Show image on screen before saving")
 
+    parser.add_argument("--threshold-cv",    type=float, default=0.02,
+                        help="CV-visible density threshold")
+    parser.add_argument("--threshold-human", type=float, default=0.10,
+                        help="Human-visible density threshold")
+
     args = parser.parse_args()
 
     # Load calibration settings from .json file.
@@ -344,3 +365,10 @@ if __name__ == "__main__":
         composition.show()
 
     resized.save(args.output_image)
+    vis_class = compute_visibility(resized,
+                                   threshold_cv=args.threshold_cv,
+                                   threshold_human=args.threshold_human)
+    labels = {0: "invisible (0)", 1: "cv-visible only (1)", 2: "human-visible (2)"}
+    arr = np.array(resized.convert('L'), dtype=np.float32) / 255.0
+    density = float(np.mean(arr > 0))
+    print(f"Visibility: {labels[vis_class]}  density={density:.4f}")
