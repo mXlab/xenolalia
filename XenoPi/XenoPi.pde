@@ -184,6 +184,8 @@ void keyPressed() {
   // Switch mode.
   if (key == 'g')
     generativeMode();
+  else if (key == 'k')
+    cameraCalibrationMode();
   else if (key == 's' && !(mode instanceof ShapeMode))
     shapeMode();
   //

@@ -363,7 +363,7 @@ void drawHelp() {
         "  a              - Select ALL dishes",
         "",
         "EDIT PROPERTIES (apply to all selected):",
-        "  s - Cycle shape (X -> Circle -> Bars)",
+        "  s - Cycle shape (X -> Circle -> Bars -> Glyph)",
         "  c - Cycle color (Red -> Magenta -> Blue -> Cyan -> Yellow -> White)",
         "  t - Cycle thickness (Thin -> Medium -> Large)",
         "  l - Cycle lightness (25% -> 50% -> 75% -> 100%)",

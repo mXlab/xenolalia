@@ -12,10 +12,11 @@ class DishSpot {
   static final int STATE_SYMBOL = 2;
 
   // Shape constants
-  static final int SHAPE_X = 0;
+  static final int SHAPE_X     = 0;
   static final int SHAPE_CIRCLE = 1;
-  static final int SHAPE_BARS = 2;
-  static final int N_SHAPES = 3;
+  static final int SHAPE_BARS  = 2;
+  static final int SHAPE_GLYPH = 3;
+  static final int N_SHAPES    = 4;
 
   // Color constants
   static final int COLOR_RED     = 0;
@@ -177,6 +178,9 @@ class DishSpot {
       case SHAPE_BARS:
         drawBars(strokeW);
         break;
+      case SHAPE_GLYPH:
+        drawGlyph(strokeW);
+        break;
     }
 
     // Redraw circular mask border to clean up edges
@@ -243,6 +247,37 @@ class DishSpot {
     }
   }
 
+  void drawGlyph(float strokeW) {
+    noFill();
+    stroke(currentColor());
+    strokeWeight(strokeW);
+    strokeCap(ROUND);
+    strokeJoin(ROUND);
+
+    float r = diameter * 0.26;
+
+    // Organic loop-with-tail path inspired by the xenolalia 'a' glyph.
+    // The curve passes through the junction twice to enclose a loop,
+    // then descends as a tail that curls left at the bottom.
+    beginShape();
+    curveVertex( r * 1.05,  r * 0.30);  // ghost control
+    curveVertex( r * 0.85,  r * 0.00);  // junction (start)
+    curveVertex( r * 0.95, -r * 0.65);  // right
+    curveVertex( r * 0.30, -r * 1.05);  // top
+    curveVertex(-r * 0.70, -r * 0.80);  // upper-left
+    curveVertex(-r * 0.85, -r * 0.10);  // left
+    curveVertex(-r * 0.55,  r * 0.45);  // lower-left
+    curveVertex( r * 0.10,  r * 0.45);  // bottom of loop
+    curveVertex( r * 0.85,  r * 0.00);  // junction (second pass — closes loop visually)
+    curveVertex( r * 0.90,  r * 0.65);  // tail, down-right
+    curveVertex( r * 0.30,  r * 1.00);  // tail, lower
+    curveVertex(-r * 0.15,  r * 0.95);  // tail end
+    curveVertex(-r * 0.35,  r * 0.75);  // ghost control
+    endShape();
+
+    noStroke();
+  }
+
   // State methods
   void setState(int newState) {
     state = constrain(newState, STATE_WHITE, STATE_SYMBOL);
@@ -258,7 +293,7 @@ class DishSpot {
 
   // Shape methods
   void setShape(int newShape) {
-    shape = constrain(newShape, SHAPE_X, SHAPE_BARS);
+    shape = constrain(newShape, SHAPE_X, SHAPE_GLYPH);
     if (state != STATE_SYMBOL) state = STATE_SYMBOL;
   }
 
@@ -273,10 +308,11 @@ class DishSpot {
 
   String getShapeName() {
     switch (shape) {
-      case SHAPE_X: return "X";
+      case SHAPE_X:      return "X";
       case SHAPE_CIRCLE: return "Circle";
-      case SHAPE_BARS: return "Bars";
-      default: return "?";
+      case SHAPE_BARS:   return "Bars";
+      case SHAPE_GLYPH:  return "Glyph";
+      default:           return "?";
     }
   }
 

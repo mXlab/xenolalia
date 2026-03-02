@@ -6,9 +6,10 @@ class ShapeMode extends AbstractMode {
   final int SHAPE_X      = 0;
   final int SHAPE_CIRCLE = 1;
   final int SHAPE_BARS   = 2;
-  final int N_SHAPES     = 3;
+  final int SHAPE_GLYPH  = 3;
+  final int N_SHAPES     = 4;
 
-  String[] shapeNames = {"X", "Circle", "Bars"};
+  String[] shapeNames = {"X", "Circle", "Bars", "Glyph"};
 
   // Color constants (matching EuglenaLightTable)
   final int COLOR_RED     = 0;
@@ -101,9 +102,10 @@ class ShapeMode extends AbstractMode {
     noStroke();
 
     switch (shapeType) {
-      case SHAPE_X:      drawX(strokeW, diameter);      break;
+      case SHAPE_X:      drawX(strokeW, diameter);          break;
       case SHAPE_CIRCLE: drawCircleShape(strokeW, diameter); break;
-      case SHAPE_BARS:   drawBars(strokeW, diameter);   break;
+      case SHAPE_BARS:   drawBars(strokeW, diameter);       break;
+      case SHAPE_GLYPH:  drawGlyph(strokeW, diameter);      break;
     }
   }
 
@@ -156,6 +158,37 @@ class ShapeMode extends AbstractMode {
       vertex(xPos - halfW,  len/2);
       endShape(CLOSE);
     }
+  }
+
+  void drawGlyph(float strokeW, float diameter) {
+    noFill();
+    stroke(currentColor());
+    strokeWeight(strokeW);
+    strokeCap(ROUND);
+    strokeJoin(ROUND);
+
+    float r = diameter * 0.46;
+
+    // Organic loop-with-tail path inspired by the xenolalia 'a' glyph.
+    // The curve passes through the junction twice to enclose a loop,
+    // then descends as a tail that curls left at the bottom.
+    beginShape();
+    curveVertex( r * 1.05,  r * 0.30);  // ghost control
+    curveVertex( r * 0.85,  r * 0.00);  // junction (start)
+    curveVertex( r * 0.95, -r * 0.65);  // right
+    curveVertex( r * 0.30, -r * 1.05);  // top
+    curveVertex(-r * 0.70, -r * 0.80);  // upper-left
+    curveVertex(-r * 0.85, -r * 0.10);  // left
+    curveVertex(-r * 0.55,  r * 0.45);  // lower-left
+    curveVertex( r * 0.10,  r * 0.45);  // bottom of loop
+    curveVertex( r * 0.85,  r * 0.00);  // junction (second pass — closes loop visually)
+    curveVertex( r * 0.90,  r * 0.65);  // tail, down-right
+    curveVertex( r * 0.30,  r * 1.00);  // tail, lower
+    curveVertex(-r * 0.15,  r * 0.95);  // tail end
+    curveVertex(-r * 0.35,  r * 0.75);  // ghost control
+    endShape();
+
+    noStroke();
   }
 
   void drawHelp() {
