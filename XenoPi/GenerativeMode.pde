@@ -430,6 +430,12 @@ class GenerativeMode extends AbstractMode {
     snapshotRequested = true;
   }
 
+  // Called when receiving OSC visibility message from xeno_osc.py.
+  void neuronsVisibility(int visClass) {
+    if (experiment != null)
+      experiment.updateVisibility(visClass);
+  }
+
   // Called when receiving OSC message.
   void nextImage(String imagePath) {
     println("Received image: " + imagePath, nextGlyphReceived);

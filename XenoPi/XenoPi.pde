@@ -123,7 +123,8 @@ void setup() {
   oscP5.plug(this, "nextImage", "/xeno/neurons/step");
   oscP5.plug(this, "ready", "/xeno/neurons/handshake");
   oscP5.plug(this, "ready", "/xeno/neurons/begin");
-  oscP5.plug(this, "testCamera", "/xeno/neurons/test-camera");  
+  oscP5.plug(this, "testCamera", "/xeno/neurons/test-camera");
+  oscP5.plug(this, "neuronsVisibility", "/xeno/neurons/visibility");
   
   oscP5.plug(this, "refreshed", "/xeno/apparatus/refreshed");
   oscP5.plug(this, "apparatusHandshake", "/xeno/handshake");
@@ -135,6 +136,10 @@ void setup() {
 
 void nextImage(String imagePath) {
   mode.nextImage(imagePath);
+}
+
+void neuronsVisibility(int visClass) {
+  mode.neuronsVisibility(visClass);
 }
 
 void testCamera(String imagePath) {

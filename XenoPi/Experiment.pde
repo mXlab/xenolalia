@@ -5,6 +5,10 @@ class Experiment {
   
   // Number of snapshots taken thus far.
   int nSnapshots;
+
+  // Maximum visibility class seen during this experiment.
+  // 0=invisible, 1=cv-only, 2=human-visible
+  int visibilityClass;
   
   // Start time of experiment (in ms).
   int startTimeMs;
@@ -12,6 +16,7 @@ class Experiment {
   String baseImageFilename;
   
   Experiment() {
+    visibilityClass = 0;
   }
   
   void start(PImage baseImage) {
@@ -78,9 +83,20 @@ class Experiment {
     nSnapshots++;
   }
   
+  void updateVisibility(int visClass) {
+    if (visClass > visibilityClass)
+      visibilityClass = visClass;
+  }
+
+  int getVisibilityClass() {
+    return visibilityClass;
+  }
+
   void updateServer(String addr) {
     OscMessage msg = new OscMessage("/xeno/exp/" + addr);
     msg.add(info.getUid());
+    if (addr.equals("end"))
+      msg.add(visibilityClass);
     oscP5.send(msg, remoteLocationServer);
   }
 }
