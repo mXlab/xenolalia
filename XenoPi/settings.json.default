@@ -1,30 +1,37 @@
 {
   "node_name": "nodepi-01",
-  "session_name": "optofonica-2020",
-  "exposure_time": 60,
+  "session_name": "default",
+
   "camera_id": 0,
-  "camera_width": 480,
+  "camera_width": 640,
   "camera_height": 480,
+  "camera_quad": [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0],
+
+  "image_rect": [0.25, 0.25, 0.75, 0.75],
+
+  "osc_receive_port": 7001,
   "osc_remote_ip": "127.0.0.1",
   "osc_send_port": 7000,
-  "osc_receive_port": 7001,
-  "seed_image": "random",
+  "osc_server_remote_ip": "192.168.0.100",
+  "osc_server_send_port": 7000,
+  "osc_apparatus_remote_ip": "192.168.0.102",
+  "osc_apparatus_send_port": 7000,
+
+  "exposure_time": 60.0,
   "n_feedback_steps": 4,
   "use_base_image": true,
-  "camera_quad": [
-    0,
-    0,
-    0,
-    1,
-    1,
-    1,
-    1,
-    0
-  ],
-  "image_rect": [
-    0.25,
-    0.25,
-    0.75,
-    0.75
-  ]
+  "seed_image": "random",
+
+  "use_apparatus": false,
+
+  "model_name": "model",
+  "use_convolutional": true,
+  "encoder_layer": 5,
+
+  "squircle_mode": "none",
+  "output_size": 224,
+  "output_stroke_width": 20,
+  "output_boundary_px": 22,
+  "output_threshold": 0.5,
+  "output_area_max": null
 }
