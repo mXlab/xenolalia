@@ -167,6 +167,10 @@ void cameraCalibrationMode() {
 }
 
 void generativeMode() {
+  if (cam instanceof NullCam) {
+    mode = new NoCameraMode();
+    return;
+  }
   mode = new GenerativeMode();
 }
 
