@@ -26,6 +26,7 @@ ArrayList<Scene> previousExperimentScenes = new ArrayList<Scene>();
 SequentialScene sequentialScene;
 SequentialScene nextSequentialScene; // sequential scene that will be loaded next
 Scene recentGlyphsScene;
+Scene pipelineScene;
 
 float midpointY = 0;//-0.15;
 float sequentialSceneRelativeWidth = 0.99;
@@ -152,6 +153,20 @@ void setup() {
     }
     scenes.add(scene);
     recentGlyphsScene = scene;
+  }
+
+  // CV pipeline scene: what the machine sees (4 stages in a row).
+  if (true)
+  {
+    Scene scene = new Scene(4, 1, doubleVignetteRect);
+    String[] stages = {"0trn", "1fil", "2res", "3ann"};
+    for (int i = 0; i < stages.length; i++) {
+      PipelineVignette v = new PipelineVignette(currentExperiment, stages[i]);
+      scene.putVignette(i, v);
+    }
+    scenes.add(scene);
+    pipelineScene = scene;
+    currentExperimentScenes.add(scene);
   }
 
   // Build all scenes.
