@@ -35,6 +35,27 @@ class ExperimentData {
   
   String getUid() { return uid; }
   
+  // Returns file paths for a specific pipeline stage (e.g. "0trn", "1fil", "2res", "3ann").
+  ArrayList<String> listPipelineFiles(String stage) {
+    File[] files = new File(this.directory).listFiles(new FilenameFilter() {
+      public boolean accept(File dir, String name) {
+        return name.matches(".*_raw_" + stage + "\\.png");
+      }
+    });
+    if (files == null) return new ArrayList<String>();
+    ArrayList<String> filenames = new ArrayList<String>();
+    for (File f : files)
+      filenames.add(f.getPath());
+    Collections.sort(filenames);
+    return filenames;
+  }
+
+  PImage getLastPipelineImage(String stage) {
+    ArrayList<String> files = listPipelineFiles(stage);
+    if (files.isEmpty()) return null;
+    return manager.getImage(files.get(files.size() - 1));
+  }
+
   // Lists file names that correspond to specified type.
   ArrayList<String> listFiles(String type) {
     // Get files that correspond to type.
