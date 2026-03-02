@@ -32,6 +32,8 @@ float sequentialSceneRelativeWidth = 0.99;
 
 boolean initialState = true;
 
+int lastExperimentVisibilityClass = 0;
+
 boolean takingSnapshot = false;
 Timer snapshotFadeTimer = new Timer(1000);
 float snapshotFadeTarget = 0;
@@ -54,7 +56,8 @@ void setup() {
 
   oscP5.plug(this, "experimentNew",  "/xeno/server/new");
   oscP5.plug(this, "experimentStep", "/xeno/server/step");
-  oscP5.plug(this, "experimentEnd",  "/xeno/server/end");
+  oscP5.plug(this, "experimentEnd",               "/xeno/server/end");
+  oscP5.plug(this, "experimentEndWithVisibility", "/xeno/server/end");
 
   oscP5.plug(this, "snapshot",  "/xeno/server/snapshot");
 
@@ -241,13 +244,19 @@ void experimentStep(String uid) {
   scenes.currentScene().build();
 }
 
+// Called when experiment ends AND visibility class is known (new message format).
+void experimentEndWithVisibility(String uid, int visClass) {
+  lastExperimentVisibilityClass = visClass;
+  experimentEnd(uid);
+}
+
 void experimentEnd(String uid) {
   try {
     previousExperiment.reload(currentExperiment.getUid());
-  
+
     refreshScenes(previousExperimentScenes);
     sequentialScene.requestRefresh();
-  
+
     nextSequentialScene = createSequentialScene(previousExperiment);
     for (int i=0; i<previousExperiment.nImages()-1; i++) {
       GlyphVignette v = new GlyphVignette(previousExperiment);
@@ -255,8 +264,13 @@ void experimentEnd(String uid) {
       v.noBorder();
       nextSequentialScene.putVignette(i, v);
     }
-  
-    recentGlyphsScene.requestRefresh();
+
+    // Only add to recent glyphs if the glyph was human-visible.
+    if (lastExperimentVisibilityClass >= 2) {
+      recentGlyphsScene.requestRefresh();
+    }
+    // Reset for next experiment.
+    lastExperimentVisibilityClass = 0;
   } catch (Exception e) {
     e.printStackTrace();
   }
