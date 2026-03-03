@@ -18,6 +18,11 @@ class GenerativeMode extends AbstractMode {
   // The "glyph" image currently displayed in background.
   PImage glyph;
 
+  // Filtered image shown briefly as overlay after receiving a new glyph.
+  PImage filterOverlay;
+  int overlayStartTime = -1;
+  final int OVERLAY_DURATION = 5000;
+
   // Status flags.
   boolean flash = false;
   boolean camView = false;
@@ -310,6 +315,20 @@ class GenerativeMode extends AbstractMode {
         background(PROJECTION_BACKGROUND_COLOR);
         tint(PROJECTION_COLOR); // tint
         drawScaledImage(glyph);
+        // Briefly overlay the CV-detected shape.
+        if (filterOverlay != null && overlayStartTime >= 0) {
+          int elapsed = millis() - overlayStartTime;
+          if (elapsed < OVERLAY_DURATION) {
+            // Fade out during the last 20% of the duration.
+            float progress = (float)elapsed / OVERLAY_DURATION;
+            float alpha = (progress > 0.8) ? map(progress, 0.8, 1.0, 200, 0) : 200;
+            tint(255, constrain(alpha, 0, 200));
+            drawScaledImage(filterOverlay);
+            noTint();
+          } else {
+            overlayStartTime = -1;
+          }
+        }
       }
 
       // Camera view in the top-left corner.
@@ -419,6 +438,17 @@ class GenerativeMode extends AbstractMode {
     else if (key == 'n') {
       requestNewExperiment();
     }
+
+    // Test overlay: load most recent _3ann.png from snapshots.
+    else if (key == 't') {
+      String testPath = findMostRecentFile(savePath("snapshots/"), "_3ann.png");
+      if (testPath != null) {
+        println("Test overlay: " + testPath);
+        nextImage(testPath);
+      } else {
+        println("No _3ann.png found for overlay test.");
+      }
+    }
   }
 
   void requestNewExperiment() {
@@ -440,6 +470,13 @@ class GenerativeMode extends AbstractMode {
   void nextImage(String imagePath) {
     println("Received image: " + imagePath, nextGlyphReceived);
     glyph = loadImage(imagePath);
+    // Load the filtered (enhanced) image for overlay display.
+    String filteredPath = imagePath.replace("_3ann.png", "_1fil.png");
+    PImage loaded = loadImage(filteredPath);
+    if (loaded != null && loaded.width > 0) {
+      filterOverlay = loaded;
+      overlayStartTime = millis();
+    }
     snapshotRequested = false;
     nextGlyphReceived = true;
     experiment.updateServer("step");
@@ -484,5 +521,31 @@ class GenerativeMode extends AbstractMode {
     oscP5.send(msg, remoteLocationApparatus);
 
     log("Sent call to " + (on ? "start" : "stop") + "glow.");
+  }
+
+  // Returns the path of the most recent file with the given suffix under dir,
+  // searching one level of subdirectories. Returns null if none found.
+  String findMostRecentFile(String dir, String suffix) {
+    File root = new File(dir);
+    if (!root.exists()) return null;
+    ArrayList<String> found = new ArrayList<String>();
+    // Check direct children and one level of subdirectories.
+    File[] dirFiles = root.listFiles();
+    if (dirFiles != null) {
+      for (File f : dirFiles) {
+        if (f.isFile() && f.getName().endsWith(suffix))
+          found.add(f.getPath());
+        if (f.isDirectory()) {
+          File[] subFiles = f.listFiles();
+          if (subFiles != null)
+            for (File sf : subFiles)
+              if (sf.isFile() && sf.getName().endsWith(suffix))
+                found.add(sf.getPath());
+        }
+      }
+    }
+    if (found.isEmpty()) return null;
+    Collections.sort(found);
+    return found.get(found.size() - 1);
   }
 }
