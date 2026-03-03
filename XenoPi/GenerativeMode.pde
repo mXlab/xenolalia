@@ -327,6 +327,7 @@ class GenerativeMode extends AbstractMode {
             noTint();
           } else {
             overlayStartTime = -1;
+            noTint();
           }
         }
       }
