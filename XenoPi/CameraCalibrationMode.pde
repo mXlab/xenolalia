@@ -75,6 +75,11 @@ class CameraCalibrationMode extends AbstractMode {
       // Draw points.
       drawControlPoint(x1, y1, 0);
       drawControlPoint(x2, y2, 1);
+
+      // Show the projected circle when squircle mode is active.
+      if (settings.usesSquircle()) {
+        drawSquircleCircle();
+      }
     }
     
     // Quad points mode. ///////////////////////////////////////////////////////
@@ -308,6 +313,22 @@ class CameraCalibrationMode extends AbstractMode {
   void drawReferenceImage() {
     // Draw reference image.
     drawScaledImage(referenceImg);
+  }
+
+  void drawSquircleCircle() {
+    PVector topLeft     = settings.getImageRectPoint(0);
+    PVector bottomRight = settings.getImageRectPoint(1);
+    float cx = (topLeft.x + bottomRight.x) / 2;
+    float cy = (topLeft.y + bottomRight.y) / 2;
+    float w  = abs(bottomRight.x - topLeft.x);
+    float h  = abs(bottomRight.y - topLeft.y);
+    float diameter = min(w, h);
+
+    strokeWeight(controlSize);
+    stroke(#00ffff);  // cyan to distinguish from the rect (green)
+    noFill();
+    ellipseMode(CENTER);
+    ellipse(cx, cy, diameter, diameter);
   }
 
   String getTestImagePath() {
