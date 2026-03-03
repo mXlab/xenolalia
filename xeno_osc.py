@@ -84,8 +84,8 @@ def load_settings():
             squircle_mode = "inside"
         else:
             squircle_mode = "none"
-        visibility_threshold_cv    = float(data.get('visibility_threshold_cv',    0.02))
-        visibility_threshold_human = float(data.get('visibility_threshold_human', 0.10))
+        visibility_threshold_cv    = float(data.get('visibility_threshold_cv',    0.1))
+        visibility_threshold_human = float(data.get('visibility_threshold_human', 0.3))
 
 # Defaults — overwritten by load_settings().
 output_size                = 224
@@ -94,8 +94,8 @@ output_boundary_px         = 22
 output_threshold           = 0.5
 output_area_max            = None
 squircle_mode              = "none"
-visibility_threshold_cv    = 0.02
-visibility_threshold_human = 0.10
+visibility_threshold_cv    = 0.1
+visibility_threshold_human = 0.3
 
 # Load settings.
 load_settings()
@@ -256,14 +256,16 @@ def next_image(image_path, base_image_path, starting_frame_random):
         if not use_base_image:
             base_image_path = False
 
-        starting_image, filtered_image, ___, ___, transformed_image, ___ = xeno_image.load_image(image_path, base_image_path, image_side, input_quad, squircle_mode=squircle_mode)
+        starting_image, filtered_image, ___, ___, transformed_image, raw_transformed = xeno_image.load_image(image_path, base_image_path, image_side, input_quad, squircle_mode=squircle_mode)
         starting_frame = xeno_image.image_to_array(starting_image, input_shape)
         transformed_image.save("{}/{}_0trn.png".format(dirname, basename))
         filtered_image.save("{}/{}_1fil.png".format(dirname, basename))
         starting_image.save("{}/{}_2res.png".format(dirname, basename))
-        # Compute and broadcast visibility class.
+        # Compute and broadcast visibility class (correlation with previous projected glyph).
         vis_class = xeno_image.compute_visibility(
             starting_image,
+            raw_image=raw_transformed,
+            projected=prev_frame,
             threshold_cv=visibility_threshold_cv,
             threshold_human=visibility_threshold_human,
         )

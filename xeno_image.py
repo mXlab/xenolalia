@@ -186,18 +186,72 @@ def _image_density(resized):
     arr = np.array(resized.convert('L'), dtype=np.float32) / 255.0
     return float(np.mean(arr > 0))
 
-def compute_visibility(resized, threshold_cv=0.02, threshold_human=0.10):
-    """Classify glyph visibility from the 28x28 simplified-resized image.
+def _image_correlation(a, b):
+    """Pearson correlation between two grayscale images.
+
+    Inputs can be PIL Images or numpy arrays (any shape).
+    Returns float in [-1, 1], or 0.0 if either image has zero variance.
+    """
+    def to_flat(x):
+        if isinstance(x, np.ndarray):
+            return x.flatten().astype(np.float32)
+        return np.array(x.convert('L'), dtype=np.float32).flatten() / 255.0
+
+    a_arr, b_arr = to_flat(a), to_flat(b)
+    if len(a_arr) != len(b_arr):
+        return 0.0
+    a_std, b_std = a_arr.std(), b_arr.std()
+    if a_std < 1e-8 or b_std < 1e-8:
+        return 0.0
+    return float(np.corrcoef(a_arr, b_arr)[0, 1])
+
+def compute_visibility(bio_image, raw_image=None, projected=None,
+                       threshold_cv=0.1, threshold_human=0.3):
+    """Classify visibility of the biological reaction to the projected glyph.
+
+    Measures Pearson correlation between the biological image (what CV or a
+    human sees) and the previously projected glyph.  A positive correlation
+    indicates that the biological pattern spatially matches the glyph
+    (visible reaction).
+
+    Args:
+        bio_image:       28×28 PIL Image — processed, base-subtracted (what CV sees).
+        raw_image:       PIL Image — perspective-corrected, no base subtraction
+                         (what a human sees).  If None, falls back to bio_image.
+        projected:       Previous AE output — numpy array (any shape with 28*28
+                         values) or PIL Image.  None → returns 0 (no prior glyph).
+        threshold_cv:    Minimum correlation for the CV-visible class.
+        threshold_human: Minimum correlation for the human-visible class.
 
     Returns:
-        2  – human-visible  (density > threshold_human)
-        1  – CV-visible only (density > threshold_cv)
-        0  – invisible
+        2  – human-visible  (human correlation ≥ threshold_human)
+        1  – CV-visible only (CV correlation ≥ threshold_cv)
+        0  – invisible / no prior glyph
     """
-    density = _image_density(resized)
-    if density > threshold_human:
+    if projected is None:
+        return 0
+
+    # Normalise projected to a 28×28 grayscale PIL Image.
+    if isinstance(projected, np.ndarray):
+        proj_arr = projected.flatten()[:28 * 28].astype(np.float32)
+        proj_img = Image.fromarray(
+            (proj_arr.reshape(28, 28) * 255).clip(0, 255).astype(np.uint8), mode='L')
+    else:
+        proj_img = projected.convert('L').resize((28, 28), Image.LANCZOS)
+
+    # CV correlation: processed 28×28 bio image vs projected.
+    cv_corr = _image_correlation(bio_image, proj_img)
+
+    # Human correlation: raw image resized to 28×28 vs projected.
+    if raw_image is not None:
+        raw_28 = raw_image.convert('L').resize((28, 28), Image.LANCZOS)
+        human_corr = _image_correlation(raw_28, proj_img)
+    else:
+        human_corr = cv_corr
+
+    if human_corr >= threshold_human:
         return 2
-    if density > threshold_cv:
+    if cv_corr >= threshold_cv:
         return 1
     return 0
 
@@ -329,10 +383,12 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--enable-color", default=False, action='store_true', help="Enable color when taking snapshot")
     parser.add_argument("-s", "--show", default=False, action='store_true', help="Show image on screen before saving")
 
-    parser.add_argument("--threshold-cv",    type=float, default=0.02,
-                        help="CV-visible density threshold")
-    parser.add_argument("--threshold-human", type=float, default=0.10,
-                        help="Human-visible density threshold")
+    parser.add_argument("--projected", type=str, default=None,
+                        help="Previous projected glyph image for correlation-based visibility")
+    parser.add_argument("--threshold-cv",    type=float, default=0.1,
+                        help="CV-visible correlation threshold")
+    parser.add_argument("--threshold-human", type=float, default=0.3,
+                        help="Human-visible correlation threshold")
 
     args = parser.parse_args()
 
@@ -369,9 +425,13 @@ if __name__ == "__main__":
         composition.show()
 
     resized.save(args.output_image)
-    vis_class = compute_visibility(resized,
+    density = _image_density(resized)
+    projected = None
+    if args.projected:
+        projected = Image.open(args.projected)
+    vis_class = compute_visibility(resized, raw_image=raw_transformed,
+                                   projected=projected,
                                    threshold_cv=args.threshold_cv,
                                    threshold_human=args.threshold_human)
     labels = {0: "invisible (0)", 1: "cv-visible only (1)", 2: "human-visible (2)"}
-    density = _image_density(resized)
     print(f"Visibility: {labels[vis_class]}  density={density:.4f}")

@@ -16,6 +16,7 @@ import sys
 import time
 from pathlib import Path
 
+from PIL import Image
 from pythonosc import udp_client
 
 import xeno_image
@@ -38,8 +39,8 @@ if __name__ == "__main__":
         cfg = json.load(f)
     input_quad    = tuple(cfg["camera_quad"])
     squircle_mode = cfg.get("squircle_mode", "none")
-    threshold_cv    = float(cfg.get("visibility_threshold_cv",    0.02))
-    threshold_human = float(cfg.get("visibility_threshold_human", 0.10))
+    threshold_cv    = float(cfg.get("visibility_threshold_cv",    0.1))
+    threshold_human = float(cfg.get("visibility_threshold_human", 0.3))
 
     xenopi = udp_client.SimpleUDPClient(args.xenopi_ip, args.xenopi_port)
     server = udp_client.SimpleUDPClient(args.server_ip, args.server_port)
@@ -73,8 +74,18 @@ if __name__ == "__main__":
         if vis_class is None:
             if raw_path.exists():
                 try:
-                    resized, *_ = xeno_image.load_image(str(raw_path), False, 28, input_quad, squircle_mode)
-                    vis_class = xeno_image.compute_visibility(resized, threshold_cv, threshold_human)
+                    # Projected glyph at this step = ann output from the previous step.
+                    prev_ann = ann_files[i - 1] if i > 0 else None
+                    projected = Image.open(str(prev_ann)) if prev_ann and prev_ann.exists() else None
+                    resized, simplified, enhanced, masked, transformed, raw_transformed = \
+                        xeno_image.load_image(str(raw_path), False, 28, input_quad, squircle_mode)
+                    vis_class = xeno_image.compute_visibility(
+                        resized,
+                        raw_image=raw_transformed,
+                        projected=projected,
+                        threshold_cv=threshold_cv,
+                        threshold_human=threshold_human,
+                    )
                 except Exception as e:
                     print(f"    (visibility compute failed: {e})")
                     vis_class = 0
