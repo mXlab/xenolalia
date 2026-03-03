@@ -48,10 +48,15 @@ class ShapeMode extends AbstractMode {
   float[] lightnessLevels  = {0.25, 0.5, 0.75, 1.0};
   String[] lightnessNames  = {"25%", "50%", "75%", "100%"};
 
+  // Hue offset
+  final int HUE_STEP = 5;
+  final int HUE_MAX  = 60;
+
   int shapeType;
   int symbolColor;
   int strokeWidth;
   int lightnessLevel;
+  int hueOffset;
   boolean helpEnabled;
   boolean flashEnabled;
   boolean symbolEnabled;
@@ -61,6 +66,7 @@ class ShapeMode extends AbstractMode {
     symbolColor    = COLOR_WHITE;
     strokeWidth    = WIDTH_MEDIUM;
     lightnessLevel = LIGHTNESS_100;
+    hueOffset      = 0;
     helpEnabled    = true;
     flashEnabled   = false;
     symbolEnabled  = true;
@@ -69,7 +75,17 @@ class ShapeMode extends AbstractMode {
   color currentColor() {
     float b = lightnessLevels[lightnessLevel];
     color c = colors[symbolColor];
-    return color(red(c) * b, green(c) * b, blue(c) * b);
+    if (hueOffset == 0) {
+      return color(red(c) * b, green(c) * b, blue(c) * b);
+    }
+    pushStyle();
+    colorMode(HSB, 360, 100, 100);
+    float h = (hue(c) + hueOffset + 360) % 360;
+    float s = saturation(c);
+    float v = brightness(c) * b;
+    color result = color(h, s, v);
+    popStyle();
+    return result;
   }
 
   void draw() {
@@ -196,11 +212,13 @@ class ShapeMode extends AbstractMode {
     noStroke();
     textSize(14);
     textAlign(LEFT, TOP);
+    String hueStr = (hueOffset == 0 ? "0" : (hueOffset > 0 ? "+" : "") + hueOffset) + "\u00b0";
     text("Symbol: " + (symbolEnabled ? "ON" : "off") + " (x)" +
          "  Shape: " + shapeNames[shapeType] + " (s)" +
          "  Color: " + colorNames[symbolColor] + " (c)" +
          "  Thickness: " + widthNames[strokeWidth] + " (t)" +
          "  Lightness: " + lightnessNames[lightnessLevel] + " (l)" +
+         "  Hue: " + hueStr + " ([/])" +
          "  Flash: " + (flashEnabled ? "ON" : "off") + " (f)" +
          "  h: hide",
          10, 10);
@@ -212,6 +230,8 @@ class ShapeMode extends AbstractMode {
       case 'c': symbolColor  = (symbolColor + 1) % N_COLORS; break;
       case 't': strokeWidth     = (strokeWidth     + 1) % N_WIDTHS;     break;
       case 'l': lightnessLevel = (lightnessLevel + 1) % N_LIGHTNESS; break;
+      case '[': hueOffset = constrain(hueOffset - HUE_STEP, -HUE_MAX, HUE_MAX); break;
+      case ']': hueOffset = constrain(hueOffset + HUE_STEP, -HUE_MAX, HUE_MAX); break;
       case 'x': case 'X': symbolEnabled = !symbolEnabled;    break;
       case 'f': flashEnabled = !flashEnabled;                 break;
       case 'h': helpEnabled  = !helpEnabled;                  break;

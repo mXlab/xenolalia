@@ -294,7 +294,8 @@ void drawSymbolEditMode() {
     text("Shape: " + ref.getShapeName() +
          "  |  Color: " + ref.getColorName() +
          "  |  Width: " + ref.getWidthName() +
-         "  |  Lightness: " + ref.getLightnessName(),
+         "  |  Lightness: " + ref.getLightnessName() +
+         "  |  Hue: " + ref.getHueOffsetName(),
          width/2, 58);
   }
 
@@ -303,7 +304,7 @@ void drawSymbolEditMode() {
   textAlign(LEFT, BOTTOM);
   textSize(12);
   text("Click=Select  Shift+Click=Add  Ctrl+Click=Toggle  a=All  " +
-       "s=Shape  c=Color  t=Thickness  l=Lightness  n=Enable/Disable  d=Default  " +
+       "s=Shape  c=Color  t=Thickness  l=Lightness  [ / ]=Hue  n=Enable/Disable  d=Default  " +
        "w=White  b=Black  ESC/e=Done  h=Help",
        10, height - 10);
 }
@@ -367,8 +368,9 @@ void drawHelp() {
         "  c - Cycle color (Red -> Magenta -> Blue -> Cyan -> Yellow -> White)",
         "  t - Cycle thickness (Thin -> Medium -> Large)",
         "  l - Cycle lightness (25% -> 50% -> 75% -> 100%)",
+        "  [ / ] - Hue offset (-5\u00b0 / +5\u00b0 per press, range \u00b160\u00b0)",
         "  n - Toggle enable/disable (disabled = no light emitted)",
-        "  d - Reset to default (X / Medium / Magenta / 100%)",
+        "  d - Reset to default (X / Medium / Magenta / 100% / Hue 0\u00b0)",
         "",
         "QUICK SET:",
         "  w - Set selected to white (no symbol)",
@@ -548,6 +550,14 @@ void handleSymbolEditKeys() {
     // Lightness
     case 'l': case 'L':
       applyToSelected(d -> d.cycleLightness());
+      break;
+
+    // Hue offset
+    case '[':
+      applyToSelected(d -> d.nudgeHueOffset(-DishSpot.HUE_STEP));
+      break;
+    case ']':
+      applyToSelected(d -> d.nudgeHueOffset(+DishSpot.HUE_STEP));
       break;
 
     // Quick set to white

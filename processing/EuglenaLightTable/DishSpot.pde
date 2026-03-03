@@ -51,11 +51,16 @@ class DishSpot {
   // Current state
   int state = STATE_WHITE;
 
+  // Hue offset constants
+  static final int HUE_STEP = 5;   // degrees per press
+  static final int HUE_MAX  = 60;  // ±60° range
+
   // Symbol properties
   int shape = SHAPE_X;
   int symbolColor = COLOR_WHITE;
   int strokeWidth = WIDTH_MEDIUM;
   int lightnessLevel = LIGHTNESS_100;
+  int hueOffset = 0;  // degrees: negative = cooler, positive = warmer
 
   // Predefined colors
   color[] colors = {
@@ -83,7 +88,17 @@ class DishSpot {
   color currentColor() {
     float b = lightnessLevels[lightnessLevel];
     color c = colors[symbolColor];
-    return color(red(c) * b, green(c) * b, blue(c) * b);
+    if (hueOffset == 0) {
+      return color(red(c) * b, green(c) * b, blue(c) * b);
+    }
+    pushStyle();
+    colorMode(HSB, 360, 100, 100);
+    float h = (hue(c) + hueOffset + 360) % 360;
+    float s = saturation(c);
+    float v = brightness(c) * b;
+    color result = color(h, s, v);
+    popStyle();
+    return result;
   }
 
   void draw() {
@@ -397,12 +412,29 @@ class DishSpot {
   boolean isEnabled()          { return enabled; }
   void toggleEnabled()         { enabled = !enabled; }
 
+  // Hue offset methods
+  void nudgeHueOffset(int delta) {
+    hueOffset = constrain(hueOffset + delta, -HUE_MAX, HUE_MAX);
+  }
+
+  void setHueOffset(int val) {
+    hueOffset = constrain(val, -HUE_MAX, HUE_MAX);
+  }
+
+  int getHueOffset() { return hueOffset; }
+
+  String getHueOffsetName() {
+    if (hueOffset == 0) return "0\u00b0";
+    return (hueOffset > 0 ? "+" : "") + hueOffset + "\u00b0";
+  }
+
   void resetToDefault() {
-    shape        = SHAPE_X;
-    strokeWidth  = WIDTH_MEDIUM;
-    symbolColor  = COLOR_MAGENTA;
+    shape          = SHAPE_X;
+    strokeWidth    = WIDTH_MEDIUM;
+    symbolColor    = COLOR_MAGENTA;
     lightnessLevel = LIGHTNESS_100;
-    state        = STATE_SYMBOL;
+    hueOffset      = 0;
+    state          = STATE_SYMBOL;
   }
 
   String getStateName() {
