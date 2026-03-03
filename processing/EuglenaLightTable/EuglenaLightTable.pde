@@ -295,7 +295,8 @@ void drawSymbolEditMode() {
          "  |  Color: " + ref.getColorName() +
          "  |  Width: " + ref.getWidthName() +
          "  |  Lightness: " + ref.getLightnessName() +
-         "  |  Hue: " + ref.getHueOffsetName(),
+         "  |  Hue: " + ref.getHueOffsetName() +
+         "  |  Sat: " + ref.getSaturationName(),
          width/2, 58);
   }
 
@@ -304,7 +305,7 @@ void drawSymbolEditMode() {
   textAlign(LEFT, BOTTOM);
   textSize(12);
   text("Click=Select  Shift+Click=Add  Ctrl+Click=Toggle  a=All  " +
-       "s=Shape  c=Color  t=Thickness  l=Lightness  [ / ]=Hue  n=Enable/Disable  d=Default  " +
+       "s=Shape  c=Color  t=Thickness  l=Lightness  [ / ]=Hue  , / .=Sat  n=Enable/Disable  d=Default  " +
        "w=White  b=Black  ESC/e=Done  h=Help",
        10, height - 10);
 }
@@ -369,6 +370,7 @@ void drawHelp() {
         "  t - Cycle thickness (Thin -> Medium -> Large)",
         "  l - Cycle lightness (25% -> 50% -> 75% -> 100%)",
         "  [ / ] - Hue offset (-5\u00b0 / +5\u00b0 per press, range \u00b160\u00b0)",
+        "  , / . - Saturation (-10% / +10% per press, 0%=white \u2192 100%=full color)",
         "  n - Toggle enable/disable (disabled = no light emitted)",
         "  d - Reset to default (X / Medium / Magenta / 100% / Hue 0\u00b0)",
         "",
@@ -558,6 +560,14 @@ void handleSymbolEditKeys() {
       break;
     case ']':
       applyToSelected(d -> d.nudgeHueOffset(+DishSpot.HUE_STEP));
+      break;
+
+    // Saturation
+    case ',':
+      applyToSelected(d -> d.nudgeSaturation(-DishSpot.SAT_STEP));
+      break;
+    case '.':
+      applyToSelected(d -> d.nudgeSaturation(+DishSpot.SAT_STEP));
       break;
 
     // Quick set to white

@@ -55,12 +55,16 @@ class DishSpot {
   static final int HUE_STEP = 5;   // degrees per press
   static final int HUE_MAX  = 60;  // ±60° range
 
+  // Saturation constants
+  static final int SAT_STEP = 10;  // % per press
+
   // Symbol properties
   int shape = SHAPE_X;
   int symbolColor = COLOR_WHITE;
   int strokeWidth = WIDTH_MEDIUM;
   int lightnessLevel = LIGHTNESS_100;
-  int hueOffset = 0;  // degrees: negative = cooler, positive = warmer
+  int hueOffset = 0;       // degrees: negative = cooler, positive = warmer
+  int saturationPct = 100; // 0–100%: 100 = full color, 0 = white
 
   // Predefined colors
   color[] colors = {
@@ -88,13 +92,13 @@ class DishSpot {
   color currentColor() {
     float b = lightnessLevels[lightnessLevel];
     color c = colors[symbolColor];
-    if (hueOffset == 0) {
+    if (hueOffset == 0 && saturationPct == 100) {
       return color(red(c) * b, green(c) * b, blue(c) * b);
     }
     pushStyle();
     colorMode(HSB, 360, 100, 100);
     float h = (hue(c) + hueOffset + 360) % 360;
-    float s = saturation(c);
+    float s = saturation(c) * saturationPct / 100.0;
     float v = brightness(c) * b;
     color result = color(h, s, v);
     popStyle();
@@ -428,12 +432,26 @@ class DishSpot {
     return (hueOffset > 0 ? "+" : "") + hueOffset + "\u00b0";
   }
 
+  // Saturation methods
+  void nudgeSaturation(int delta) {
+    saturationPct = constrain(saturationPct + delta, 0, 100);
+  }
+
+  void setSaturationPct(int val) {
+    saturationPct = constrain(val, 0, 100);
+  }
+
+  int getSaturationPct() { return saturationPct; }
+
+  String getSaturationName() { return saturationPct + "%"; }
+
   void resetToDefault() {
     shape          = SHAPE_X;
     strokeWidth    = WIDTH_MEDIUM;
     symbolColor    = COLOR_MAGENTA;
     lightnessLevel = LIGHTNESS_100;
     hueOffset      = 0;
+    saturationPct  = 100;
     state          = STATE_SYMBOL;
   }
 

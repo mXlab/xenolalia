@@ -14,7 +14,8 @@ class Settings {
   int[] dishWidths      = new int[12];
   int[] dishLightness   = new int[12];
   int[] dishEnabled     = new int[12];  // 1 = enabled, 0 = disabled
-  int[] dishHueOffsets  = new int[12];
+  int[] dishHueOffsets    = new int[12];
+  int[] dishSaturations   = new int[12];
 
   Settings(String filepath) {
     this.filepath = filepath;
@@ -26,7 +27,8 @@ class Settings {
       dishWidths[i]     = DishSpot.WIDTH_MEDIUM;
       dishLightness[i]  = DishSpot.LIGHTNESS_100;
       dishEnabled[i]    = 1;
-      dishHueOffsets[i] = 0;
+      dishHueOffsets[i]  = 0;
+      dishSaturations[i] = 100;
     }
   }
 
@@ -96,6 +98,14 @@ class Settings {
         }
       }
 
+      // Load dish saturations (optional — defaults to 100)
+      if (json.hasKey("dishSaturations")) {
+        JSONArray arr = json.getJSONArray("dishSaturations");
+        for (int i = 0; i < min(arr.size(), 12); i++) {
+          dishSaturations[i] = arr.getInt(i);
+        }
+      }
+
       println("Settings loaded from: " + filepath);
     } catch (Exception e) {
       println("Error loading settings: " + e.getMessage());
@@ -141,6 +151,11 @@ class Settings {
       for (int i = 0; i < 12; i++) hueOffsets.setInt(i, dishHueOffsets[i]);
       json.setJSONArray("dishHueOffsets", hueOffsets);
 
+      // Save dish saturations
+      JSONArray saturations = new JSONArray();
+      for (int i = 0; i < 12; i++) saturations.setInt(i, dishSaturations[i]);
+      json.setJSONArray("dishSaturations", saturations);
+
       saveJSONObject(json, filepath);
       println("Settings saved to: " + filepath);
     } catch (Exception e) {
@@ -157,6 +172,7 @@ class Settings {
       dishes[i].setStrokeWidth(dishWidths[i]);
       dishes[i].setLightnessLevel(dishLightness[i]);
       dishes[i].setHueOffset(dishHueOffsets[i]);
+      dishes[i].setSaturationPct(dishSaturations[i]);
       // Reset state after setting properties (setShape etc. force STATE_SYMBOL)
       dishes[i].setState(dishStates[i]);
       dishes[i].setEnabled(dishEnabled[i] != 0);
@@ -171,7 +187,8 @@ class Settings {
       dishColors[i]     = dishes[i].getSymbolColor();
       dishWidths[i]     = dishes[i].getStrokeWidth();
       dishLightness[i]  = dishes[i].getLightnessLevel();
-      dishHueOffsets[i] = dishes[i].getHueOffset();
+      dishHueOffsets[i]  = dishes[i].getHueOffset();
+      dishSaturations[i] = dishes[i].getSaturationPct();
       dishEnabled[i]    = dishes[i].isEnabled() ? 1 : 0;
     }
     save();

@@ -52,11 +52,15 @@ class ShapeMode extends AbstractMode {
   final int HUE_STEP = 5;
   final int HUE_MAX  = 60;
 
+  // Saturation
+  final int SAT_STEP = 10;
+
   int shapeType;
   int symbolColor;
   int strokeWidth;
   int lightnessLevel;
   int hueOffset;
+  int saturationPct;
   boolean helpEnabled;
   boolean flashEnabled;
   boolean symbolEnabled;
@@ -67,6 +71,7 @@ class ShapeMode extends AbstractMode {
     strokeWidth    = WIDTH_MEDIUM;
     lightnessLevel = LIGHTNESS_100;
     hueOffset      = 0;
+    saturationPct  = 100;
     helpEnabled    = true;
     flashEnabled   = false;
     symbolEnabled  = true;
@@ -75,13 +80,13 @@ class ShapeMode extends AbstractMode {
   color currentColor() {
     float b = lightnessLevels[lightnessLevel];
     color c = colors[symbolColor];
-    if (hueOffset == 0) {
+    if (hueOffset == 0 && saturationPct == 100) {
       return color(red(c) * b, green(c) * b, blue(c) * b);
     }
     pushStyle();
     colorMode(HSB, 360, 100, 100);
     float h = (hue(c) + hueOffset + 360) % 360;
-    float s = saturation(c);
+    float s = saturation(c) * saturationPct / 100.0;
     float v = brightness(c) * b;
     color result = color(h, s, v);
     popStyle();
@@ -219,6 +224,7 @@ class ShapeMode extends AbstractMode {
          "  Thickness: " + widthNames[strokeWidth] + " (t)" +
          "  Lightness: " + lightnessNames[lightnessLevel] + " (l)" +
          "  Hue: " + hueStr + " ([/])" +
+         "  Sat: " + saturationPct + "% (,/.)" +
          "  Flash: " + (flashEnabled ? "ON" : "off") + " (f)" +
          "  h: hide",
          10, 10);
@@ -230,8 +236,10 @@ class ShapeMode extends AbstractMode {
       case 'c': symbolColor  = (symbolColor + 1) % N_COLORS; break;
       case 't': strokeWidth     = (strokeWidth     + 1) % N_WIDTHS;     break;
       case 'l': lightnessLevel = (lightnessLevel + 1) % N_LIGHTNESS; break;
-      case '[': hueOffset = constrain(hueOffset - HUE_STEP, -HUE_MAX, HUE_MAX); break;
-      case ']': hueOffset = constrain(hueOffset + HUE_STEP, -HUE_MAX, HUE_MAX); break;
+      case '[': hueOffset    = constrain(hueOffset - HUE_STEP, -HUE_MAX, HUE_MAX); break;
+      case ']': hueOffset    = constrain(hueOffset + HUE_STEP, -HUE_MAX, HUE_MAX); break;
+      case ',': saturationPct = constrain(saturationPct - SAT_STEP, 0, 100);        break;
+      case '.': saturationPct = constrain(saturationPct + SAT_STEP, 0, 100);        break;
       case 'x': case 'X': symbolEnabled = !symbolEnabled;    break;
       case 'f': flashEnabled = !flashEnabled;                 break;
       case 'h': helpEnabled  = !helpEnabled;                  break;
