@@ -38,6 +38,9 @@ class Settings {
   String modelName;
   boolean useConvolutional;
 
+  // Image mapping.
+  String squircleMode;
+
   Settings() {
     load();
   }
@@ -78,6 +81,9 @@ class Settings {
 
   boolean useApparatus() { return useApparatus; }
 
+  String squircleMode() { return squircleMode; }
+  boolean usesSquircle() { return !squircleMode.equals("none"); }
+
   void save() {
     try {
       JSONObject settings = new JSONObject();
@@ -116,6 +122,8 @@ class Settings {
 
       settings.setString("model_name", modelName);
       settings.setBoolean("use_convolutional", useConvolutional);
+
+      settings.setString("squircle_mode", squircleMode);
 
       // Save file.
       saveJSONObject(settings, SETTINGS_FILE_NAME);
@@ -162,7 +170,13 @@ class Settings {
       
       modelName = settings.getString("model_name");
       useConvolutional = settings.getBoolean("use_convolutional");
-      
+
+      squircleMode = "none";
+      if (settings.hasKey("squircle_mode")) {
+        squircleMode = settings.getString("squircle_mode");
+        if (squircleMode == null) squircleMode = "none";
+      }
+
     } catch (Exception e) {
       println("Problem loading settings, setting to defaults: " + e);
       reset();
@@ -194,6 +208,7 @@ class Settings {
 
     cameraId = 0;
     exposureTime = 60.0f;
+    squircleMode = "none";
   }
 
   // Writes points contained in an array of PVectors into a list of values.
