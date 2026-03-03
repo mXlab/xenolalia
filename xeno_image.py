@@ -240,12 +240,17 @@ def compute_visibility(bio_image, raw_image=None, projected=None,
         proj_img = projected.convert('L').resize((28, 28), Image.LANCZOS)
 
     # CV correlation: processed 28×28 bio image vs projected.
-    cv_corr = _image_correlation(bio_image, proj_img)
+    # Use absolute value: the sign depends on polarity conventions (enhanced image is
+    # inverted vs raw), but the magnitude reflects how strongly the biological pattern
+    # spatially matches the glyph regardless of direction.
+    cv_corr = abs(_image_correlation(bio_image, proj_img))
 
     # Human correlation: raw image resized to 28×28 vs projected.
+    # Raw image has opposite polarity (dark euglenas on light medium), so abs() is
+    # required here to capture both accumulation and avoidance responses.
     if raw_image is not None:
         raw_28 = raw_image.convert('L').resize((28, 28), Image.LANCZOS)
-        human_corr = _image_correlation(raw_28, proj_img)
+        human_corr = abs(_image_correlation(raw_28, proj_img))
     else:
         human_corr = cv_corr
 

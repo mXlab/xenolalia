@@ -60,7 +60,7 @@ if __name__ == "__main__":
 
     labels = {0: "invisible", 1: "cv-only  ", 2: "human-vis"}
 
-    hdr = f"{'File':<55}  {'Density':>7}  {'CV-corr':>7}  {'Hum-corr':>8}  Class"
+    hdr = f"{'File':<55}  {'Density':>7}  {'|CV-r|':>7}  {'|Hum-r|':>8}  Class"
     print(hdr)
     print("-" * len(hdr))
 
@@ -98,9 +98,9 @@ if __name__ == "__main__":
                 # Compute correlations for display.
                 if projected is not None:
                     proj_28 = projected.convert('L').resize((28, 28), Image.LANCZOS)
-                    cv_corr    = xeno_image._image_correlation(resized, proj_28)
+                    cv_corr    = abs(xeno_image._image_correlation(resized, proj_28))
                     raw_28     = raw_transformed.convert('L').resize((28, 28), Image.LANCZOS)
-                    human_corr = xeno_image._image_correlation(raw_28, proj_28)
+                    human_corr = abs(xeno_image._image_correlation(raw_28, proj_28))
                     cv_str    = f"{cv_corr:7.4f}"
                     human_str = f"{human_corr:8.4f}"
                 else:
