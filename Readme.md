@@ -129,6 +129,7 @@ You can exit ```XenoPi``` with the ESC key. If you started the programs using ``
 | v | Toggle camera view (live camera feed appears in the corner) |
 | a | Toggle auto mode (\*) |
 | n | Start new experiment |
+| t | Test overlay: load the most recent snapshot and briefly show the CV-detected shape |
 
 (\*) In auto mode (default) snapshots will be taken at a regular pace as specified by the "exposure_time" setting. In manual mode (ie. non-auto mode) the user has the responsibility to manually take snapshots using the SPACEBAR.
 
@@ -281,6 +282,200 @@ sudo /etc/cron.hourly/xeno_sync_snapshots
 The web-app can be access here: http://xenodata.sofianaudry.com/
 
 
+## Glyph Alphabet & Font Generation
+
+Two scripts allow generating a full xenolalia glyph alphabet — one image per character — and packaging it as a TrueType font (`.ttf`). It does not use the euglenas, just the autoencoder.
+
+### Environment setup
+
+```bash
+python -m venv xeno-env
+source xeno-env/bin/activate
+pip install -r requirements_alphabet.txt
+```
+
+### Step 1 — Generate glyph images (`xeno_alphabet.py`)
+
+For each character (a–z, A–Z, 0–9, punctuation) the script renders the character as a 28×28 seed image, blends it with noise, and feeds it through the autoencoder to produce a xenolalia glyph.
+
+```bash
+python xeno_alphabet.py -m <model_name> -C XenoPi/settings.json -o alphabet/
+```
+
+These are the settings that were used to generate the "official" font xenolalia.ttf:
+
+```bash
+python xeno_alphabet.py -m model_sparse_conv_enc20-40_dec40-20_k5_b128 -c -n 5 -N 0.8 -s 28 --squircle-mode inside --threshold 0.2 -o alphabet --seed 23 --fit --fit-max 2
+```
+
+
+Key options:
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `-m`, `--model-name` | *(required)* | Model filename without `.hdf5` extension |
+| `-M`, `--model-directory` | `results` | Directory containing `.hdf5` model files |
+| `-C`, `--configuration-file` | — | Load post-processing params from `settings.json` |
+| `-n`, `--n-steps` | `10` | Number of autoencoder feedback iterations per glyph |
+| `-N`, `--noise` | `0.3` | Noise blend weight (0 = pure character, 1 = pure random) |
+| `-o`, `--output-dir` | `alphabet` | Directory where glyph images are saved |
+| `--fit` | off | Auto-scale each glyph to fill the 28×28 canvas |
+| `--fit-max` | unlimited | Maximum expansion in `--fit` mode as a multiplier of the natural rendered size (e.g. `2.0`) |
+| `--uppercase` | off | Render letters as uppercase |
+| `--seed` | — | Integer random seed for reproducibility |
+| `--save-seeds` | off | Also save intermediate seed and raw autoencoder images |
+| `--output-size` | `224` | Side length of saved output images in pixels |
+| `--squircle-mode` | `none` | Squircle remapping: `none`, `inside`, or `outside` |
+
+Example with common options:
+
+```bash
+python xeno_alphabet.py -m my_model -C XenoPi/settings.json \
+    --fit --fit-max 2.0 --seed 784 -o alphabet/
+```
+
+### Step 2 — Convert to TrueType font (`xeno_font.py`)
+
+Traces the binary glyph PNGs into vector contours and assembles a `.ttf` file.
+
+```bash
+python xeno_font.py alphabet/ xenolalia.ttf --family Xenolalia
+```
+
+Key options:
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `glyph_dir` | *(required)* | Directory of glyph PNGs (output of `xeno_alphabet.py`) |
+| `output_font` | *(required)* | Output `.ttf` file path |
+| `--family` | `Xenolalia` | Font family name embedded in the TTF |
+| `--style` | `Regular` | Font style name |
+| `--upm` | `1000` | Units per em |
+| `--advance` | UPM | Advance width for all glyphs |
+| `--simplify` | `1.0` | Contour simplification tolerance in pixels (0 to disable) |
+
+## Testing & Development Tools
+
+These scripts let you test individual features offline — without needing a camera, live euglenas, or a full experiment cycle. They are especially useful for calibrating visibility thresholds and verifying OSC plumbing before a session.
+
+### `xeno_test_snapshots.py` — Batch Visibility Tester
+
+Scans a directory of raw snapshots, runs each through the full image processing pipeline, and prints a table of pixel density and visibility classification. Use this to calibrate `visibility_threshold_cv` and `visibility_threshold_human` in `settings.json` before deploying with live euglenas.
+
+**Visibility classes:**
+
+| Class | Label | Meaning |
+|:-----:|-------|---------|
+| 0 | `invisible` | No signal detected |
+| 1 | `cv-only` | Machine detects it, not perceptible to humans |
+| 2 | `human-vis` | Strong enough for humans to perceive |
+
+**Usage:**
+
+```bash
+source xeno-env/bin/activate
+
+# Scan a single experiment directory
+python xeno_test_snapshots.py XenoPi/snapshots/00_test/ -C XenoPi/settings.json
+
+# Scan all snapshot subdirectories recursively
+python xeno_test_snapshots.py XenoPi/snapshots/ --recursive -C XenoPi/settings.json
+
+# Try different thresholds to find good values for your setup
+python xeno_test_snapshots.py XenoPi/snapshots/ --recursive \
+    --threshold-cv 0.03 --threshold-human 0.15
+```
+
+**Example output:**
+
+```
+File                                                      Density  Class
+---------------------------------------------------------------------------
+2019-08-01_23:52:42_058055_raw.png                         0.3367  human-vis
+2019-08-02_00:15:59_028862_raw.png                         0.0000  invisible
+2019-08-02_00:51:09_1381825_raw.png                        0.0459  cv-only
+```
+
+**Options:**
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `directory` | *(required)* | Directory to scan for `*_raw.png` files |
+| `-C` | `XenoPi/settings.json` | Config file (reads `camera_quad`, `squircle_mode`, thresholds) |
+| `--recursive` | off | Also scan subdirectories |
+| `--threshold-cv` | from settings or `0.02` | Override the CV-visible density threshold |
+| `--threshold-human` | from settings or `0.10` | Override the human-visible density threshold |
+
+Once you have settled on good threshold values, add them to `settings.json`:
+
+```json
+"visibility_threshold_cv": 0.03,
+"visibility_threshold_human": 0.15
+```
+
+---
+
+### `xeno_simulate.py` — OSC Simulation Script
+
+Replays a past experiment snapshot directory by sending OSC messages to XenoPi and XenoProjection exactly as `xeno_osc.py` would — without needing a camera, live euglenas, or a running model. Use this to test the shape overlay, visibility tracking, gallery gating, and pipeline scene in isolation.
+
+XenoPi and/or XenoProjection must be running before you start the script.
+
+**Usage:**
+
+```bash
+source xeno-env/bin/activate
+
+# Replay an experiment with a 2-second delay between steps (default)
+python xeno_simulate.py XenoPi/snapshots/2021-09-03_17:16:07_emery-2021_nodepi-02/ \
+    --xenopi-ip 127.0.0.1 --server-ip 127.0.0.1
+
+# Fast replay with no delay (useful for quick connection checks)
+python xeno_simulate.py XenoPi/snapshots/2021-09-03_17:16:07_emery-2021_nodepi-02/ \
+    --delay 0 --xenopi-ip 127.0.0.1 --server-ip 127.0.0.1
+
+# Force a specific visibility class for all steps (skip recompute from raw images)
+python xeno_simulate.py XenoPi/snapshots/2021-09-03_17:16:07_emery-2021_nodepi-02/ \
+    --vis-override 0   # invisible — should NOT update recent-glyphs gallery
+python xeno_simulate.py XenoPi/snapshots/2021-09-03_17:16:07_emery-2021_nodepi-02/ \
+    --vis-override 2   # human-visible — SHOULD update recent-glyphs gallery
+```
+
+**Multi-machine setup** (XenoPi on RPi, XenoProjection on xenopc):
+
+```bash
+python xeno_simulate.py XenoPi/snapshots/2021-09-03_17:16:07_emery-2021_nodepi-02/ \
+    --xenopi-ip 192.168.0.101 \
+    --server-ip  192.168.0.100 \
+    --delay 3
+```
+
+**Options:**
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `snapshot_dir` | *(required)* | Experiment directory to replay (must contain `*_raw_3ann.png` files) |
+| `-C` | `XenoPi/settings.json` | Config file |
+| `--xenopi-ip` | `127.0.0.1` | IP of the machine running XenoPi |
+| `--xenopi-port` | `7001` | OSC receive port of XenoPi |
+| `--server-ip` | `192.168.0.100` | IP of the machine running XenoProjection |
+| `--server-port` | `7000` | OSC receive port of XenoProjection |
+| `--delay` | `2.0` | Seconds between steps |
+| `--vis-override` | *(recomputed)* | Force visibility class for all steps: `0`, `1`, or `2` |
+
+**OSC messages sent:**
+
+| Timing | Address | Destination | Payload |
+|--------|---------|-------------|---------|
+| Start | `/xeno/server/new` | XenoProjection | `[uid]` |
+| Per step | `/xeno/neurons/step` | XenoPi | `[ann_image_path]` |
+| Per step | `/xeno/neurons/visibility` | XenoPi | `[vis_class]` |
+| Per step | `/xeno/server/step` | XenoProjection | `[uid]` |
+| End | `/xeno/server/end` | XenoProjection | `[uid, 2]` |
+
+Visibility is computed from the corresponding `_raw.png` using the same pipeline as `xeno_osc.py`. If the raw file is missing it defaults to `0`.
+
+---
 
 ## Troubleshooting
 
@@ -333,6 +528,7 @@ Then save (CTRL-X). You should now be able to run Pd as sudo without having to t
 | XenoPi.pde | `xeno_osc.py` | `/xeno/neurons/end` | — | Neural network server is shutting down |
 | XenoPi.pde | `xeno_osc.py` | `/xeno/neurons/new` | — | Neural network acknowledged new experiment |
 | XenoPi.pde | `xeno_osc.py` | `/xeno/neurons/step` | `s` | Delivers `nn_image_path`, the path to the autoencoder-generated image for this step |
+| XenoPi.pde | `xeno_osc.py` | `/xeno/neurons/visibility` | `i` | Visibility class for this step: `0`=invisible, `1`=cv-only, `2`=human-visible |
 | XenoPi.pde | `xeno_osc.py` | `/xeno/neurons/test-camera` | `s` | Returns `transformed_image_path`, the perspective-corrected version of the test capture |
 | XenoPi.pde | XenolaliaApparatus | `/xeno/apparatus/refreshed` | — | Liquid refresh cycle completed |
 | XenoPi.pde | XenolaliaApparatus | `/xeno/handshake` | — | Apparatus acknowledged a command |
@@ -342,11 +538,11 @@ Then save (CTRL-X). You should now be able to run Pd as sudo without having to t
 | `xeno_orbiter.py` | `xeno_osc.py` | `/xeno/neurons/end` | — | Stop OLED display animation |
 | `xeno_server.py` | XenoPi.pde | `/xeno/exp/new` | `s` | New experiment started; `uid` identifies the experiment; triggers rsync and data preparation |
 | `xeno_server.py` | XenoPi.pde | `/xeno/exp/step` | `s` | New image added to the experiment identified by `uid`; triggers rsync and data preparation |
-| `xeno_server.py` | XenoPi.pde | `/xeno/exp/end` | `s` | Experiment identified by `uid` has ended; triggers final rsync and data preparation |
+| `xeno_server.py` | XenoPi.pde | `/xeno/exp/end` | `si` | Experiment identified by `uid` has ended; second arg is visibility class (`0`/`1`/`2`); triggers final rsync and data preparation |
 | `xeno_server.py` | XenoPi.pde | `/xeno/exp/state` | `s` | Current FSM state name (e.g. `FLASH`, `SNAPSHOT`); used internally to derive downstream messages |
 | XenoProjection | `xeno_server.py` | `/xeno/server/new` | `s` | New experiment identified by `uid` has started |
 | XenoProjection | `xeno_server.py` | `/xeno/server/step` | `s` | New image added to experiment identified by `uid` |
-| XenoProjection | `xeno_server.py` | `/xeno/server/end` | `s` | Experiment identified by `uid` has ended |
+| XenoProjection | `xeno_server.py` | `/xeno/server/end` | `s` or `si` | Experiment identified by `uid` has ended; second arg (int) is visibility class when present |
 | XenoProjection | `xeno_server.py` | `/xeno/server/snapshot` | — | Trigger snapshot visual effect (fired when state = `FLASH`) |
 | XenolaliaApparatus | XenoPi.pde | `/xeno/refresh` | `i` | Trigger a full liquid refresh cycle (always sent with value `1`) |
 | XenolaliaApparatus | XenoPi.pde | `/xeno/glow` | `i` | Turn LED ring on (`1`) or off (`0`) |
@@ -355,6 +551,8 @@ Then save (CTRL-X). You should now be able to run Pd as sudo without having to t
 | XenolaliaApparatus | any | `/xeno/drain` | `i` | Drain tube; integer value controls duration or amount |
 | XenolaliaApparatus | any | `/xeno/fill` | `i` | Fill tube; integer value controls duration or amount |
 | XenolaliaApparatus | any | `/xeno/color` | `iii` | Set NeoPixel ring color; three integers for red, green, blue (0–255) |
+
+| Pd (sonoscope) | `xeno_osc.py` | `/xeno/sonoscope/activations` | `fff…` | Flattened, normalized encoder activations as a float array; sent after each step |
 
 **Notes:**
 
