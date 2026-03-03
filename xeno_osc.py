@@ -35,6 +35,11 @@ parser.add_argument("-ie", "--orbiter-ip", default="127.0.0.1",
 parser.add_argument("-se", "--orbiter-send-port", default="7002",
                     type=int, help="The port number used to send data to the orbiter.")
 
+parser.add_argument("-ip", "--sonoscope-ip", default="192.168.0.100",
+                    help="IP address where the Pd sonoscope patch runs.")
+parser.add_argument("-sp", "--sonoscope-send-port", default=9000,
+                    type=int, help="Port number to send activations to Pd.")
+
 parser.add_argument("-is", "---server-ip", default="192.168.0.100",
                     help="The IP address where the server program runs.")
 parser.add_argument("-ss", "--server-send-port", default="7000",
@@ -217,6 +222,18 @@ def save_encoded_json(
     with open(filepath, "w") as f:
         json.dump(channels, f, indent=2)
     
+def send_encoder_activations(encoded):
+    """Send flattened, normalized encoder activations to the sonoscope."""
+    if encoded is None:
+        return
+    # Remove batch dim if present, flatten to 1D, normalize to [0, 1].
+    arr = encoded[0] if encoded.ndim == 4 else encoded
+    flat = arr.flatten().astype(np.float32)
+    vmin, vmax = flat.min(), flat.max()
+    if vmax > vmin:
+        flat = (flat - vmin) / (vmax - vmin)
+    sonoscope_client.send_message("/xeno/sonoscope/activations", flat.tolist())
+
 # Processes next image based on image path and sends an OSC message back to the XenoPi program.
 # At each step, this function will save the following images:
 # - (basename)_0trn.png : transformed image
@@ -254,6 +271,7 @@ def next_image(image_path, base_image_path, starting_frame_random):
     # Generate new image.
     encoded, frame = generate(n_feedback_steps, starting_frame, prev_frame)
     prev_frame = np.copy(frame)
+    send_encoder_activations(encoded)
     image = xeno_image.array_to_image(frame, image_side, image_side)
     image = xeno_image.postprocess_output(
         image,
@@ -334,6 +352,7 @@ dispatcher.map("/xeno/euglenas/test-camera", handle_test_camera)
 server = osc_server.BlockingOSCUDPServer(("0.0.0.0", args.receive_port), dispatcher)
 xenopi_client = udp_client.SimpleUDPClient(args.xenopi_ip, args.xenopi_send_port)
 orbiter_client = udp_client.SimpleUDPClient(args.orbiter_ip, args.orbiter_send_port)
+sonoscope_client = udp_client.SimpleUDPClient(args.sonoscope_ip, args.sonoscope_send_port)
 
 # Allows program to end cleanly on a CTRL-C command.
 def interrupt(signup, frame):
