@@ -87,8 +87,10 @@ def get_ordered_snapshot_images(folder, pattern):
     return [Image.open(filename) for filename in sorted(glob.glob(f"{folder}/{pattern}"), key=snapshot_file_get_timestamp)]
 
 # Get all "ann" images in experiment folder, with optional background and foreground RGB colors.
+# Uses _4prj.png (postprocessed projected output) when available, falls back to _3ann.png.
 def get_ann_images(experiment_folder, gif_file_side, background=(0, 0, 0), foreground=(255, 255, 255), fit_in_circle=False):
-    images = get_ordered_snapshot_images(experiment_folder, "*_3ann.png")
+    pattern = "*_4prj.png" if glob.glob(f"{experiment_folder}/*_4prj.png") else "*_3ann.png"
+    images = get_ordered_snapshot_images(experiment_folder, pattern)
     images = [ImageOps.colorize(img, background, foreground) for img in images]
     images = resize_square_images(images, gif_file_side)
     if fit_in_circle:

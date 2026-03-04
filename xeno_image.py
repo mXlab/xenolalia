@@ -41,8 +41,22 @@ def create_mask(image, invert=False):
     return Image.open(absolute_file_mask_path).convert('RGBA').resize(image.size)
 
 # Returns image resulting from subtraction of image from base_image.
+# scale=0.1 amplifies the difference ×10 for the CV pipeline (high contrast).
 def remove_base(image, base_image):
     return ImageChops.subtract(image.convert('RGB'), base_image.convert('RGB'), scale=0.1, offset=127)
+
+def remove_base_natural(image, base_image):
+    """Subtract base at natural scale (no amplification).
+
+    Computes (image - base + 128) clipped to [0, 255] in grayscale.
+    128 = no change, <128 = darker than base, >128 = brighter than base.
+    Reflects genuine biological signal without the CV pipeline's ×10 boost.
+    Both inputs must already be perspective-corrected and the same size.
+    """
+    raw_arr  = np.array(image.convert('L'),      dtype=np.float32)
+    base_arr = np.array(base_image.convert('L').resize(image.size, Image.LANCZOS), dtype=np.float32)
+    diff = np.clip(raw_arr - base_arr + 128.0, 0, 255).astype(np.uint8)
+    return Image.fromarray(diff, mode='L')
 
 # Returns square image picked from area in image defined by input_quad.
 def transform(image, input_quad):
@@ -260,36 +274,45 @@ def compute_visibility(bio_image, raw_image=None, projected=None,
         return 1
     return 0
 
-def postprocess_output(image, output_size=224, threshold=0.5, stroke_width=20, boundary_px=22, area_max=None):
+def postprocess_output(image, output_size=224, threshold=0.5, stroke_width=20, boundary_px=22, area_max=None, supersample=2):
     """Post-process an autoencoder output image for projection.
 
     Transforms the raw 28x28 (or any size) grayscale PIL image into a
-    higher-resolution binary image suitable for projection:
-      1. Upscale to output_size x output_size.
+    higher-resolution image suitable for projection:
+      1. Upscale to output_size*supersample for rendering.
       2. Threshold to binary (using area_max or fixed threshold).
       3. Classify each connected component as thin or thick via morphological
          opening with radius stroke_width.
       4. Thin components (opening produces nothing) are kept solid.
          Thick components are drawn as an inward contour of width boundary_px,
          hollowing out their interior without growing beyond the original shape.
+      5. Downsample to output_size with LANCZOS for antialiased edges.
 
     Args:
         image:        Grayscale PIL Image (autoencoder output).
         output_size:  Side length of the returned image in pixels.
         threshold:    Binary threshold in [0, 1), used when area_max is None.
                       Values >= 1.0 produce all-black output.
-        stroke_width: Opening-kernel radius (pixels). Components where the
-                      opening kernel fits (max inscribed radius > stroke_width)
-                      are treated as thick and hollowed out.
-        boundary_px:  Width of the inward contour drawn for thick components.
+        stroke_width: Opening-kernel radius (pixels at output_size resolution).
+                      Components where the opening kernel fits are treated as
+                      thick and hollowed out.
+        boundary_px:  Width of the inward contour for thick components
+                      (pixels at output_size resolution).
         area_max:     If set (0-1), overrides threshold: keeps at most this
                       fraction of pixels above the binarisation threshold.
+        supersample:  Render scale factor (default 2). All drawing happens at
+                      output_size*supersample; the result is downsampled with
+                      LANCZOS for clean antialiased edges.
 
     Returns:
         Grayscale PIL Image of size output_size x output_size.
     """
-    # 1. Upscale.
-    arr = np.array(image.convert('L').resize((output_size, output_size), Image.LANCZOS), dtype=np.uint8)
+    render_size = output_size * supersample
+    sw = stroke_width * supersample
+    bp = boundary_px * supersample
+
+    # 1. Upscale to render resolution.
+    arr = np.array(image.convert('L').resize((render_size, render_size), Image.LANCZOS), dtype=np.uint8)
 
     # 2. Threshold to binary.
     if area_max is not None:
@@ -300,7 +323,7 @@ def postprocess_output(image, output_size=224, threshold=0.5, stroke_width=20, b
         _, binary = cv2.threshold(arr, int(float(threshold) * 255), 255, cv2.THRESH_BINARY)
 
     # 3. Morphological opening to classify thick vs thin components.
-    k_open = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * stroke_width + 1, 2 * stroke_width + 1))
+    k_open = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * sw + 1, 2 * sw + 1))
     opened = cv2.morphologyEx(binary, cv2.MORPH_OPEN, k_open)
 
     # 4. Per-component processing.
@@ -311,16 +334,16 @@ def postprocess_output(image, output_size=224, threshold=0.5, stroke_width=20, b
         comp_u8 = comp.astype(np.uint8) * 255
         if opened[comp].any():
             # Thick: draw inward contour of width boundary_px.
-            # Draw 2x thickness centered on contour, then clip to inside the shape.
             contours, _ = cv2.findContours(comp_u8, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             layer = np.zeros_like(binary)
-            cv2.drawContours(layer, contours, -1, 255, thickness=boundary_px * 2)
+            cv2.drawContours(layer, contours, -1, 255, thickness=bp * 2)
             result = cv2.add(result, cv2.bitwise_and(layer, comp_u8))
         else:
             # Thin: keep all pixels solid.
             result[comp] = 255
 
-    return Image.fromarray(result, mode='L')
+    # 5. Downsample to output_size — LANCZOS averaging gives antialiased edges.
+    return Image.fromarray(result, mode='L').resize((output_size, output_size), Image.LANCZOS)
 
 # Processes raw image.
 def process_image(image, base_image=False, image_side=28, input_quad=[0, 0, 0, 1, 1, 1, 1, 0], squircle_mode="none"):

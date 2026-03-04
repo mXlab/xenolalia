@@ -71,13 +71,11 @@ void setup() {
 
   // Load starting experiments.
   ExperimentData[] allExperiments = loadExperiments(sketchPath("") + "contents/experiments.txt");
-  previousExperiment = allExperiments[0].copy();
-
-  // Create first experiment.
-  currentExperiment = new ExperimentData("2022-10-13_14:53:52_hexagram-uqam-2022_nodepi-02");
+  previousExperiment = new ExperimentData("2025-12-17_12:26:33_xpanse-2024_nodepi-01");
+  currentExperiment  = previousExperiment.copy();
 
   // Single artificial image of current experiment (image on apparatus).
-  if (true)
+  if (false)
   {
     Scene scene = new Scene(1, 1, singleVignetteRect);
     GlyphVignette v = new GlyphVignette(currentExperiment);
@@ -89,7 +87,7 @@ void setup() {
   }
 
   // Side-by-side animation of last experiment.
-  if (true)
+  if (false)
   {
     Scene scene = new Scene(2, 1, doubleVignetteRect);
 
@@ -109,7 +107,7 @@ void setup() {
   }
 
   // Single animation of alternating images from last experiment.
-  if (true)
+  if (false)
   {
     Scene scene = new Scene(1, 1, singleVignetteRect);
     scene.setOscAddress("/retina");
@@ -128,7 +126,7 @@ void setup() {
   }
 
   // Stepwise alternating sequence of images from last experiment.
-  if (true)
+  if (false)
   {
     SequentialScene scene = createSequentialScene(previousExperiment);
     scene.setOscAddress("/sequence");
@@ -143,7 +141,7 @@ void setup() {
   }
 
   // Animation of recent generative glyphs.
-  if (true)
+  if (false)
   {
     Scene scene = new Scene(5, 2, gridVignetteRect);
     for (int i=0; i<min(scene.nVignettes(), allExperiments.length); i++) {
@@ -155,13 +153,17 @@ void setup() {
     recentGlyphsScene = scene;
   }
 
-  // CV pipeline scene: what the machine sees (4 stages in a row).
+  // CV pipeline scene: all stages from color source to final output (3 cols × 2 rows).
+  // Row 0: col (color source), bsb (color−base), 0trn (transform)
+  // Row 1: 1fil (enhance), 3ann (raw AE output), 4prj (postprocessed → projected)
   if (true)
   {
-    Scene scene = new Scene(4, 1, doubleVignetteRect);
-    String[] stages = {"0trn", "1fil", "2res", "3ann"};
+    Scene scene = new Scene(3, 2, gridVignetteRect);
+    String[] stages = {"col", "bsb", "0trn", "1fil", "3ann", "4prj"};
     for (int i = 0; i < stages.length; i++) {
       PipelineVignette v = new PipelineVignette(currentExperiment, stages[i]);
+      if (stages[i].equals("4prj"))
+        v.setArtificialPalette(ArtificialPalette.MAGENTA);
       scene.putVignette(i, v);
     }
     scenes.add(scene);

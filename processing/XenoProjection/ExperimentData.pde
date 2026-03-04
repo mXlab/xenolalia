@@ -51,6 +51,12 @@ class ExperimentData {
   }
 
   PImage getLastPipelineImage(String stage) {
+    // "col" = color perspective-corrected source; fall back to _bio_N.png for older experiments.
+    if (stage.equals("col")) {
+      ArrayList<String> files = listPipelineFiles("col");
+      if (!files.isEmpty()) return manager.getImage(files.get(files.size() - 1));
+      return getLastBiological();
+    }
     ArrayList<String> files = listPipelineFiles(stage);
     if (files.isEmpty()) return null;
     return manager.getImage(files.get(files.size() - 1));

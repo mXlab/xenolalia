@@ -258,6 +258,11 @@ def next_image(image_path, base_image_path, starting_frame_random):
 
         starting_image, filtered_image, ___, ___, transformed_image, raw_transformed = xeno_image.load_image(image_path, base_image_path, image_side, input_quad, squircle_mode=squircle_mode)
         starting_frame = xeno_image.image_to_array(starting_image, input_shape)
+        raw_transformed.save("{}/{}_col.png".format(dirname, basename))
+        if base_image_path:
+            base_img = Image.open(base_image_path)
+            base_tf  = xeno_image.transform(base_img.convert('L'), input_quad)
+            xeno_image.remove_base_natural(raw_transformed, base_tf).save("{}/{}_bsb.png".format(dirname, basename))
         transformed_image.save("{}/{}_0trn.png".format(dirname, basename))
         filtered_image.save("{}/{}_1fil.png".format(dirname, basename))
         starting_image.save("{}/{}_2res.png".format(dirname, basename))
@@ -274,7 +279,10 @@ def next_image(image_path, base_image_path, starting_frame_random):
     encoded, frame = generate(n_feedback_steps, starting_frame, prev_frame)
     prev_frame = np.copy(frame)
     send_encoder_activations(encoded)
+    # Save raw AE output (before postprocessing).
     image = xeno_image.array_to_image(frame, image_side, image_side)
+    image.save("{}/{}_3ann.png".format(dirname, basename))
+    # Postprocess: distance transform, threshold, stroke widening.
     image = xeno_image.postprocess_output(
         image,
         output_size=output_size,
@@ -289,8 +297,8 @@ def next_image(image_path, base_image_path, starting_frame_random):
         image = Image.fromarray(_squircle.to_circle(np.array(image)), mode='L')
     elif squircle_mode == "outside":
         image = xeno_image.to_circle_outside(image)
-    # Save image to path.
-    nn_image_path = "{}/{}_3ann.png".format(dirname, basename)
+    # Save postprocessed projected image.
+    nn_image_path = "{}/{}_4prj.png".format(dirname, basename)
     image.save(nn_image_path)
     # Save encoded data (only when encoder output is available).
     if encoded is not None:
