@@ -43,12 +43,14 @@ class GenerativeMode extends AbstractMode {
   // Snapshot-related.
   Timer exposureTimer;
   Timer stateTimer;
+  Timer cameraWatchdogTimer;
 
   final int FLASH_TIME = 8000;
   final int GLOW_STOP_BEFORE_SNAPSHOT_TIME = 3000; // should be smaller than FLASH_TIME
   final int HANDSHAKE_TIMEOUT = 5000;
   final int SNAPSHOT_BASE_TIME = 10000;
   final int SNAPSHOT_INTER_SHOT_TIME = 2000;
+  final int SNAPSHOT_CAMERA_TIMEOUT = 60000; // restart camera if no frame within this time
   
   final int N_SNAPSHOTS_PER_EXPERIMENT = 12;
   //final int N_SNAPSHOTS_PER_EXPERIMENT = 3;
@@ -232,6 +234,8 @@ class GenerativeMode extends AbstractMode {
         snapshot = null;
         stateTimer = new Timer(SNAPSHOT_BASE_TIME);
         stateTimer.start();
+        cameraWatchdogTimer = new Timer(SNAPSHOT_CAMERA_TIMEOUT);
+        cameraWatchdogTimer.start();
       }
 
       // Set color to flash.
@@ -256,6 +260,17 @@ class GenerativeMode extends AbstractMode {
             stateTimer.start();
           }
         }
+      }
+
+      // Camera watchdog: if no frame received for too long, reinitialize camera and retry.
+      // This handles USB re-enumeration (e.g. after an EMI-induced hub reset) where the
+      // device path changes and a simple stop/start is insufficient.
+      if (snapshot == null && cameraWatchdogTimer.isFinished()) {
+        println("Camera watchdog triggered: reinitializing camera and retrying.");
+        cam.reinitialize();
+        stateTimer = new Timer(SNAPSHOT_BASE_TIME);
+        stateTimer.start();
+        cameraWatchdogTimer.start();
       }
 
       // Process snapshot.

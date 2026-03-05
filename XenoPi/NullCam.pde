@@ -8,6 +8,8 @@ class NullCam extends AbstractCam {
   }
 
   void start()        {}
+  void stop()         {}
+  void reinitialize() {}
   boolean available() { return false; }
   void read()         {}
   PImage getImage()   { return _blank; }
