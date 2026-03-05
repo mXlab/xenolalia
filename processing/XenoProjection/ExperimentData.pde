@@ -84,7 +84,10 @@ class ExperimentData {
   
   /// Rereads folder to see if there is any new images.
   void refresh() {
-    artificialImageFilenames = listFiles("ann");
+    // Prefer per-snapshot _4prj.png (live, postprocessed) over pre-generated _ann_N.png.
+    artificialImageFilenames = listPipelineFiles("4prj");
+    if (artificialImageFilenames.isEmpty())
+      artificialImageFilenames = listFiles("ann");
     biologicalImageFilenames = listFiles("bio");
     startsWithArtificial = nArtificial() > nBiological();
   }
