@@ -168,8 +168,7 @@ def generate_pipeline_snapshots(exp_dir, settings, force=False):
                 area_max=output_area_max,
             )
             if squircle_mode == "inside":
-                import squircle as _squircle
-                prj_img = Image.fromarray(_squircle.to_circle(np.array(prj_img)), mode='L')
+                prj_img = xeno_image.to_circle_inside(prj_img)
             elif squircle_mode == "outside":
                 prj_img = xeno_image.to_circle_outside(prj_img)
             prj_img.save(str(prj_path))

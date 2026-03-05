@@ -293,8 +293,7 @@ def next_image(image_path, base_image_path, starting_frame_random):
     )
     # Squircle remapping: map square output to circular disc for projection.
     if squircle_mode == "inside":
-        import squircle as _squircle
-        image = Image.fromarray(_squircle.to_circle(np.array(image)), mode='L')
+        image = xeno_image.to_circle_inside(image)
     elif squircle_mode == "outside":
         image = xeno_image.to_circle_outside(image)
     # Save postprocessed projected image.
