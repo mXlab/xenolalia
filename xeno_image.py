@@ -77,7 +77,7 @@ def to_circle_outside(image):
 
     The output disc circumscribes the input square: its radius equals the
     half-diagonal (side * sqrt(2) / 2), so all four canvas corners are
-    populated — no black corners. Uses inverse FGS mapping via cv2.remap.
+    populated - no black corners. Uses inverse FGS mapping via cv2.remap.
 
     Args:
         image: Grayscale PIL Image (must be square).
@@ -229,18 +229,18 @@ def compute_visibility(bio_image, raw_image=None, projected=None,
     (visible reaction).
 
     Args:
-        bio_image:       28x28 PIL Image — processed, base-subtracted (what CV sees).
-        raw_image:       PIL Image — perspective-corrected, no base subtraction
+        bio_image:       28x28 PIL Image - processed, base-subtracted (what CV sees).
+        raw_image:       PIL Image - perspective-corrected, no base subtraction
                          (what a human sees).  If None, falls back to bio_image.
-        projected:       Previous AE output — numpy array (any shape with 28*28
-                         values) or PIL Image.  None → returns 0 (no prior glyph).
+        projected:       Previous AE output - numpy array (any shape with 28*28
+                         values) or PIL Image.  None -> returns 0 (no prior glyph).
         threshold_cv:    Minimum correlation for the CV-visible class.
         threshold_human: Minimum correlation for the human-visible class.
 
     Returns:
-        2  – human-visible  (human correlation ≥ threshold_human)
-        1  – CV-visible only (CV correlation ≥ threshold_cv)
-        0  – invisible / no prior glyph
+        2  - human-visible  (human correlation >= threshold_human)
+        1  - CV-visible only (CV correlation >= threshold_cv)
+        0  - invisible / no prior glyph
     """
     if projected is None:
         return 0
@@ -342,7 +342,7 @@ def postprocess_output(image, output_size=224, threshold=0.5, stroke_width=20, b
             # Thin: keep all pixels solid.
             result[comp] = 255
 
-    # 5. Downsample to output_size — LANCZOS averaging gives antialiased edges.
+    # 5. Downsample to output_size - LANCZOS averaging gives antialiased edges.
     return Image.fromarray(result, mode='L').resize((output_size, output_size), Image.LANCZOS)
 
 # Processes raw image.
