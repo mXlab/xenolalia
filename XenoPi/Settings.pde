@@ -33,6 +33,9 @@ class Settings {
 
   // Apparatus.
   boolean useApparatus;
+
+  // If true, skip calibration screen and go straight to generative mode on startup.
+  boolean autostart;
   
   // Neural net.
   String modelName;
@@ -80,6 +83,7 @@ class Settings {
   boolean useBaseImage() { return useBaseImage; }
 
   boolean useApparatus() { return useApparatus; }
+  boolean autostart()    { return autostart; }
 
   String squircleMode() { return squircleMode; }
   boolean usesSquircle() { return !squircleMode.equals("none"); }
@@ -124,6 +128,7 @@ class Settings {
       settings.setBoolean("use_base_image", useBaseImage);
 
       settings.setBoolean("use_apparatus", useApparatus);
+      settings.setBoolean("autostart", autostart);
 
       settings.setFloat("exposure_time", exposureTime);
 
@@ -172,6 +177,7 @@ class Settings {
       useBaseImage = settings.getBoolean("use_base_image");
 
       useApparatus = settings.getBoolean("use_apparatus");
+      autostart = settings.hasKey("autostart") && settings.getBoolean("autostart");
 
       exposureTime = settings.getFloat("exposure_time");
       

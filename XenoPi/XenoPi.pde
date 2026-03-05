@@ -107,7 +107,10 @@ void setup() {
   settings = new Settings();
 
   // Initialize mode.
-  cameraCalibrationMode();
+  if (settings.autostart())
+    generativeMode();
+  else
+    cameraCalibrationMode();
 
   // Setup OSC.
   oscP5 = new OscP5(this, settings.oscReceivePort());
