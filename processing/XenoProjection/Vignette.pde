@@ -42,6 +42,7 @@ abstract class Vignette {
   Scene scene;
 
   PImage mask;
+  PImage _styleMask;  // set by drawImageWithStyle(); consumed by display()
 
   float side;
 
@@ -57,7 +58,8 @@ abstract class Vignette {
     pg = createGraphics(VIGNETTE_SIDE, VIGNETTE_SIDE);
     this.scene = null;
     this.exp = exp;
-    this.mask = DEFAULT_MASK;
+    this.mask       = DEFAULT_MASK;
+    this._styleMask = null;
     this.type = DataType.ALL;
     this.useBorder = true;
     this.borderColor = color(64);
@@ -109,9 +111,11 @@ abstract class Vignette {
     // Call child class display function.
     doDisplay();
 
-    // Add mask.
-    if (hasMask())
-      pg.image(mask, 0, 0);
+    // Add mask: prefer per-style override, fall back to vignette default.
+    PImage activeMask = (_styleMask != null) ? _styleMask : mask;
+    _styleMask = null;
+    if (activeMask != null)
+      pg.image(activeMask, 0, 0);
 
     pg.endDraw();
 
@@ -130,6 +134,8 @@ abstract class Vignette {
 
   // Render img using the given VignetteStyle onto pg.
   // Must be called from within a pg.beginDraw() / pg.endDraw() block.
+  // If style.customMask is set, records it so display() uses it instead of
+  // the vignette's own mask.
   void drawImageWithStyle(PImage img, VignetteStyle style) {
     if (img == null) {
       pg.background(20);
@@ -143,6 +149,8 @@ abstract class Vignette {
     } else {
       pg.image(img, 0, 0, VIGNETTE_SIDE, VIGNETTE_SIDE);
     }
+    if (style.customMask != null)
+      _styleMask = style.customMask;
   }
 
   void doDisplay() {
