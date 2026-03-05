@@ -171,6 +171,7 @@ void setup() {
         v.setArtificialPalette(ArtificialPalette.MAGENTA);
       scene.putVignette(i, v);
     }
+    scene.setSequential(true);
     scenes.add(scene);
     pipelineScene = scene;
     currentExperimentScenes.add(scene);

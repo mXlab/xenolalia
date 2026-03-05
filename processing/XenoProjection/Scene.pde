@@ -1,10 +1,10 @@
 // A scene presents one or multiple vignettes in a grid-like view.
 class Scene {
 
-  final int RUN_DURATION = 15000;
-  final int END_DURATION =  5000;
-  //final int RUN_DURATION = 1000;
-  //final int END_DURATION = 500;
+  //final int RUN_DURATION = 15000;
+  //final int END_DURATION =  5000;
+  final int RUN_DURATION = 1000;
+  final int END_DURATION = 500;
 
   final int TOTAL_DURATION = RUN_DURATION + END_DURATION;
   final float RUN_DURATION_PROPORTION = RUN_DURATION / (float)TOTAL_DURATION;
@@ -24,6 +24,7 @@ class Scene {
   Timer timer;
 
   boolean needsRefresh;
+  boolean sequential = false;  // if true, reveal vignettes one by one over RUN_DURATION
 
   String oscAddress = null;
 
@@ -36,6 +37,10 @@ class Scene {
     timer = new Timer(TOTAL_DURATION);
     background = 0;
     init(nColumns, nRows);
+  }
+
+  void setSequential(boolean s) {
+    sequential = s;
   }
 
   void setOscAddress(String addr) {
@@ -185,12 +190,15 @@ class Scene {
 
   void doDisplay() {
     pg.imageMode(CORNER);
-    int k=0;
+    int n = nColumns * nRows;
+    int k = 0;
     for (int r=0; r<nRows; r++) {
       for (int c=0; c<nColumns; c++, k++) {
+        if (sequential && runProgress() < k / (float)n)
+          continue;
         Vignette v = getVignette(c, r);
         if (v != null)
-        v.display(c*vignetteSide, r*vignetteSide, vignetteSide, pg);
+          v.display(c*vignetteSide, r*vignetteSide, vignetteSide, pg);
       }
     }
   }
