@@ -29,6 +29,9 @@ echo ""
 
 trap "$cleanup; exit" SIGINT
 
+# Initialize log file.
+> $xeno_logs_dir/xeno_pi.log
+
 # Wait for xeno_osc.py to start before first launch.
 echo "Waiting for xeno_osc.py to start..."
 sleep 20
@@ -36,10 +39,10 @@ sleep 20
 # Launch processing sketch, restarting on crash.
 # On subsequent restarts xeno_osc.py is already running, so use a shorter delay.
 while true; do
-  echo "[$(date)] Launching XenoPi"
+  echo "[$(date)] Launching XenoPi" >> $xeno_logs_dir/xeno_pi.log
   /usr/local/bin/processing-java --sketch=$xeno_dir/XenoPi --run >> $xeno_logs_dir/xeno_pi.log 2>&1
   EXIT_CODE=$?
-  echo "[$(date)] XenoPi exited with code $EXIT_CODE. Restarting in 5s..."
+  echo "[$(date)] XenoPi exited with code $EXIT_CODE. Restarting in 5s..." >> $xeno_logs_dir/xeno_pi.log
   sleep 5
 done
 
