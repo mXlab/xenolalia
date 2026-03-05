@@ -4,24 +4,52 @@ PImage createVignetteMask(color maskColor) {
   return createVignetteMask(maskColor, 0.9);
 }
 
-// Single-zone mask: gradient from VIGNETTE_RADIUS inward to transparencyRadius*VIGNETTE_RADIUS,
-// fully transparent inside.
+// Single-zone mask: corners are OPAQUE (maskColor), gradient from the circle
+// edge inward to transparencyRadius*VIGNETTE_RADIUS, transparent inside.
+// Corners are opaque so maskColor clips the rectangular PGraphics to a circle.
+// Use when maskColor matches the scene background (e.g. black on black).
 PImage createVignetteMask(color maskColor, float transparencyRadius) {
-  return createVignetteMask(maskColor, 1.0, transparencyRadius);
+  PGraphics alphaMask = createGraphics(VIGNETTE_SIDE, VIGNETTE_SIDE);
+  alphaMask.beginDraw();
+  alphaMask.background(255);   // corners opaque
+  alphaMask.noStroke();
+
+  float radiusBegin = transparencyRadius * VIGNETTE_RADIUS;
+  float radiusEnd   = VIGNETTE_RADIUS;
+  for (float r = radiusEnd; r > radiusBegin; r--) {
+    float alpha = map(r, radiusBegin, radiusEnd, 0, 255);
+    alphaMask.fill(alpha);
+    alphaMask.circle(VIGNETTE_RADIUS, VIGNETTE_RADIUS, 2*r);
+  }
+  alphaMask.fill(0);
+  alphaMask.circle(VIGNETTE_RADIUS, VIGNETTE_RADIUS, 2*radiusBegin);
+  alphaMask.endDraw();
+
+  PGraphics mask = createGraphics(VIGNETTE_SIDE, VIGNETTE_SIDE);
+  mask.beginDraw();
+  mask.background(maskColor);
+  mask.mask(alphaMask);
+  mask.endDraw();
+  return mask.get();
 }
 
-// Two-zone mask:
-//   opaqueRadius..1.0   : fully opaque (hard band, fraction of VIGNETTE_RADIUS)
-//   transRadius..opaqueRadius : gradient from opaque → transparent
-//   inside transRadius  : fully transparent
+// Two-zone mask: corners are TRANSPARENT so the mask color only appears
+// inside the vignette circle. Use when maskColor differs from the scene bg.
+//   opaqueRadius..VIGNETTE_RADIUS : fully opaque (hard band)
+//   transRadius..opaqueRadius     : gradient opaque → transparent
+//   inside transRadius            : fully transparent
 PImage createVignetteMask(color maskColor, float opaqueRadius, float transRadius) {
   PGraphics alphaMask = createGraphics(VIGNETTE_SIDE, VIGNETTE_SIDE);
   alphaMask.beginDraw();
-  alphaMask.background(255);   // default: fully opaque (covers corners too)
+  alphaMask.background(0);   // corners TRANSPARENT
   alphaMask.noStroke();
 
   float rOpaque = opaqueRadius * VIGNETTE_RADIUS;
   float rTransp = transRadius  * VIGNETTE_RADIUS;
+
+  // Fill the full vignette circle opaque first (hard outer band).
+  alphaMask.fill(255);
+  alphaMask.circle(VIGNETTE_RADIUS, VIGNETTE_RADIUS, 2*VIGNETTE_RADIUS);
 
   // Gradient zone: from rOpaque (opaque) down to rTransp (transparent).
   for (float r = rOpaque; r > rTransp; r--) {
@@ -152,7 +180,17 @@ abstract class Vignette {
       return;
     }
     if (style.mode == VIGNETTE_IMG_FIT) {
-      pg.background(style.bgColor);
+      if (style.customMask != null) {
+        // Clear to transparent so the scene background shows through the corners,
+        // then fill only the vignette circle — prevents light bgColors from
+        // bleeding as a visible rectangle outside the circle.
+        pg.clear();
+        pg.noStroke();
+        pg.fill(style.bgColor);
+        pg.circle(VIGNETTE_SIDE/2, VIGNETTE_SIDE/2, VIGNETTE_SIDE);
+      } else {
+        pg.background(style.bgColor);
+      }
       int s   = (int)(VIGNETTE_SIDE * style.scale);
       int off = (VIGNETTE_SIDE - s) / 2;
       pg.image(img, off, off, s, s);
