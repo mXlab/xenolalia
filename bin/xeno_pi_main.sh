@@ -35,7 +35,6 @@ sleep 20
 
 # Launch processing sketch, restarting on crash.
 # On subsequent restarts xeno_osc.py is already running, so use a shorter delay.
-first_launch=true
 while true; do
   echo "[$(date)] Launching XenoPi"
   /usr/local/bin/processing-java --sketch=$xeno_dir/XenoPi --run >> $xeno_logs_dir/xeno_pi.log 2>&1
