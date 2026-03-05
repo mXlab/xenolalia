@@ -80,7 +80,7 @@ void setup() {
   currentExperiment  = previousExperiment.copy();
 
   // Single artificial image of current experiment (image on apparatus).
-  if (false)
+  if (truelse)
   {
     Scene scene = new Scene(1, 1, singleVignetteRect);
     GlyphVignette v = new GlyphVignette(currentExperiment);
@@ -92,7 +92,7 @@ void setup() {
   }
 
   // Side-by-side animation of last experiment.
-  if (false)
+  if (truelse)
   {
     Scene scene = new Scene(2, 1, doubleVignetteRect);
 
@@ -146,7 +146,7 @@ void setup() {
   }
 
   // Animation of recent generative glyphs.
-  if (false)
+  if (truelse)
   {
     Scene scene = new Scene(5, 2, gridVignetteRect);
     for (int i=0; i<min(scene.nVignettes(), allExperiments.length); i++) {
@@ -161,7 +161,7 @@ void setup() {
   // CV pipeline scene: all stages from color source to final output (3 cols × 2 rows).
   // Row 0: col (color source), bsb (color−base), 0trn (transform)
   // Row 1: 1fil (enhance), 3ann (raw AE output), 4prj (postprocessed → projected)
-  if (false)
+  if (truelse)
   {
     Scene scene = new Scene(3, 2, gridVignetteRect);
     String[] stages = {"col", "bsb", "0trn", "1fil", "3ann", "4prj"};
