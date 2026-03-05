@@ -86,7 +86,14 @@ class Settings {
 
   void save() {
     try {
-      JSONObject settings = new JSONObject();
+      // Load existing file first so unknown fields (e.g. encoder_layer,
+      // output_size, …) that xeno_osc.py reads are not silently dropped.
+      JSONObject settings;
+      try {
+        settings = loadJSONObject(SETTINGS_FILE_NAME);
+      } catch (Exception e) {
+        settings = new JSONObject();
+      }
       // Write camera perspective quad.
       JSONArray camQuad = new JSONArray();
       _writePoints(camQuadPoints, camQuad);
