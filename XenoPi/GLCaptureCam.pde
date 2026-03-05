@@ -31,7 +31,7 @@ class GLCaptureCam extends AbstractCam {
   }
 
   void stop() {
-    try { cam.stop(); } catch (Throwable e) { println("Camera stop error: " + e.getMessage()); }
+    try { cam.dispose(); } catch (Throwable e) { println("Camera stop error: " + e.getMessage()); }
   }
 
   // Re-enumerate devices and create a fresh capture pipeline.
