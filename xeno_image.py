@@ -423,6 +423,8 @@ if __name__ == "__main__":
     parser.add_argument("-r", "--raw-image", default=False, action='store_true', help="Use raw image (ie. do not apply any transformations, just filterings)")
     parser.add_argument("-c", "--enable-color", default=False, action='store_true', help="Enable color when taking snapshot")
     parser.add_argument("-s", "--show", default=False, action='store_true', help="Show image on screen before saving")
+    parser.add_argument("--save-pipeline", type=str, default=None, metavar="PATH",
+                        help="Save a 3x2 pipeline-stages grid image to PATH (col, transform, masked / enhanced, simplified, resized)")
 
     parser.add_argument("--projected", type=str, default=None,
                         help="Previous projected glyph image for correlation-based visibility")
@@ -453,17 +455,20 @@ if __name__ == "__main__":
         load_settings()
 
     resized, simplified, enhanced, masked, transformed, raw_transformed = load_image(args.input_image, args.base_image, input_quad=input_quad, squircle_mode=squircle_mode)#, apply_transforms=(not args.raw_image))
-    if args.show:
+    if args.show or args.save_pipeline:
         single_image_side = transformed.size[0]
-        print(single_image_side)
-        composition = Image.new('RGBA', (3*single_image_side, 2*single_image_side))
-        composition.paste(raw_transformed, (0, 0))
-        composition.paste(transformed, (  single_image_side, 0))
-        composition.paste(masked,      (2*single_image_side, 0))
-        composition.paste(enhanced,    (0,                   single_image_side))
-        composition.paste(simplified,  (  single_image_side, single_image_side))
-        composition.paste(resized.resize(transformed.size), (2*single_image_side, single_image_side))
-        composition.show()
+        composition = Image.new('RGB', (3*single_image_side, 2*single_image_side))
+        composition.paste(raw_transformed.convert('RGB'), (0, 0))
+        composition.paste(transformed.convert('RGB'),     (  single_image_side, 0))
+        composition.paste(masked.convert('RGB'),          (2*single_image_side, 0))
+        composition.paste(enhanced.convert('RGB'),        (0,                   single_image_side))
+        composition.paste(simplified.convert('RGB'),      (  single_image_side, single_image_side))
+        composition.paste(resized.resize(transformed.size).convert('RGB'), (2*single_image_side, single_image_side))
+        if args.save_pipeline:
+            composition.save(args.save_pipeline)
+            print("Pipeline grid saved to {}".format(args.save_pipeline))
+        if args.show:
+            composition.show()
 
     resized.save(args.output_image)
     density = _image_density(resized)
