@@ -115,6 +115,7 @@ class ExperimentData {
   
   PImage getArtificial(int i, ArtificialPalette palette) {
     PImage img = _getImage(i, artificialImageFilenames);
+    if (img == null) return null;
     PGraphics pg = createGraphics(img.width, img.height);
     pg.beginDraw();
     if (palette == ArtificialPalette.MAGENTA)
