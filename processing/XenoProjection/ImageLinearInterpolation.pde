@@ -62,6 +62,8 @@
 //}
 
 PImage lerpImage(PImage src, PImage dst, float t) {
+  if (src == null) return dst;
+  if (dst == null) return src;
   if (src == dst)
     return src;
 
