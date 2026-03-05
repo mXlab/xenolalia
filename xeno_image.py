@@ -424,7 +424,9 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--enable-color", default=False, action='store_true', help="Enable color when taking snapshot")
     parser.add_argument("-s", "--show", default=False, action='store_true', help="Show image on screen before saving")
     parser.add_argument("--save-pipeline", type=str, default=None, metavar="PATH",
-                        help="Save a 3x2 pipeline-stages grid image to PATH (col, transform, masked / enhanced, simplified, resized)")
+                        help="Save pipeline-stages grid to PATH")
+    parser.add_argument("--ann-image", type=str, default=None, metavar="PATH",
+                        help="Raw AE output (_3ann.png) to include output/projection stages in the pipeline grid")
 
     parser.add_argument("--projected", type=str, default=None,
                         help="Previous projected glyph image for correlation-based visibility")
@@ -438,15 +440,33 @@ if __name__ == "__main__":
     # Load calibration settings from .json file.
     def load_settings():
         import json
-        global args, data, input_quad, n_steps, squircle_mode
+        global args, data, input_quad, n_steps, squircle_mode, \
+               output_size, output_stroke_width, output_boundary_px, output_threshold, output_area_max
         print("Loading settings")
         with open(args.configuration_file, "r") as f:
             data = json.load(f)
             input_quad = tuple( data['camera_quad'] )
-            squircle_mode = str(data.get('squircle_mode', 'none'))
+            if 'squircle_mode' in data:
+                squircle_mode = str(data['squircle_mode'])
+            elif data.get('use_squircle', False):
+                squircle_mode = "inside"
+            output_size         = int(data.get('output_size',         224))
+            output_stroke_width = int(data.get('output_stroke_width', 20))
+            output_boundary_px  = int(data.get('output_boundary_px',  22))
+            output_threshold    = float(data.get('output_threshold',  0.5))
+            output_area_max     = data.get('output_area_max', None)
+            if output_area_max is not None:
+                output_area_max = float(output_area_max)
+
+    # Defaults (overwritten by load_settings).
+    squircle_mode       = "none"
+    output_size         = 224
+    output_stroke_width = 20
+    output_boundary_px  = 22
+    output_threshold    = 0.5
+    output_area_max     = None
 
     # Load input quad
-    squircle_mode = "none"
     if args.raw_image:
         input_quad = (0, 0, 0, 1, 1, 1, 1, 1, 0)  # dummy
     elif (args.input_quad != None):
@@ -456,14 +476,53 @@ if __name__ == "__main__":
 
     resized, simplified, enhanced, masked, transformed, raw_transformed = load_image(args.input_image, args.base_image, input_quad=input_quad, squircle_mode=squircle_mode)#, apply_transforms=(not args.raw_image))
     if args.show or args.save_pipeline:
-        single_image_side = transformed.size[0]
-        composition = Image.new('RGB', (3*single_image_side, 2*single_image_side))
-        composition.paste(raw_transformed.convert('RGB'), (0, 0))
-        composition.paste(transformed.convert('RGB'),     (  single_image_side, 0))
-        composition.paste(masked.convert('RGB'),          (2*single_image_side, 0))
-        composition.paste(enhanced.convert('RGB'),        (0,                   single_image_side))
-        composition.paste(simplified.convert('RGB'),      (  single_image_side, single_image_side))
-        composition.paste(resized.resize(transformed.size).convert('RGB'), (2*single_image_side, single_image_side))
+        tile = transformed.size[0]
+
+        # Pre-squircle masked: recompute from transformed so we can show both sides.
+        masked_pre = add_mask(transformed)
+
+        # Collect tiles as (label, PIL Image) pairs.
+        # Input pipeline.
+        tiles = [
+            ("col",     raw_transformed),
+            ("0trn",    transformed),
+            ("mask",    masked_pre),
+            ("sqr_in",  masked),       # == masked_pre when squircle_mode="none"
+            ("1fil",    enhanced),
+            ("2res",    simplified),
+            ("resized", resized.resize((tile, tile), Image.NEAREST)),
+        ]
+
+        # Output / projection pipeline (optional).
+        if args.ann_image:
+            ann = Image.open(args.ann_image)
+            ann_post = postprocess_output(
+                ann,
+                output_size=output_size,
+                threshold=output_threshold,
+                stroke_width=output_stroke_width,
+                boundary_px=output_boundary_px,
+                area_max=output_area_max,
+            )
+            if squircle_mode == "inside":
+                ann_proj = to_circle_inside(ann_post)
+            elif squircle_mode == "outside":
+                ann_proj = to_circle_outside(ann_post)
+            else:
+                ann_proj = ann_post
+            tiles += [
+                ("3ann",    ann.resize((tile, tile), Image.NEAREST)),
+                ("4prj_pre", ann_post),
+                ("4prj",    ann_proj),
+            ]
+
+        n_cols = 4
+        n_rows = (len(tiles) + n_cols - 1) // n_cols
+        composition = Image.new('RGB', (n_cols * tile, n_rows * tile))
+        for idx, (label, img) in enumerate(tiles):
+            row, col = divmod(idx, n_cols)
+            composition.paste(img.convert('RGB').resize((tile, tile)), (col * tile, row * tile))
+
         if args.save_pipeline:
             composition.save(args.save_pipeline)
             print("Pipeline grid saved to {}".format(args.save_pipeline))
