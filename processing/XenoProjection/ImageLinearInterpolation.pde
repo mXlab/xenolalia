@@ -64,19 +64,22 @@
 PImage lerpImage(PImage src, PImage dst, float t) {
   if (src == dst)
     return src;
-  
+
   int w = src.width;
   int h = src.height;
- 
+
+  src = src.copy();
+  dst = dst.copy();
+  if (dst.width != w || dst.height != h)
+    dst.resize(w, h);
+
   PGraphics mask = createGraphics(w, h);
   mask.beginDraw();
   mask.background(t*255);
   mask.endDraw();
-  
-  src = src.copy();
-  dst = dst.copy();
+
   dst.mask(mask);
-  
+
   src.blend(dst, 0, 0, w, h, 0, 0, w, h, BLEND);
   return src;
 }
