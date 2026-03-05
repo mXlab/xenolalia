@@ -13,7 +13,24 @@ class CaptureCam extends AbstractCam {
   void start() {
     cam.start();
   }
-  
+
+  void stop() {
+    try { cam.stop(); } catch (Throwable e) { println("Camera stop error: " + e.getMessage()); }
+  }
+
+  void reinitialize() {
+    stop();
+    delay(500);
+    String[] devices = Capture.list();
+    println("Camera reinitialize: reconnecting CaptureCam");
+    try {
+      cam = new Capture(parent, devices.length > 0 ? devices[0] : "");
+      cam.start();
+    } catch (Throwable e) {
+      println("Camera reinitialize failed: " + e.getMessage());
+    }
+  }
+
   boolean available() { return cam.available(); }
   
   void read() {
