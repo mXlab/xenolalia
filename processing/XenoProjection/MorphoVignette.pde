@@ -22,8 +22,34 @@ class MorphoVignette extends Vignette {
     int nImages = max(exp.nImages(type) - lastImageOffset, 0);
     images = new PImage[nImages];
     for (int i=0; i<images.length; i++) {
-      images[i] = exp.getImage(i, type, palette);
+      PImage img = exp.getImage(i, type, palette);
+      // When interpolating a mixed bio/art sequence, pre-render each image
+      // with its calibrated style into a VIGNETTE_SIDE canvas.  This makes
+      // both types appear at the same content-circle size so the lerp is
+      // smooth with no scale jump at the boundary.
+      if (useInterpolation && type == DataType.ALL && img != null) {
+        DataType dt = exp.getDataType(i);
+        img = _normalizeImage(img, getVignetteStyle(vignetteStyleKey(dt)));
+      }
+      images[i] = img;
     }
+  }
+
+  // Composite img into a VIGNETTE_SIDE canvas using the given style's scale/bg.
+  PImage _normalizeImage(PImage img, VignetteStyle style) {
+    PGraphics pg = createGraphics(VIGNETTE_SIDE, VIGNETTE_SIDE);
+    pg.beginDraw();
+    if (style.mode == VIGNETTE_IMG_FIT) {
+      pg.background(style.bgColor);
+      int s   = (int)(VIGNETTE_SIDE * style.scale);
+      int off = (VIGNETTE_SIDE - s) / 2;
+      pg.image(img, off, off, s, s);
+    } else {
+      pg.background(0);
+      pg.image(img, 0, 0, VIGNETTE_SIDE, VIGNETTE_SIDE);
+    }
+    pg.endDraw();
+    return pg.get();
   }
 
   int lastImageIndex = -1;
@@ -58,11 +84,15 @@ class MorphoVignette extends Vignette {
       }
 
       PImage img = useInterpolation ? lerpImage(prevImage, nextImage, t) : images[round(imageIndex)];
-      // When type=ALL, images alternate bio/art — look up the actual type of the
-      // dominant frame so each image gets its calibrated style.
-      DataType displayType = (type == DataType.ALL)
-          ? exp.getDataType(round(imageIndex))
-          : type;
+      // Style selection:
+      // - Interpolated type=ALL: images were pre-normalized in build() to the
+      //   same visual scale, so use FILL ("bio") for all — no per-frame resize.
+      // - Non-interpolated type=ALL: snap to each image's own calibrated style.
+      // - Explicit type: always use that type's style.
+      DataType displayType;
+      if      (type == DataType.ALL && useInterpolation)  displayType = DataType.BIOLOGICAL;
+      else if (type == DataType.ALL)                      displayType = exp.getDataType(round(imageIndex));
+      else                                                displayType = type;
       drawImageWithStyle(img, getVignetteStyle(vignetteStyleKey(displayType)));
     }
   }
