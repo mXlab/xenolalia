@@ -15,6 +15,9 @@
 final int VIGNETTE_IMG_FILL = 0;
 final int VIGNETTE_IMG_FIT  = 1;
 
+final float VIGNETTE_FIT_COLOR_PROPORTION = 0.85;
+final float VIGNETTE_FIT_BW_PROPORTION = 0.75;
+
 class VignetteStyle {
   int    mode;
   color  bgColor;
@@ -58,19 +61,19 @@ void initVignetteStyles() {
   // col / bsb / 0trn: FIT at scale=1.0 so the dish fills the vignette circle.
   // Custom mask: soft white fade at the circle edge (no hard band needed).
   // CIRCLE_CLIP_MASK is applied afterward to clip the square corners.
-  PImage photoMask = createVignetteMask(color(255), 1.0, 0.80);
-  vignetteStyles.put("col",  new VignetteStyle(VIGNETTE_IMG_FIT, color(255), 1.0, photoMask));
-  vignetteStyles.put("bsb",  new VignetteStyle(VIGNETTE_IMG_FIT, color(255), 1.0, photoMask));
-  vignetteStyles.put("0trn", new VignetteStyle(VIGNETTE_IMG_FIT, color(255), 1.0, photoMask));
+  PImage photoMask = createVignetteMask(color(0), VIGNETTE_FIT_COLOR_PROPORTION, 0.9*VIGNETTE_FIT_COLOR_PROPORTION);
+  vignetteStyles.put("col",  new VignetteStyle(VIGNETTE_IMG_FIT, color(255), VIGNETTE_FIT_COLOR_PROPORTION, photoMask));
+  vignetteStyles.put("bsb",  new VignetteStyle(VIGNETTE_IMG_FIT, color(255), VIGNETTE_FIT_COLOR_PROPORTION, photoMask));
+  vignetteStyles.put("0trn", new VignetteStyle(VIGNETTE_IMG_FIT, color(255), VIGNETTE_FIT_COLOR_PROPORTION, photoMask));
 
   // --- Category 3: CV pipeline / neural-network output stages -----------
   // Square 224×224 images; content disc inscribed.  Add breathing room
   // with a solid dark background.
-  vignetteStyles.put("1fil", new VignetteStyle(VIGNETTE_IMG_FIT, color(0),  0.85));
-  vignetteStyles.put("2res", new VignetteStyle(VIGNETTE_IMG_FIT, color(0),  0.85));
-  vignetteStyles.put("3ann", new VignetteStyle(VIGNETTE_IMG_FIT, color(0),  0.85));
+  vignetteStyles.put("1fil", new VignetteStyle(VIGNETTE_IMG_FIT, color(0),  VIGNETTE_FIT_BW_PROPORTION));
+  vignetteStyles.put("2res", new VignetteStyle(VIGNETTE_IMG_FIT, color(0),  VIGNETTE_FIT_BW_PROPORTION));
+  vignetteStyles.put("3ann", new VignetteStyle(VIGNETTE_IMG_FIT, color(0),  VIGNETTE_FIT_BW_PROPORTION));
   // 4prj: postprocessed + squircle-mapped disc on black bg.
-  vignetteStyles.put("4prj", new VignetteStyle(VIGNETTE_IMG_FIT, color(0),  0.85));
+  vignetteStyles.put("4prj", new VignetteStyle(VIGNETTE_IMG_FIT, color(0),  VIGNETTE_FIT_BW_PROPORTION));
 }
 
 // Returns the style for a given stage/type key, defaulting to FILL.
