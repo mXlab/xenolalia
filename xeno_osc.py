@@ -8,6 +8,7 @@ import time
 import math
 import argparse
 import traceback
+import json
 
 from pythonosc import dispatcher
 from pythonosc import osc_server
@@ -55,7 +56,6 @@ from keras.models import Model, load_model
 
 # Load calibration settings from .json file.
 def load_settings():
-    import json
     global args, data, input_quad, n_feedback_steps, use_base_image, \
            use_convolutional, model_name, encoder_layer, \
            output_size, output_stroke_width, output_boundary_px, output_threshold, output_area_max, \
