@@ -462,4 +462,4 @@ if __name__ == "__main__":
                                    threshold_cv=args.threshold_cv,
                                    threshold_human=args.threshold_human)
     labels = {0: "invisible (0)", 1: "cv-visible only (1)", 2: "human-visible (2)"}
-    print(f"Visibility: {labels[vis_class]}  density={density:.4f}")
+    print("Visibility: {}  density={:.4f}".format(labels[vis_class], density))
