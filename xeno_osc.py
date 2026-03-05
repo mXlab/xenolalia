@@ -7,6 +7,7 @@ import signal
 import time
 import math
 import argparse
+import traceback
 
 from pythonosc import dispatcher
 from pythonosc import osc_server
@@ -311,11 +312,17 @@ def handle_new(addr):
 
 # Handler for first image step.
 def handle_begin(addr, image_path, base_image_path):
-    next_image(image_path, base_image_path, True)
+    try:
+        next_image(image_path, base_image_path, True)
+    except Exception as e:
+        traceback.print_exc()
 
 # Handler for one image step.
 def handle_step(addr, image_path, base_image_path):
-    next_image(image_path, base_image_path, False)
+    try:
+        next_image(image_path, base_image_path, False)
+    except Exception as e:
+        traceback.print_exc()
 
 # Handler for XenoPi handshake.
 def handle_handshake(addr):
