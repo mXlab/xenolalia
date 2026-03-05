@@ -25,7 +25,7 @@ open_stage_control_pid=$!
 echo "Launching Open Stage Control (PID=$open_stage_control_pid)"
 
 # Launch Pd sonoscope.
-sudo /usr/bin/pd $xeno_dir/pd/xeno-sonoscope.pd > $xeno_logs_dir/xeno_sonoscope.log 2>&1 &
+bash $bin_dir/xeno_audio.sh $xeno_dir/pd/xeno-sonoscope.pd > $xeno_logs_dir/xeno_sonoscope.log 2>&1 &
 xeno_sonoscope_pid=$!
 echo "Launching xeno-sonoscope (PID=$xeno_sonoscope_pid)"
 
