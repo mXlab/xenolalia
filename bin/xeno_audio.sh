@@ -14,16 +14,30 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-# start pd in background briefly so we can link it
+# Wait for PipeWire to be ready (up to 30s)
+PW_SOCKET="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/pipewire-0"
+for i in $(seq 1 30); do
+    [ -S "$PW_SOCKET" ] && break
+    echo "Waiting for PipeWire... ($i/30)"
+    sleep 1
+done
+
+if [ ! -S "$PW_SOCKET" ]; then
+    echo "PipeWire socket not found, aborting"
+    exit 1
+fi
+
+# Start pd via pw-jack
 pw-jack pd -noprefs -jack -noadc -r 48000 -outchannels 2 -audiobuf 200 -send '; pd dsp 1' "$PATCH" &
 PD_PID=$!
 
-sleep 3
-
-# connect to HDMI
-pw-link pure_data:output_1 "${SINK}:playback_FL" 2>/dev/null
-pw-link pure_data:output_2 "${SINK}:playback_FR" 2>/dev/null
-echo "pd connected to HDMI — ctrl-c to stop"
+# Retry pw-link until HDMI sink is available (up to 15s)
+for i in $(seq 1 15); do
+    sleep 1
+    pw-link pure_data:output_1 "${SINK}:playback_FL" 2>/dev/null && \
+    pw-link pure_data:output_2 "${SINK}:playback_FR" 2>/dev/null && \
+    { echo "pd connected to HDMI"; break; }
+done
 
 # wait on pd process
 wait "$PD_PID"
