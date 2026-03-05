@@ -41,7 +41,7 @@ def create_mask(image, invert=False):
     return Image.open(absolute_file_mask_path).convert('RGBA').resize(image.size)
 
 # Returns image resulting from subtraction of image from base_image.
-# scale=0.1 amplifies the difference ×10 for the CV pipeline (high contrast).
+# scale=0.1 amplifies the difference x10 for the CV pipeline (high contrast).
 def remove_base(image, base_image):
     return ImageChops.subtract(image.convert('RGB'), base_image.convert('RGB'), scale=0.1, offset=127)
 
@@ -50,7 +50,7 @@ def remove_base_natural(image, base_image):
 
     Computes (image - base + 128) clipped to [0, 255] in grayscale.
     128 = no change, <128 = darker than base, >128 = brighter than base.
-    Reflects genuine biological signal without the CV pipeline's ×10 boost.
+    Reflects genuine biological signal without the CV pipeline's x10 boost.
     Both inputs must already be perspective-corrected and the same size.
     """
     raw_arr  = np.array(image.convert('L'),      dtype=np.float32)
@@ -229,7 +229,7 @@ def compute_visibility(bio_image, raw_image=None, projected=None,
     (visible reaction).
 
     Args:
-        bio_image:       28×28 PIL Image — processed, base-subtracted (what CV sees).
+        bio_image:       28x28 PIL Image — processed, base-subtracted (what CV sees).
         raw_image:       PIL Image — perspective-corrected, no base subtraction
                          (what a human sees).  If None, falls back to bio_image.
         projected:       Previous AE output — numpy array (any shape with 28*28
@@ -245,7 +245,7 @@ def compute_visibility(bio_image, raw_image=None, projected=None,
     if projected is None:
         return 0
 
-    # Normalise projected to a 28×28 grayscale PIL Image.
+    # Normalise projected to a 28x28 grayscale PIL Image.
     if isinstance(projected, np.ndarray):
         proj_arr = projected.flatten()[:28 * 28].astype(np.float32)
         proj_img = Image.fromarray(
@@ -253,13 +253,13 @@ def compute_visibility(bio_image, raw_image=None, projected=None,
     else:
         proj_img = projected.convert('L').resize((28, 28), Image.LANCZOS)
 
-    # CV correlation: processed 28×28 bio image vs projected.
+    # CV correlation: processed 28x28 bio image vs projected.
     # Use absolute value: the sign depends on polarity conventions (enhanced image is
     # inverted vs raw), but the magnitude reflects how strongly the biological pattern
     # spatially matches the glyph regardless of direction.
     cv_corr = abs(_image_correlation(bio_image, proj_img))
 
-    # Human correlation: raw image resized to 28×28 vs projected.
+    # Human correlation: raw image resized to 28x28 vs projected.
     # Raw image has opposite polarity (dark euglenas on light medium), so abs() is
     # required here to capture both accumulation and avoidance responses.
     if raw_image is not None:
