@@ -55,13 +55,14 @@ void initVignetteStyles() {
   vignetteStyles.put("ann", new VignetteStyle(VIGNETTE_IMG_FILL));
 
   // --- Category 2: Real photo images (square crop, unpredictable bg) ---
-  // col / bsb / 0trn: FIT with a dark background, but with a wide-gradient
-  // mask (transparencyRadius=0.65) that softly fades the square corners
-  // instead of leaving a hard circle edge.
-  PImage wideGradMask = createVignetteMask(color(0), 0.65);
-  vignetteStyles.put("col",  new VignetteStyle(VIGNETTE_IMG_FIT, color(20), 0.85, wideGradMask));
-  vignetteStyles.put("bsb",  new VignetteStyle(VIGNETTE_IMG_FIT, color(20), 0.85, wideGradMask));
-  vignetteStyles.put("0trn", new VignetteStyle(VIGNETTE_IMG_FIT, color(20), 0.85, wideGradMask));
+  // col / bsb / 0trn: FIT (scale=0.85) with a dark background.
+  // Custom mask: fully opaque from the outer edge down to opaqueRadius=0.85
+  // (covers the 0.15 gap between the vignette circle and the image disc),
+  // then a soft gradient fade from 0.85 inward to transRadius=0.70.
+  PImage photoMask = createVignetteMask(color(0), 0.85, 0.70);
+  vignetteStyles.put("col",  new VignetteStyle(VIGNETTE_IMG_FIT, color(0), 0.85, photoMask));
+  vignetteStyles.put("bsb",  new VignetteStyle(VIGNETTE_IMG_FIT, color(0), 0.85, photoMask));
+  vignetteStyles.put("0trn", new VignetteStyle(VIGNETTE_IMG_FIT, color(0), 0.85, photoMask));
 
   // --- Category 3: CV pipeline / neural-network output stages -----------
   // Square 224×224 images; content disc inscribed.  Add breathing room

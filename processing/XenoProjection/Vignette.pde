@@ -4,25 +4,35 @@ PImage createVignetteMask(color maskColor) {
   return createVignetteMask(maskColor, 0.9);
 }
 
+// Single-zone mask: gradient from VIGNETTE_RADIUS inward to transparencyRadius*VIGNETTE_RADIUS,
+// fully transparent inside.
 PImage createVignetteMask(color maskColor, float transparencyRadius) {
-  // Create a graycale transparency mask.
+  return createVignetteMask(maskColor, 1.0, transparencyRadius);
+}
+
+// Two-zone mask:
+//   opaqueRadius..1.0   : fully opaque (hard band, fraction of VIGNETTE_RADIUS)
+//   transRadius..opaqueRadius : gradient from opaque → transparent
+//   inside transRadius  : fully transparent
+PImage createVignetteMask(color maskColor, float opaqueRadius, float transRadius) {
   PGraphics alphaMask = createGraphics(VIGNETTE_SIDE, VIGNETTE_SIDE);
   alphaMask.beginDraw();
-  alphaMask.background(255);
+  alphaMask.background(255);   // default: fully opaque (covers corners too)
   alphaMask.noStroke();
 
-  // Draw concentric circles for gradient.
-  float radiusBegin = transparencyRadius * VIGNETTE_RADIUS;
-  float radiusEnd   = VIGNETTE_RADIUS;
-  for (float r=radiusEnd; r>radiusBegin; r--) {
-    float alpha = map(r, radiusBegin, radiusEnd, 0, 255);
+  float rOpaque = opaqueRadius * VIGNETTE_RADIUS;
+  float rTransp = transRadius  * VIGNETTE_RADIUS;
+
+  // Gradient zone: from rOpaque (opaque) down to rTransp (transparent).
+  for (float r = rOpaque; r > rTransp; r--) {
+    float alpha = map(r, rTransp, rOpaque, 0, 255);
     alphaMask.fill(alpha);
     alphaMask.circle(VIGNETTE_RADIUS, VIGNETTE_RADIUS, 2*r);
   }
 
-  // Draw final full white/transparent circle.
+  // Fully transparent inside rTransp.
   alphaMask.fill(0);
-  alphaMask.circle(VIGNETTE_RADIUS, VIGNETTE_RADIUS, 2*radiusBegin);
+  alphaMask.circle(VIGNETTE_RADIUS, VIGNETTE_RADIUS, 2*rTransp);
 
   alphaMask.endDraw();
 
