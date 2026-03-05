@@ -200,6 +200,8 @@ void keyPressed() {
     cameraCalibrationMode();
   else if (key == 's' && !(mode instanceof ShapeMode))
     shapeMode();
+  else if (key == 'f' && mode instanceof ShapeMode)
+    generativeMode(); // exit shape mode back to generative when toggling flash off
   //
   else if (key == CODED && keyCode == SHIFT)
     shiftPressed = true;
