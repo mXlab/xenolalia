@@ -58,7 +58,7 @@ class MorphoVignette extends Vignette {
       }
 
       PImage img = useInterpolation ? lerpImage(prevImage, nextImage, t) : images[round(imageIndex)];
-      pg.image(img, 0, 0, VIGNETTE_SIDE, VIGNETTE_SIDE);
+      drawImageWithStyle(img, getVignetteStyle(vignetteStyleKey(type)));
     }
   }
 }

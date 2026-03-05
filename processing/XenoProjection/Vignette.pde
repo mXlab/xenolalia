@@ -128,9 +128,26 @@ abstract class Vignette {
     }
   }
 
+  // Render img using the given VignetteStyle onto pg.
+  // Must be called from within a pg.beginDraw() / pg.endDraw() block.
+  void drawImageWithStyle(PImage img, VignetteStyle style) {
+    if (img == null) {
+      pg.background(20);
+      return;
+    }
+    if (style.mode == VIGNETTE_IMG_FIT) {
+      pg.background(style.bgColor);
+      int s   = (int)(VIGNETTE_SIDE * style.scale);
+      int off = (VIGNETTE_SIDE - s) / 2;
+      pg.image(img, off, off, s, s);
+    } else {
+      pg.image(img, 0, 0, VIGNETTE_SIDE, VIGNETTE_SIDE);
+    }
+  }
+
   void doDisplay() {
   }
-  
+
   String toString() {
     return exp.getUid();
   }

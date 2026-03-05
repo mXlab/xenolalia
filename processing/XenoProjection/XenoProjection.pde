@@ -52,6 +52,9 @@ void setup() {
   // Create default mask.
   DEFAULT_MASK = createVignetteMask(0);
 
+  // Initialise per-stage vignette display styles.
+  initVignetteStyles();
+
   // Setup OSC.
   oscP5 = new OscP5(this, OSC_RECEIVE_PORT);
 

@@ -15,16 +15,12 @@ class PipelineVignette extends Vignette {
   }
 
   void doDisplay() {
-    if (img != null) {
-      pg.imageMode(CORNER);
-      pg.noSmooth(); // keep pixelated look for 28x28 images
-      if (palette == ArtificialPalette.MAGENTA)
-        pg.tint(255, 0, 255);
-      pg.image(img, 0, 0, VIGNETTE_SIDE, VIGNETTE_SIDE);
-      pg.noTint();
-      pg.smooth();  // restore for everything else
-    } else {
-      pg.background(20);
-    }
+    pg.imageMode(CORNER);
+    pg.noSmooth(); // keep pixelated look for 28x28 images
+    if (palette == ArtificialPalette.MAGENTA)
+      pg.tint(255, 0, 255);
+    drawImageWithStyle(img, getVignetteStyle(stage));
+    pg.noTint();
+    pg.smooth();
   }
 }
