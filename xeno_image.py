@@ -105,7 +105,7 @@ def _fgs_to_circle(image, scale):
     y = np.clip(y, -1.0, 1.0)
     map_x = ((x + 1.0) * 0.5 * n).astype(np.float32)
     map_y = ((y + 1.0) * 0.5 * n).astype(np.float32)
-    result = cv2.remap(arr, map_x, map_y, cv2.INTER_LINEAR, borderValue=0)
+    result = cv2.remap(arr, map_x, map_y, cv2.INTER_LINEAR)
     result[~inside] = 0
     return Image.fromarray(result, mode='L')
 
@@ -134,7 +134,7 @@ def _fgs_to_square(image, scale):
     v = y * rad * inv_sqrt_r2 * scale
     map_x = np.clip((u + 1.0) * 0.5 * n, 0, n - 1).astype(np.float32)
     map_y = np.clip((v + 1.0) * 0.5 * n, 0, n - 1).astype(np.float32)
-    result = cv2.remap(arr, map_x, map_y, cv2.INTER_LINEAR, borderValue=0)
+    result = cv2.remap(arr, map_x, map_y, cv2.INTER_LINEAR)
     return Image.fromarray(result, mode='L')
 
 
