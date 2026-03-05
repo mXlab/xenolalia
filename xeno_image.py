@@ -348,7 +348,8 @@ def postprocess_output(image, output_size=224, threshold=0.5, stroke_width=20, b
         comp_u8 = comp.astype(np.uint8) * 255
         if opened[comp].any():
             # Thick: draw inward contour of width boundary_px.
-            contours, _ = cv2.findContours(comp_u8, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            _fc = cv2.findContours(comp_u8, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            contours = _fc[0] if len(_fc) == 2 else _fc[1]
             layer = np.zeros_like(binary)
             cv2.drawContours(layer, contours, -1, 255, thickness=bp * 2)
             result = cv2.add(result, cv2.bitwise_and(layer, comp_u8))
