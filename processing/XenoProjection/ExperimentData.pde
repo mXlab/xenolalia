@@ -165,7 +165,10 @@ class ExperimentData {
       
     if (index < 0)
       index = filenames.size() + index;
-    
+
+    if (index < 0 || index >= filenames.size())
+      return null;
+
     return manager.getImage(filenames.get(index));
   }
     
