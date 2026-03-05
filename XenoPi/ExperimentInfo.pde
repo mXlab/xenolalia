@@ -15,21 +15,14 @@ class ExperimentInfo {
     reset();
   }
 
-  // Fetches basic data.
+  // Fetches basic data from local system clock.
+  // (worldtimeapi.org fallback removed: Pi has no internet during installation.)
   void reset() {
-    try {
-      JSONObject data = loadJSONObject(TIME_API_URL);
-      timeZone = data.getString("timezone");
-      unixTime = data.getInt("unixtime");
-      shortTimeZone = data.getString("abbreviation");
-      timeSource = "worldtimeapi";
-    } catch (Exception e) {
-      Calendar cal = Calendar.getInstance();
-      timeZone = cal.getTimeZone().getID();
-      shortTimeZone = cal.getTimeZone().getDisplayName(false, TimeZone.SHORT);
-      unixTime = (int)(cal.getTimeInMillis()/1000);
-      timeSource = "local";
-    }
+    Calendar cal = Calendar.getInstance();
+    timeZone = cal.getTimeZone().getID();
+    shortTimeZone = cal.getTimeZone().getDisplayName(false, TimeZone.SHORT);
+    unixTime = (int)(cal.getTimeInMillis()/1000);
+    timeSource = "local";
   }
 
   // Returns UID.
