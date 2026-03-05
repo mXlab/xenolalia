@@ -19,6 +19,11 @@ class GlyphVignette extends Vignette {
 
   void doDisplay() {
     pg.ellipseMode(CORNER);
-    drawImageWithStyle(img, getVignetteStyle(vignetteStyleKey(type)));
+    // When type=ALL, images alternate bio/art — look up the actual type of
+    // this specific index so each image gets its calibrated style.
+    DataType displayType = (type == DataType.ALL && index >= 0)
+        ? exp.getDataType(index)
+        : type;
+    drawImageWithStyle(img, getVignetteStyle(vignetteStyleKey(displayType)));
   }
 }
