@@ -13,6 +13,7 @@ OscP5 oscP5;
 NetAddress sonoscope;
 
 PImage DEFAULT_MASK;
+PImage CIRCLE_CLIP_MASK;  // hard black outside circle, transparent inside — clips square corners
 
 DataManager manager = new DataManager();
 SceneManager scenes = new SceneManager();
@@ -49,8 +50,9 @@ void setup() {
   // Init data directory.
   DATA_DIR =  sketchPath("") + "contents/";
 
-  // Create default mask.
-  DEFAULT_MASK = createVignetteMask(0);
+  // Create masks.
+  DEFAULT_MASK      = createVignetteMask(0);
+  CIRCLE_CLIP_MASK  = createVignetteMask(color(0), 1.0);  // no gradient, just clips to circle
 
   // Initialise per-stage vignette display styles.
   initVignetteStyles();

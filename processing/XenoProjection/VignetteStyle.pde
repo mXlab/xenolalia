@@ -3,8 +3,8 @@
 // FILL : image is stretched to cover the full VIGNETTE_SIDE × VIGNETTE_SIDE
 //        area; the vignette's circular mask clips it to a disc.
 //        Use for images that are already circular (bio, ann display files).
-//        For real photo images (col, bsb, 0trn), FIT is used with a
-//        customMask that has a wider gradient to fade the square corners.
+//        For real photo images (col, bsb, 0trn), FIT at scale=1.0 is used
+//        with a customMask (white edge fade) + CIRCLE_CLIP_MASK for corners.
 //
 // FIT  : a solid background fills the vignette circle first, then the image
 //        is drawn centred at `scale` × VIGNETTE_SIDE, giving breathing room
@@ -55,14 +55,13 @@ void initVignetteStyles() {
   vignetteStyles.put("ann", new VignetteStyle(VIGNETTE_IMG_FILL));
 
   // --- Category 2: Real photo images (square crop, unpredictable bg) ---
-  // col / bsb / 0trn: FIT (scale=0.85) with a dark background.
-  // Custom mask: fully opaque from the outer edge down to opaqueRadius=0.85
-  // (covers the 0.15 gap between the vignette circle and the image disc),
-  // then a soft gradient fade from 0.85 inward to transRadius=0.70.
-  PImage photoMask = createVignetteMask(color(255), 0.85, 0.70);
-  vignetteStyles.put("col",  new VignetteStyle(VIGNETTE_IMG_FIT, color(255), 0.85, photoMask));
-  vignetteStyles.put("bsb",  new VignetteStyle(VIGNETTE_IMG_FIT, color(255), 0.85, photoMask));
-  vignetteStyles.put("0trn", new VignetteStyle(VIGNETTE_IMG_FIT, color(255), 0.85, photoMask));
+  // col / bsb / 0trn: FIT at scale=1.0 so the dish fills the vignette circle.
+  // Custom mask: soft white fade at the circle edge (no hard band needed).
+  // CIRCLE_CLIP_MASK is applied afterward to clip the square corners.
+  PImage photoMask = createVignetteMask(color(255), 1.0, 0.80);
+  vignetteStyles.put("col",  new VignetteStyle(VIGNETTE_IMG_FIT, color(255), 1.0, photoMask));
+  vignetteStyles.put("bsb",  new VignetteStyle(VIGNETTE_IMG_FIT, color(255), 1.0, photoMask));
+  vignetteStyles.put("0trn", new VignetteStyle(VIGNETTE_IMG_FIT, color(255), 1.0, photoMask));
 
   // --- Category 3: CV pipeline / neural-network output stages -----------
   // Square 224×224 images; content disc inscribed.  Add breathing room

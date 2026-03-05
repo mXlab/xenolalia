@@ -149,11 +149,14 @@ abstract class Vignette {
     // Call child class display function.
     doDisplay();
 
-    // Add mask: prefer per-style override, fall back to vignette default.
-    PImage activeMask = (_styleMask != null) ? _styleMask : mask;
-    _styleMask = null;
-    if (activeMask != null)
-      pg.image(activeMask, 0, 0);
+    // Add mask.
+    if (_styleMask != null) {
+      pg.image(_styleMask, 0, 0);          // custom style mask (e.g. white fade)
+      pg.image(CIRCLE_CLIP_MASK, 0, 0);   // clip square corners to scene background
+      _styleMask = null;
+    } else if (mask != null) {
+      pg.image(mask, 0, 0);
+    }
 
     pg.endDraw();
 
