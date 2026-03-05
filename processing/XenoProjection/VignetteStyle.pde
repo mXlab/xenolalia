@@ -3,8 +3,8 @@
 // FILL : image is stretched to cover the full VIGNETTE_SIDE × VIGNETTE_SIDE
 //        area; the vignette's circular mask clips it to a disc.
 //        Use for images that are already circular (bio, ann display files).
-//        For real photo images (col, bsb, 0trn), FILL is used together with
-//        a customMask that has a wider gradient to fade the square corners.
+//        For real photo images (col, bsb, 0trn), FIT is used with a
+//        customMask that has a wider gradient to fade the square corners.
 //
 // FIT  : a solid background fills the vignette circle first, then the image
 //        is drawn centred at `scale` × VIGNETTE_SIDE, giving breathing room
@@ -55,14 +55,13 @@ void initVignetteStyles() {
   vignetteStyles.put("ann", new VignetteStyle(VIGNETTE_IMG_FILL));
 
   // --- Category 2: Real photo images (square crop, unpredictable bg) ---
-  // col / bsb / 0trn: actual camera/color images whose background cannot
-  // be matched.  Use FILL so the content fills the disc, but swap in a
-  // wide-gradient mask (transparencyRadius=0.65) so the square corners
-  // are softly faded out before the hard circle edge.
+  // col / bsb / 0trn: FIT with a dark background, but with a wide-gradient
+  // mask (transparencyRadius=0.65) that softly fades the square corners
+  // instead of leaving a hard circle edge.
   PImage wideGradMask = createVignetteMask(color(0), 0.65);
-  vignetteStyles.put("col",  new VignetteStyle(VIGNETTE_IMG_FILL, wideGradMask));
-  vignetteStyles.put("bsb",  new VignetteStyle(VIGNETTE_IMG_FILL, wideGradMask));
-  vignetteStyles.put("0trn", new VignetteStyle(VIGNETTE_IMG_FILL, wideGradMask));
+  vignetteStyles.put("col",  new VignetteStyle(VIGNETTE_IMG_FIT, color(20), 0.85, wideGradMask));
+  vignetteStyles.put("bsb",  new VignetteStyle(VIGNETTE_IMG_FIT, color(20), 0.85, wideGradMask));
+  vignetteStyles.put("0trn", new VignetteStyle(VIGNETTE_IMG_FIT, color(20), 0.85, wideGradMask));
 
   // --- Category 3: CV pipeline / neural-network output stages -----------
   // Square 224×224 images; content disc inscribed.  Add breathing room
