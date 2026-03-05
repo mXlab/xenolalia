@@ -41,20 +41,20 @@ void initVignetteStyles() {
   // Already circular after fit-in-circle pre-processing; let the vignette
   // mask do the work.
   vignetteStyles.put("bio", new VignetteStyle(VIGNETTE_IMG_FILL));
-  vignetteStyles.put("col", new VignetteStyle(VIGNETTE_IMG_FIT,  color(0),  0.85));
+  vignetteStyles.put("col", new VignetteStyle(VIGNETTE_IMG_FIT,  color(0),  0.9));
 
   // --- CV pipeline processing stages ------------------------------------
   // Square 224×224 images; content disc inscribed.  Add breathing room.
-  vignetteStyles.put("bsb",  new VignetteStyle(VIGNETTE_IMG_FIT, color(20), 0.85));
-  vignetteStyles.put("0trn", new VignetteStyle(VIGNETTE_IMG_FIT, color(20), 0.85));
-  vignetteStyles.put("1fil", new VignetteStyle(VIGNETTE_IMG_FIT, color(0),  0.85));
-  vignetteStyles.put("2res", new VignetteStyle(VIGNETTE_IMG_FIT, color(0),  0.85));
+  vignetteStyles.put("bsb",  new VignetteStyle(VIGNETTE_IMG_FIT, color(20), 0.9));
+  vignetteStyles.put("0trn", new VignetteStyle(VIGNETTE_IMG_FIT, color(20), 0.9));
+  vignetteStyles.put("1fil", new VignetteStyle(VIGNETTE_IMG_FIT, color(0),  0.9));
+  vignetteStyles.put("2res", new VignetteStyle(VIGNETTE_IMG_FIT, color(0),  0.9));
 
   // --- Neural network output stages -------------------------------------
   // 3ann: raw 28×28 square AE output, scaled up pixelated.
-  vignetteStyles.put("3ann", new VignetteStyle(VIGNETTE_IMG_FIT, color(0),  0.85));
-  // 4prj: postprocessed + squircle-mapped → already a disc on black bg.
-  vignetteStyles.put("4prj", new VignetteStyle(VIGNETTE_IMG_FILL));
+  vignetteStyles.put("3ann", new VignetteStyle(VIGNETTE_IMG_FIT, color(0),  0.9));
+  // 4prj: postprocessed + squircle-mapped disc on black bg.
+  vignetteStyles.put("4prj", new VignetteStyle(VIGNETTE_IMG_FIT, color(0), 0.9));
 
   // --- Pre-generated display images -------------------------------------
   // _ann_N.png: generated with fit_in_circle → already circular.
