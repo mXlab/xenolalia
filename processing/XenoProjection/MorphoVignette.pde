@@ -58,7 +58,12 @@ class MorphoVignette extends Vignette {
       }
 
       PImage img = useInterpolation ? lerpImage(prevImage, nextImage, t) : images[round(imageIndex)];
-      drawImageWithStyle(img, getVignetteStyle(vignetteStyleKey(type)));
+      // When type=ALL, images alternate bio/art — look up the actual type of the
+      // dominant frame so each image gets its calibrated style.
+      DataType displayType = (type == DataType.ALL)
+          ? exp.getDataType(round(imageIndex))
+          : type;
+      drawImageWithStyle(img, getVignetteStyle(vignetteStyleKey(displayType)));
     }
   }
 }

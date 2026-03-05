@@ -92,6 +92,15 @@ class ExperimentData {
     startsWithArtificial = nArtificial() > nBiological();
   }
   
+  // Returns whether image i (in DataType.ALL ordering) is ARTIFICIAL or BIOLOGICAL.
+  DataType getDataType(int i) {
+    boolean isEven = (i % 2 == 0);
+    if (startsWithArtificial)
+      return isEven ? DataType.ARTIFICIAL : DataType.BIOLOGICAL;
+    else
+      return isEven ? DataType.BIOLOGICAL  : DataType.ARTIFICIAL;
+  }
+
   int nArtificial() { return artificialImageFilenames.size(); }
   int nBiological() { return biologicalImageFilenames.size(); }
   int nImages() { return nArtificial() + nBiological(); }

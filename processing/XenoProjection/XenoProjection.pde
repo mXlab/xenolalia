@@ -80,7 +80,7 @@ void setup() {
   currentExperiment  = previousExperiment.copy();
 
   // Single artificial image of current experiment (image on apparatus).
-  if (false)
+  if (true)
   {
     Scene scene = new Scene(1, 1, singleVignetteRect);
     GlyphVignette v = new GlyphVignette(currentExperiment);
@@ -92,7 +92,7 @@ void setup() {
   }
 
   // Side-by-side animation of last experiment.
-  if (false)
+  if (true)
   {
     Scene scene = new Scene(2, 1, doubleVignetteRect);
 
@@ -112,7 +112,7 @@ void setup() {
   }
 
   // Single animation of alternating images from last experiment.
-  if (false)
+  if (true)
   {
     Scene scene = new Scene(1, 1, singleVignetteRect);
     scene.setOscAddress("/retina");
@@ -131,13 +131,14 @@ void setup() {
   }
 
   // Stepwise alternating sequence of images from last experiment.
-  if (false)
+  if (true)
   {
     SequentialScene scene = createSequentialScene(previousExperiment);
     scene.setOscAddress("/sequence");
     for (int i=0; i<previousExperiment.nImages()-1; i++) {
       GlyphVignette v = new GlyphVignette(previousExperiment);
       v.setIndex(i);
+      v.setDataType(previousExperiment.getDataType(i));
       v.noBorder();
       scene.putVignette(i, v);
     }
@@ -146,7 +147,7 @@ void setup() {
   }
 
   // Animation of recent generative glyphs.
-  if (false)
+  if (true)
   {
     Scene scene = new Scene(5, 2, gridVignetteRect);
     for (int i=0; i<min(scene.nVignettes(), allExperiments.length); i++) {
@@ -284,6 +285,7 @@ void experimentEnd(String uid) {
     for (int i=0; i<previousExperiment.nImages()-1; i++) {
       GlyphVignette v = new GlyphVignette(previousExperiment);
       v.setIndex(i);
+      v.setDataType(previousExperiment.getDataType(i));
       v.noBorder();
       nextSequentialScene.putVignette(i, v);
     }
