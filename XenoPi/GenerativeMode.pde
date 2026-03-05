@@ -262,10 +262,10 @@ class GenerativeMode extends AbstractMode {
         }
       }
 
-      // Camera watchdog: if no frame received for too long, reinitialize camera and retry.
-      // This handles USB re-enumeration (e.g. after an EMI-induced hub reset) where the
-      // device path changes and a simple stop/start is insufficient.
-      if (snapshot == null && cameraWatchdogTimer.isFinished()) {
+      // Camera watchdog: if no frame received for too long (or camera flagged an error),
+      // reinitialize camera and retry. This handles USB re-enumeration (e.g. after an
+      // EMI-induced hub reset) where the device path changes.
+      if (snapshot == null && (cameraWatchdogTimer.isFinished() || (cam instanceof GLCaptureCam && ((GLCaptureCam)cam).isError))) {
         println("Camera watchdog triggered: reinitializing camera and retrying.");
         cam.reinitialize();
         stateTimer = new Timer(SNAPSHOT_BASE_TIME);

@@ -6,6 +6,7 @@ class GLCaptureCam extends AbstractCam {
   private PApplet parent;
   private String deviceName;
   private int w, h;
+  boolean isError = false; // set true on any camera exception; triggers watchdog immediately
 
   GLCaptureCam(PApplet parent, String device, int w, int h) {
 //    cam = new GLCapture(parent, device);
@@ -56,15 +57,22 @@ class GLCaptureCam extends AbstractCam {
       else
         cam = new GLCapture(parent, foundDevice);
       cam.start();
+      isError = false;
     } catch (Throwable e) {
       println("Camera reinitialize failed: " + e.getMessage());
     }
   }
   
-  boolean available() { return cam.available(); }
-  
+  boolean available() {
+    if (isError) return false;
+    try { return cam.available(); }
+    catch (Throwable e) { println("Camera error (available): " + e.getMessage()); isError = true; return false; }
+  }
+
   void read() {
-    cam.read(); 
+    if (isError) return;
+    try { cam.read(); }
+    catch (Throwable e) { println("Camera error (read): " + e.getMessage()); isError = true; }
   }
   
   PImage getImage() { return cam; }
