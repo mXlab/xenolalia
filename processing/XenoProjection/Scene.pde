@@ -25,6 +25,7 @@ class Scene {
 
   boolean needsRefresh;
   boolean sequential = false;  // if true, reveal vignettes one by one over RUN_DURATION
+  boolean enabled    = true;   // if false, scene is skipped immediately
 
   String oscAddress = null;
 
@@ -39,9 +40,8 @@ class Scene {
     init(nColumns, nRows);
   }
 
-  void setSequential(boolean s) {
-    sequential = s;
-  }
+  void setSequential(boolean s) { sequential = s; }
+  void setEnabled(boolean e)    { enabled = e; }
 
   void setOscAddress(String addr) {
     oscAddress = addr;
@@ -214,7 +214,7 @@ class Scene {
   }
 
   boolean isFinished() {
-    return timer.isFinished();
+    return !enabled || timer.isFinished();
   }
 
   int _getIndex(int c, int r) {

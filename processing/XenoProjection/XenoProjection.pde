@@ -112,7 +112,7 @@ void setup() {
   }
 
   // Single animation of alternating images from last experiment.
-  if (false)
+  if (true)
   {
     Scene scene = new Scene(1, 1, singleVignetteRect);
     scene.setOscAddress("/retina");
@@ -260,6 +260,11 @@ void experimentStep(String uid) {
   // Refresh current experiment.
   currentExperiment.refresh();
   refreshScenes(currentExperimentScenes);
+
+  // Only show the pipeline scene when pre-AE images exist (not on the first
+  // randomly-seeded step, which only produces 3ann + 4prj).
+  if (pipelineScene != null)
+    pipelineScene.setEnabled(!currentExperiment.listPipelineFiles("1fil").isEmpty());
   
   // Go to first scene.
   takingSnapshot = false;
