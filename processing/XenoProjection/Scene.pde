@@ -1,13 +1,15 @@
 // A scene presents one or multiple vignettes in a grid-like view.
 class Scene {
 
-  final int RUN_DURATION = 15000;
-  final int END_DURATION =  5000;
-  //final int RUN_DURATION = 1000;
-  //final int END_DURATION = 500;
+  final int RUN_DURATION_NORMAL = 15000;
+  final int END_DURATION_NORMAL =  5000;
+  final int RUN_DURATION_DEBUG  =  2000;
+  final int END_DURATION_DEBUG  =   500;
 
-  final int TOTAL_DURATION = RUN_DURATION + END_DURATION;
-  final float RUN_DURATION_PROPORTION = RUN_DURATION / (float)TOTAL_DURATION;
+  int RUN_DURATION = RUN_DURATION_NORMAL;
+  int END_DURATION = END_DURATION_NORMAL;
+  int TOTAL_DURATION = RUN_DURATION + END_DURATION;
+  float RUN_DURATION_PROPORTION = RUN_DURATION / (float)TOTAL_DURATION;
 
   color background;
 
@@ -42,6 +44,16 @@ class Scene {
 
   void setSequential(boolean s) { sequential = s; }
   void setEnabled(boolean e)    { enabled = e; }
+  boolean isEnabled()           { return enabled; }
+
+  void setDebug(boolean debug) {
+    RUN_DURATION = debug ? RUN_DURATION_DEBUG : RUN_DURATION_NORMAL;
+    END_DURATION = debug ? END_DURATION_DEBUG : END_DURATION_NORMAL;
+    TOTAL_DURATION = RUN_DURATION + END_DURATION;
+    RUN_DURATION_PROPORTION = RUN_DURATION / (float)TOTAL_DURATION;
+    timer = new Timer(TOTAL_DURATION);
+    timer.start();
+  }
 
   void setOscAddress(String addr) {
     oscAddress = addr;

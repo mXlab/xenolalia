@@ -24,8 +24,8 @@ namespace xenolalia{
 
     pq::SineOsc idleLfo(20.0f);
     bool isIdling{false};
-    RgbColor idleColorA(0, 0, 8);
-    RgbColor idleColorB(0, 0, 4);
+    RgbColor idleColorA(0, 0, 16);
+    RgbColor idleColorB(0, 0, 0);
 
     void init(){
         in_pump.init();

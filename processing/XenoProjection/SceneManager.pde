@@ -9,9 +9,17 @@ class SceneManager extends ArrayList<Scene> {
     return get(currentSceneIdx);
   }
 
+  boolean hasEnabledScene() {
+    for (Scene s : this) if (s.isEnabled()) return true;
+    return false;
+  }
+
   Scene nextScene() {
     currentScene().end();
-    currentSceneIdx = (currentSceneIdx + 1) % size();
+    int startIdx = currentSceneIdx;
+    do {
+      currentSceneIdx = (currentSceneIdx + 1) % size();
+    } while (!currentScene().isEnabled() && currentSceneIdx != startIdx);
     currentScene().reset();
     currentScene().start();
     return currentScene();

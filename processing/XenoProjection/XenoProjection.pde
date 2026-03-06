@@ -33,6 +33,7 @@ float midpointY = 0;//-0.15;
 float sequentialSceneRelativeWidth = 0.99;
 
 boolean initialState = true;
+boolean debugMode = false;
 
 int lastExperimentVisibilityClass = 0;
 
@@ -80,7 +81,7 @@ void setup() {
   currentExperiment  = previousExperiment.copy();
 
   // Single artificial image of current experiment (image on apparatus).
-  if (truelse)
+  if (false)
   {
     Scene scene = new Scene(1, 1, singleVignetteRect);
     GlyphVignette v = new GlyphVignette(currentExperiment);
@@ -92,7 +93,7 @@ void setup() {
   }
 
   // Side-by-side animation of last experiment.
-  if (truelse)
+  if (false)
   {
     Scene scene = new Scene(2, 1, doubleVignetteRect);
 
@@ -146,7 +147,7 @@ void setup() {
   }
 
   // Animation of recent generative glyphs.
-  if (truelse)
+  if (false)
   {
     Scene scene = new Scene(5, 2, gridVignetteRect);
     for (int i=0; i<min(scene.nVignettes(), allExperiments.length); i++) {
@@ -161,7 +162,7 @@ void setup() {
   // CV pipeline scene: all stages from color source to final output (3 cols × 2 rows).
   // Row 0: col (color source), bsb (color−base), 0trn (transform)
   // Row 1: 1fil (enhance), 3ann (raw AE output), 4prj (postprocessed → projected)
-  if (truelse)
+  if (false)
   {
     Scene scene = new Scene(3, 2, gridVignetteRect);
     String[] stages = {"col", "bsb", "0trn", "1fil", "3ann", "4prj"};
@@ -194,7 +195,7 @@ void draw() {
   background(0);
   
   // If current scene has ended, cleanup and go to next scene.
-  if (scenes.currentScene().isFinished()) {
+  if (scenes.currentScene().isFinished() && scenes.hasEnabledScene()) {
 
     // Make sure all scenes are built properly.
     for (int i=0; i<scenes.size(); i++) {
@@ -320,9 +321,29 @@ SequentialScene createSequentialScene(ExperimentData exp) {
 void keyPressed() {
   if (key == 's')
     saveFrame();
-   else if (key == 'o')
+  else if (key == 'o')
     sendOSCMessage("/example", random(10));
-    
+  else if (key == 'd') {
+    debugMode = !debugMode;
+    for (Scene s : scenes) s.setDebug(debugMode);
+    println("Debug mode: " + debugMode);
+  }
+  else if (key == 'n') {
+    for (Scene s : scenes) s.setEnabled(false);
+    println("All scenes disabled.");
+  }
+  else if (key == 'a') {
+    for (Scene s : scenes) s.setEnabled(true);
+    println("All scenes enabled.");
+  }
+  else if (key >= '1' && key <= '6') {
+    int idx = key - '1';
+    if (idx < scenes.size()) {
+      Scene s = scenes.get(idx);
+      s.setEnabled(!s.isEnabled());
+      println("Scene " + (idx+1) + ": " + (s.isEnabled() ? "enabled" : "disabled"));
+    }
+  }
 }
 
 ////////////////////////////////////////////////////
