@@ -286,7 +286,7 @@ void experimentEndWithVisibility(String uid, int visClass) {
 
 void experimentEnd(String uid) {
   try {
-    previousExperiment.reload(currentExperiment.getUid());
+    previousExperiment.reload(uid);
 
     refreshScenes(previousExperimentScenes);
     sequentialScene.requestRefresh();
