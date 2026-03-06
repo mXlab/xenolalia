@@ -6,6 +6,8 @@ final int OSC_RECEIVE_PORT = 7001;
 final int OSC_SEND_PORT = 7002; // sonoscope
 final int VIGNETTE_SIDE = 480;
 
+final float TITLES_FONT_SIZE_PROPORTION = 0.075;
+
 // Globals.
 String DATA_DIR;
 
@@ -38,7 +40,10 @@ boolean debugMode = false;
 int lastExperimentVisibilityClass = 0;
 
 String overlayMessage = null;
-Timer overlayFadeTimer = new Timer(1000);
+boolean overlayFadingOut = false;
+Timer overlayFadeTimer   = new Timer(1000);  // fade-in / fade-out duration
+Timer overlayAutoHideTimer = new Timer(15000); // auto-dismiss: fade_in(1s) + hold(5s)
+PFont overlayFont;
 
 /////////////////////////////////////
 void setup() {
@@ -46,6 +51,9 @@ void setup() {
 
   smooth();
   noCursor();
+
+  // Load font for overlay text (required for P2D renderer).
+  overlayFont = createFont("SansSerif", height * 0.25f);
 
   // Init data directory.
   DATA_DIR =  sketchPath("") + "contents/";
@@ -80,7 +88,7 @@ void setup() {
   currentExperiment  = previousExperiment.copy();
 
   // Single artificial image of current experiment (image on apparatus).
-  if (false)
+  if (true)
   {
     Scene scene = new Scene(1, 1, singleVignetteRect);
     GlyphVignette v = new GlyphVignette(currentExperiment);
@@ -92,7 +100,7 @@ void setup() {
   }
 
   // Side-by-side animation of last experiment.
-  if (false)
+  if (true)
   {
     Scene scene = new Scene(2, 1, doubleVignetteRect);
 
@@ -146,7 +154,7 @@ void setup() {
   }
 
   // Animation of recent generative glyphs.
-  if (false)
+  if (true)
   {
     Scene scene = new Scene(5, 2, gridVignetteRect);
     for (int i=0; i<min(scene.nVignettes(), allExperiments.length); i++) {
@@ -161,7 +169,7 @@ void setup() {
   // CV pipeline scene: all stages from color source to final output (3 cols × 2 rows).
   // Row 0: col (color source), bsb (color−base), 0trn (transform)
   // Row 1: 1fil (enhance), 3ann (raw AE output), 4prj (postprocessed → projected)
-  if (false)
+  if (true)
   {
     Scene scene = new Scene(3, 2, gridVignetteRect);
     String[] stages = {"col", "bsb", "0trn", "1fil", "3ann", "4prj"};
@@ -226,15 +234,30 @@ void draw() {
 
   // Overlay: fade scene to black and show message.
   if (overlayMessage != null) {
-    float maskOpacity = overlayFadeTimer.progress() * 255;
+    float p = overlayFadingOut
+      ? 1.0 - overlayFadeTimer.progress()
+      : overlayFadeTimer.progress();
+    float maskOpacity = p * 255;
+
     noStroke();
     fill(0, maskOpacity);
     rect(width/2, height/2, width, height);
 
     fill(255, maskOpacity);
+    textFont(overlayFont);
     textAlign(CENTER, CENTER);
-    textSize(48);
+    textSize(height * TITLES_FONT_SIZE_PROPORTION);
     text(overlayMessage, width/2, height/2);
+
+    // Auto-hide after hold duration if no explicit hideOverlay() was called.
+    if (!overlayFadingOut && overlayAutoHideTimer.isFinished())
+      hideOverlay();
+
+    // Once fade-out completes, clear the overlay.
+    if (overlayFadingOut && overlayFadeTimer.isFinished()) {
+      overlayMessage = null;
+      overlayFadingOut = false;
+    }
   }
 }
 
@@ -247,7 +270,7 @@ boolean newExperimentStarted = false;
 void experimentNew(String uid) {
   println("NEW experiment " + uid);
   newExperimentStarted = true;
-  showOverlay("Mesoscope starting new experiment");
+  showOverlay("UNE NOUVELLE EXPÉRIENCE DÉBUTE\nNEW EXPERIMENT STARTING");
 }
 
 void experimentStep(String uid) {
@@ -273,7 +296,7 @@ void experimentStep(String uid) {
     pipelineScene.setEnabled(!currentExperiment.listPipelineFiles("1fil").isEmpty());
   
   // Go to first scene.
-  overlayMessage = null;
+  hideOverlay();
   scenes.setCurrentScene(0);
   scenes.currentScene().build();
 }
@@ -316,7 +339,16 @@ void snapshot() {
 
 void showOverlay(String message) {
   overlayMessage = message;
+  overlayFadingOut = false;
   overlayFadeTimer.start();
+  overlayAutoHideTimer.start();
+}
+
+void hideOverlay() {
+  if (overlayMessage != null && !overlayFadingOut) {
+    overlayFadingOut = true;
+    overlayFadeTimer.start();
+  }
 }
 
 SequentialScene createSequentialScene(ExperimentData exp) {
