@@ -137,8 +137,10 @@ def handle_state(addr, state):
     print("** Received STATE {}".format(state))
     if bridge:
         bridge.on_experiment_state(state)
-    if (state == "FLASH"):
+    if state == "FLASH":
         send_message("/xeno/server/snapshot")
+    elif state == "REFRESH":
+        send_message("/xeno/server/begin")
 
 # # Handler for one image step.
 # def handle_step(addr, image_path, base_image_path):

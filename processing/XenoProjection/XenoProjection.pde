@@ -68,8 +68,9 @@ void setup() {
   // Setup OSC.
   oscP5 = new OscP5(this, OSC_RECEIVE_PORT);
 
-  oscP5.plug(this, "experimentNew",  "/xeno/server/new");
-  oscP5.plug(this, "experimentStep", "/xeno/server/step");
+  oscP5.plug(this, "experimentNew",   "/xeno/server/new");
+  oscP5.plug(this, "experimentBegin", "/xeno/server/begin");
+  oscP5.plug(this, "experimentStep",  "/xeno/server/step");
   oscP5.plug(this, "experimentEnd",               "/xeno/server/end");
   oscP5.plug(this, "experimentEndWithVisibility", "/xeno/server/end");
 
@@ -270,6 +271,10 @@ boolean newExperimentStarted = false;
 void experimentNew(String uid) {
   println("NEW experiment " + uid);
   newExperimentStarted = true;
+}
+
+void experimentBegin() {
+  println("BEGIN experiment");
   showOverlay("MESOSCOPE\nUNE NOUVELLE EXPÉRIENCE DÉBUTE\nNEW EXPERIMENT STARTING");
 }
 
