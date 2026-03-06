@@ -1,5 +1,6 @@
 import numpy as np
 
+import logging
 import os
 import os.path
 import sys
@@ -15,6 +16,13 @@ from pythonosc import osc_message_builder
 from pythonosc import udp_client
 
 from xeno_video import experiment_to_gif
+import xeno_bridge
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    datefmt='%H:%M:%S',
+)
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
@@ -41,7 +49,13 @@ parser.add_argument("-sm", "--macroscope-send-port", default="7001",
 parser.add_argument("-r", "--receive-port", default="7000",
                     type=int, help="The port number to listen on.")
 
+parser.add_argument("-V", "--venue-config", default=None,
+                    help="Path to venue bridge config (e.g. venues/bian_2026.yaml). "
+                         "Omit to disable the exhibition bridge.")
+
 args = parser.parse_args()
+
+bridge = None  # set after clients are created
 
 # Broadcast message.
 def send_message(addr, data=[], client=False):
@@ -121,6 +135,8 @@ def handle_end(addr, uid):
 
 def handle_state(addr, state):
     print("** Received STATE {}".format(state))
+    if bridge:
+        bridge.on_experiment_state(state)
     if (state == "FLASH"):
         send_message("/xeno/server/snapshot")
 
@@ -162,10 +178,16 @@ server = osc_server.BlockingOSCUDPServer(("0.0.0.0", args.receive_port), dispatc
 xenopi_client = udp_client.SimpleUDPClient(args.xenopi_ip, args.xenopi_send_port)
 macroscope_client = udp_client.SimpleUDPClient(args.macroscope_ip, args.macroscope_send_port)
 
+# Load exhibition bridge if a venue config is given.
+if args.venue_config:
+    bridge = xeno_bridge.VenueBridge(args.venue_config, xenopi_client)
+    bridge.start_server()  # listens on receive_port from the venue YAML
+
 # Allows program to end cleanly on a CTRL-C command.
 def interrupt(signup, frame):
     global xenopi_client, macroscope_client, server
-    # print("Exiting program... {}".format(np.mean(perf_measurements)))
+    if bridge:
+        bridge.shutdown()
     send_message("/xeno/server/end")
     server.server_close()
     sys.exit()
