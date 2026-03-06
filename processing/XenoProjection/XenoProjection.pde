@@ -270,7 +270,7 @@ boolean newExperimentStarted = false;
 void experimentNew(String uid) {
   println("NEW experiment " + uid);
   newExperimentStarted = true;
-  showOverlay("UNE NOUVELLE EXPÉRIENCE DÉBUTE\nNEW EXPERIMENT STARTING");
+  showOverlay("MESOSCOPE\nUNE NOUVELLE EXPÉRIENCE DÉBUTE\nNEW EXPERIMENT STARTING");
 }
 
 void experimentStep(String uid) {
@@ -334,7 +334,7 @@ void experimentEnd(String uid) {
 }
 
 void snapshot() {
-  showOverlay("Mesoscope taking snapshot");
+  showOverlay("MESOSCOPE\nUN NOUVEAU GLYPHE ÉMERGE\nA NEW GLYPH EMERGES");
 }
 
 void showOverlay(String message) {
