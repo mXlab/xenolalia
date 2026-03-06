@@ -1,0 +1,32 @@
+# Venue configuration: default (manual-only)
+# Used with: python xeno_server.py --venue-config venues/default.yaml
+#
+# Minimal setup with no automated triggers. Use this at venues where
+# there is no external control system, or as a starting point for a
+# new venue configuration.
+
+venue: "Default (manual control only)"
+
+receive_port: 8001
+
+# No pd target needed. Uncomment and configure if volume control is required:
+# targets:
+#   pd:
+#     host: 127.0.0.1
+#     port: 9000
+
+handlers:
+
+  # Manual start — operator-triggered, immediate and unconditional.
+  /start:
+    type: start
+
+  # Manual stop.
+  /stop:
+    type: stop
+
+  # Volume — only active if pd target is configured above.
+  # /volume:
+  #   type: volume
+  #   params:
+  #     pd_volume_address: /volume

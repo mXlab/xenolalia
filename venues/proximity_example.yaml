@@ -1,0 +1,31 @@
+# Venue configuration: proximity sensor (self-service, no time slots)
+# Used with: python xeno_server.py --venue-config venues/proximity_example.yaml
+#
+# A proximity/PIR sensor sends /presence when someone approaches.
+# The bridge starts an experiment only if one is not already running.
+# A manual /stop (e.g. from a tablet at closing time) halts the piece.
+# A manual /start overrides everything and forces a new experiment.
+
+venue: "Proximity sensor — self-service gallery"
+
+receive_port: 8001
+
+# No pd target needed for this venue.
+
+handlers:
+
+  # Proximity/PIR sensor trigger.
+  # cooldown_minutes is a safety net: the bridge also uses real-time XenoPi state.
+  /presence:
+    type: start
+    params:
+      require_inactive: true
+      cooldown_minutes: 90
+
+  # Operator stop (e.g. closing time).
+  /stop:
+    type: stop
+
+  # Manual start override — bypasses the require_inactive guard.
+  /start:
+    type: start
