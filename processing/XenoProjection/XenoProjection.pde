@@ -37,9 +37,8 @@ boolean debugMode = false;
 
 int lastExperimentVisibilityClass = 0;
 
-boolean takingSnapshot = false;
-Timer snapshotFadeTimer = new Timer(1000);
-float snapshotFadeTarget = 0;
+String overlayMessage = null;
+Timer overlayFadeTimer = new Timer(1000);
 
 /////////////////////////////////////
 void setup() {
@@ -225,10 +224,9 @@ void draw() {
   // Display current scene.
   scenes.currentScene().display();
 
-  // Snapshot overlay: fade scene to black, then show message.
-  if (takingSnapshot) {
-    float p = map(snapshotFadeTimer.progress(), 0, 1, 1-snapshotFadeTarget, snapshotFadeTarget);
-    float maskOpacity = p * 255;
+  // Overlay: fade scene to black and show message.
+  if (overlayMessage != null) {
+    float maskOpacity = overlayFadeTimer.progress() * 255;
     noStroke();
     fill(0, maskOpacity);
     rect(width/2, height/2, width, height);
@@ -236,7 +234,7 @@ void draw() {
     fill(255, maskOpacity);
     textAlign(CENTER, CENTER);
     textSize(48);
-    text("Mesoscope taking snapshot", width/2, height/2);
+    text(overlayMessage, width/2, height/2);
   }
 }
 
@@ -247,8 +245,9 @@ void refreshScenes(ArrayList<Scene> scenesToRefresh) {
 
 boolean newExperimentStarted = false;
 void experimentNew(String uid) {
-  println("NEW experiment " + uid); 
+  println("NEW experiment " + uid);
   newExperimentStarted = true;
+  showOverlay("Mesoscope starting new experiment");
 }
 
 void experimentStep(String uid) {
@@ -274,7 +273,7 @@ void experimentStep(String uid) {
     pipelineScene.setEnabled(!currentExperiment.listPipelineFiles("1fil").isEmpty());
   
   // Go to first scene.
-  takingSnapshot = false;
+  overlayMessage = null;
   scenes.setCurrentScene(0);
   scenes.currentScene().build();
 }
@@ -312,11 +311,12 @@ void experimentEnd(String uid) {
 }
 
 void snapshot() {
-  if (!takingSnapshot) {
-    snapshotFadeTimer.start();
-    snapshotFadeTarget = 1;
-    takingSnapshot = true;
-  }
+  showOverlay("Mesoscope taking snapshot");
+}
+
+void showOverlay(String message) {
+  overlayMessage = message;
+  overlayFadeTimer.start();
 }
 
 SequentialScene createSequentialScene(ExperimentData exp) {
