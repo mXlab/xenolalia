@@ -21,19 +21,43 @@
 //
 // ============================================================
 
+/* [Resolution] */
+$fn = 64;
+eps = 0.01;
+
+// 0 = 250ml, 1 = 500ml, 2 = 1000ml, 3 = 2000ml
+flask_size = 0;
+
+// [neck_id, neck_od, neck_depth_total]
+flask_specs = [
+    [25.8, 37.5, 29.6],   // 250ml -- todo
+    [34.0, 44.0, 42.0],   // 500ml -- todo
+    [40.2, 50.2, 44.5],   // 1000ml -- todo
+    [50.0, 62.0, 52.0],   // 2000ml -- todo
+];
+
+neck_id_raw      = flask_specs[flask_size][0];
+neck_od          = flask_specs[flask_size][1];
+neck_depth_total = flask_specs[flask_size][2];
+
 /* [Flask Neck Dimensions] */
 neck_id_fitting = 1.8;
-neck_depth_total = 44.5;
-neck_id    = 40.2 + neck_id_fitting;   // inner diameter of flask neck (mm)
-neck_od    = 50.2;   // outer diameter of flask neck rim (mm)
+neck_id    = neck_id_raw + neck_id_fitting;   // inner diameter of flask neck (mm)
 neck_depth = neck_depth_total*0.6;   // depth plug inserts into neck (mm)
 taper_angle = 1.5;   // friction-fit taper in degrees
 
 /* [Flange] */
-flange_dia       = neck_od + 8.0;  // flange diameter (mm)
+flange_dia       = neck_od + (neck_od-neck_id)*0.5;  // flange diameter (mm)
 flange_thickness = 4.0;             // flange thickness (mm)
 grip_ridges      = 8;               // number of grip ridges (0 = none)
 grip_ridge_height = grip_ridges > 0 ? 1.0 : 0.0;            // grip ridge height (mm)
+
+/* [Flange Grip Dents] */
+// Number of dents around the flange edge
+grip_dents      = grip_ridges;
+
+// Radius of each spherical dent (mm) - larger = more pronounced
+grip_dent_r     = 2.5;
 
 /* [Helical Vent] */
 // Radius of the helix centerline from plug axis
@@ -53,24 +77,35 @@ channel_r = 2.0;   // gives ~1.4mm diameter channel
 // Higher = smoother helix but slower render
 helix_pts_per_turn = 48;
 
-/* [Resolution] */
-$fn = 128;
-eps = 0.01;
 
 // ============================================================
 //  DERIVED DIMENSIONS
 // ============================================================
 
-plug_base_dia = neck_id;// - 0.4;
+/* [Plug] */
+// Plug diameter - slightly smaller than neck_id so it slides in easily
+plug_clearance = 2.0;   // how much smaller than neck_id (mm)
+plug_dia       = neck_id - plug_clearance;
+
+// Torus (o-ring) rings
+torus_count    = 3;     // number of sealing rings
+// Outer diameter of torus matches neck_id for a snug seal
+torus_od       = neck_id;   // slight interference fit
+torus_tube_r   = 1.8;  // thickness of the torus ring cross-section (mm)
+
+//plug_base_dia = neck_id;// - 0.4;
 
 
-plug_top_dia  = plug_base_dia - 2 * neck_depth * tan(taper_angle);
+//plug_top_dia  = plug_base_dia - 2 * neck_depth * tan(taper_angle);
 total_pts     = helix_turns * helix_pts_per_turn;
 
 // Usable vertical space inside plug for the helix
 // Leave a small margin at top and bottom for end connectors
 helix_z_margin = 2.0;
 helix_height   = neck_depth - 2 * helix_z_margin;
+
+// Spacing between torus rings along plug height
+torus_spacing = neck_depth / (torus_count + 1);
 
 // ============================================================
 //  MODULES
@@ -82,26 +117,59 @@ module plug() {
         translate([0, 0, flange_thickness])
             cylinder(
                 h = grip_ridge_height,
-                d = plug_base_dia
+                d = plug_dia
             );
     }
-    translate([0, 0, flange_thickness+grip_ridge_height])
-        cylinder(
-            h  = neck_depth+channel_r,
-            d1 = plug_base_dia,
-            d2 = plug_top_dia
-        );
+    
+    translate([0, 0, flange_thickness]) {
+        // Straight cylinder - slightly smaller than neck_id
+        cylinder(h = neck_depth + channel_r, d = plug_dia);
+
+        // Torus rings spaced evenly along the plug height
+        for (i = [1 : torus_count]) {
+            translate([0, 0, i * torus_spacing])
+                rotate_extrude()
+                    translate([torus_od / 2 - torus_tube_r, 0, 0])
+                        circle(r = torus_tube_r);
+        }
+    }
+//    translate([0, 0, flange_thickness+grip_ridge_height])
+//        cylinder(
+//            h  = neck_depth+channel_r,
+//            d1 = plug_base_dia,
+//            d2 = plug_top_dia
+//        );
 }
 
 // --- Flange with grip ridges ---
+// --- Flange with knurled edge dents ---
 module flange() {
-    cylinder(h = flange_thickness, d = flange_dia);
-    if (grip_ridges > 0) {
-        for (i = [0 : grip_ridges - 1]) {
-            rotate([0, 0, i * (360 / grip_ridges)])
-                translate([neck_id * 0.5, 0, flange_thickness])
-                    scale([1, 0.3, 1])
-                        cylinder(h = grip_ridge_height, d = flange_dia * 0.15, $fn = 32);
+    difference() {
+        union() {
+        // Main flange disk
+        cylinder(h = flange_thickness, d = flange_dia);
+
+        if (grip_ridges > 0) {
+            for (i = [0 : grip_ridges - 1]) {
+                rotate([0, 0, i * (360 / grip_ridges)])
+                    translate([neck_id * 0.5, 0, flange_thickness])
+                        scale([1, 0.3, 1])
+                            cylinder(h = grip_ridge_height, d = flange_dia * 0.15, $fn = 32);
+            }
+        }
+
+    }
+    // Cylindrical dents evenly spaced around the circumference
+    // Each cylinder is oriented radially, pointing inward from the edge
+        for (i = [0 : grip_dents - 1]) {
+            angle = 180/grip_dents + i * (360 / grip_dents);
+            translate([
+                cos(angle) * (flange_dia / 2),
+                sin(angle) * (flange_dia / 2),
+                flange_thickness / 2
+            ])
+//            rotate([180, 90, angle])
+                cylinder(h = flange_thickness, r = grip_dent_r, center = true);
         }
     }
 }

@@ -315,6 +315,9 @@ class GenerativeMode extends AbstractMode {
 
         // Start exposure timer.
         exposureTimer.start();
+
+        // Turn on idle light while projecting glyph.
+        idle(true);
       }
 
       // Capture video.
@@ -369,16 +372,20 @@ class GenerativeMode extends AbstractMode {
         
          if (experiment.nSnapshots() < N_SNAPSHOTS_PER_EXPERIMENT)
            requestSnapshot();
-         else
+         else {
+           idle(false);
            transitionTo(State.PRESENTATION);
+         }
       }
 
       if (newExperimentRequested) {
+        idle(false);
         transitionTo(State.NEW);
         newExperimentRequested = false;
         experiment.updateServer("end"); // tell server current experiment is over
       } else if (snapshotRequested) {
         println("Snap req.");
+        idle(false);
         transitionTo(State.FLASH);
       }
     }
@@ -535,6 +542,14 @@ class GenerativeMode extends AbstractMode {
     oscP5.send(msg, remoteLocationApparatus);
 
     log("Sent call to " + (on ? "start" : "stop") + "glow.");
+  }
+
+  void idle(boolean on) {
+    OscMessage msg = new OscMessage("/xeno/idle");
+    msg.add(on ? 1 : 0);
+    oscP5.send(msg, remoteLocationApparatus);
+
+    log("Sent call to " + (on ? "start" : "stop") + " idle.");
   }
 
   // Returns the path of the most recent file with the given suffix under dir,

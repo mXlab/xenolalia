@@ -9,7 +9,13 @@ void Liquid_level_sensor::init(){
     pinMode(_pin, INPUT);
 }
 
-int Liquid_level_sensor::get_level(){
-    level = analogRead(_pin);
-    return level;
+int Liquid_level_sensor::get_level(int nReadings){
+    long level = 0;
+    for (int i = 0; i < nReadings; i++)
+    {
+        level += analogRead(_pin);
+    }
+    
+    level /= nReadings;
+    return (int)level;
 }

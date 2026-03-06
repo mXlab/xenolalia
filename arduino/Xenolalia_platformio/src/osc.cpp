@@ -102,6 +102,14 @@ void glow(OSCMessage &msg){
   xenolalia::glow(on);
 }
 
+void idle(OSCMessage &msg){
+
+  osc::send("/xeno/handshake");
+  osc::send("/debug", "Idling");
+  bool on = msg.getInt(0);
+  xenolalia::idle(on);
+}
+
 namespace osc
 {
   const char* ssid {"Xenolalia"};
@@ -214,6 +222,7 @@ void send( const char* adress ){
         msg.dispatch("/xeno/mix", mix);
         msg.dispatch("/xeno/color", setColor);
         msg.dispatch("/xeno/glow", glow);
+        msg.dispatch("/xeno/idle", idle);
       }
       else
       {

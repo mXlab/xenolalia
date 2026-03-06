@@ -12,8 +12,8 @@
 namespace xenolalia{
     
 
-    Pump in_pump(pins::pump1);
-    Pump out_pump(pins::pump2);
+    Pump in_pump(pins::pump1); // drain pump
+    Pump out_pump(pins::pump2); // fill pump
     Liquid_level_sensor liquid_sensor(pins::liquid_sensor);
     const int threshold{500};
 
@@ -21,6 +21,11 @@ namespace xenolalia{
     bool isGlowing{false};
     RgbColor glowColorA(255, 0, 255);
     RgbColor glowColorB(255, 255, 255);
+
+    pq::SineOsc idleLfo(20.0f);
+    bool isIdling{false};
+    RgbColor idleColorA(0, 0, 8);
+    RgbColor idleColorB(0, 0, 4);
 
     void init(){
         in_pump.init();
@@ -41,6 +46,12 @@ namespace xenolalia{
       // Glowing: adjust color according to LFO.
       if (isGlowing) {
         RgbColor color = RgbColor::LinearBlend(glowColorA, glowColorB, glowLfo);
+        pixel_ring::set_color(color);
+      }
+
+      // Idling: very slow dark blue pulse.
+      if (isIdling) {
+        RgbColor color = RgbColor::LinearBlend(idleColorA, idleColorB, idleLfo);
         pixel_ring::set_color(color);
       }
     }
@@ -71,6 +82,7 @@ namespace xenolalia{
 
         // Second: fill partially.
         fill_petridish(0.67);
+//        fill_petridish(1.0);
         delay(500);
    }
 
@@ -131,6 +143,13 @@ namespace xenolalia{
       isGlowing = on;
       // When switching back to not glowing, clear light.
       if (!isGlowing)
+        pixel_ring::set_color(pixel_ring::black);
+    }
+
+    void idle(bool on) {
+      isIdling = on;
+      // When switching back to not idling, clear light.
+      if (!isIdling)
         pixel_ring::set_color(pixel_ring::black);
     }
 

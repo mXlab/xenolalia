@@ -13,6 +13,9 @@ namespace xenolalia{
    extern pq::SineOsc glowLfo;
    extern bool isGlowing;
 
+   extern pq::SineOsc idleLfo;
+   extern bool isIdling;
+
    /** @brief initialize project hardware
     */
    void init();
@@ -59,6 +62,10 @@ namespace xenolalia{
     */
    void glow(bool on);
 
+   /** @brief Set the idle state of the LED ring (very slow dark blue pulse).
+    */
+   void idle(bool on);
+
    /**
     * @brief Get the petridish current level
     * @param nReadings number of readings of the sensor
@@ -67,6 +74,7 @@ namespace xenolalia{
    int get_petridish_level(int nReadings=20);
 
    /**
+    * 
     * @brief Check if the petridish is full
     */
    bool petridish_full(int nReadings=20);
