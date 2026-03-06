@@ -125,14 +125,14 @@ class TestStartUnconditional(unittest.TestCase):
 
     def test_fires_immediately(self):
         fire(self.bridge, 'start', {})
-        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', 1)
+        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', [])
 
     def test_cancels_pending_timer_before_firing(self):
         timer = CapturedTimer(600, lambda: None)
         self.bridge._pending_start_timer = timer
         fire(self.bridge, 'start', {})
         self.assertFalse(timer.is_alive())
-        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', 1)
+        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', [])
 
     def test_updates_last_experiment_start_time(self):
         with patch('xeno_bridge.time.time', return_value=NOW):
@@ -165,7 +165,7 @@ class TestStartWithDelay(unittest.TestCase):
         with patch('xeno_bridge.threading.Timer', CapturedTimer):
             fire(self.bridge, 'start', {'delay_minutes': 10})
         self.bridge._pending_start_timer.fire()
-        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', 1)
+        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', [])
 
     def test_new_trigger_cancels_previous_timer(self):
         with patch('xeno_bridge.threading.Timer', CapturedTimer):
@@ -198,11 +198,11 @@ class TestStartRequireOnTime(unittest.TestCase):
 
     def test_on_time_starts(self):
         self._porte(5)
-        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', 1)
+        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', [])
 
     def test_exactly_at_threshold_starts(self):
         self._porte(30)
-        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', 1)
+        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', [])
 
     def test_one_minute_late_does_not_start(self):
         self._porte(31)
@@ -216,7 +216,7 @@ class TestStartRequireOnTime(unittest.TestCase):
         # Reset reservation state.
         self.bridge._reservation_start_time = None
         fire(self.bridge, 'start', {'require_on_time': True, 'late_threshold_minutes': 30})
-        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', 1)
+        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', [])
 
 
 # ---------------------------------------------------------------------------
@@ -232,7 +232,7 @@ class TestStartRequireInactive(unittest.TestCase):
     def test_inactive_starts(self):
         self.bridge._experiment_active = False
         fire(self.bridge, 'start', self.params)
-        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', 1)
+        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', [])
 
     def test_active_does_not_start(self):
         self.bridge._experiment_active = True
@@ -251,14 +251,14 @@ class TestStartRequireInactive(unittest.TestCase):
         self.bridge._last_experiment_start = NOW - 91 * 60  # 91 min ago, past the 90-min cooldown
         with patch('xeno_bridge.time.time', return_value=NOW):
             fire(self.bridge, 'start', self.params)
-        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', 1)
+        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', [])
 
     def test_zero_cooldown_ignores_last_start_time(self):
         self.bridge._experiment_active = False
         self.bridge._last_experiment_start = NOW - 5  # 5 seconds ago
         with patch('xeno_bridge.time.time', return_value=NOW):
             fire(self.bridge, 'start', {'require_inactive': True, 'cooldown_minutes': 0})
-        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', 1)
+        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', [])
 
 
 # ---------------------------------------------------------------------------
@@ -283,7 +283,7 @@ class TestStartCombinedGuards(unittest.TestCase):
         self.bridge._experiment_active = False
         with patch('xeno_bridge.time.time', return_value=NOW + 10 * 60):  # 10 min in, on time
             fire(self.bridge, 'start', self.params)
-        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', 1)
+        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', [])
 
     def test_on_time_but_experiment_active_does_not_start(self):
         self.bridge._experiment_active = True
@@ -309,7 +309,7 @@ class TestStop(unittest.TestCase):
 
     def test_sends_stop_to_xenopi(self):
         fire(self.bridge, 'stop', {})
-        self.xenopi.send_message.assert_called_once_with('/xeno/control/stop', 1)
+        self.xenopi.send_message.assert_called_once_with('/xeno/control/stop', [])
 
     def test_cancels_pending_start(self):
         timer = CapturedTimer(600, lambda: None)
@@ -320,7 +320,7 @@ class TestStop(unittest.TestCase):
     def test_does_not_send_begin(self):
         fire(self.bridge, 'stop', {})
         self.assertNotIn(
-            call('/xeno/control/begin', 1),
+            call('/xeno/control/begin', []),
             self.xenopi.send_message.call_args_list,
         )
 
@@ -489,7 +489,7 @@ class TestScenarioEisode(unittest.TestCase):
         self._standby(15)
         self._porte_direct(5)
         self.bridge._pending_start_timer.fire()
-        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', 1)
+        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', [])
 
     def test_late_arrival_does_not_start(self):
         """Visitors arrive 45 min into slot → no timer, no start."""
@@ -504,7 +504,7 @@ class TestScenarioEisode(unittest.TestCase):
         self._porte_direct(45)
         self.xenopi.send_message.assert_not_called()
         fire(self.bridge, 'start', {})  # unconditional
-        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', 1)
+        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', [])
 
     def test_stop_cancels_pending_start(self):
         """If /stop arrives while waiting for the delay, the timer is cancelled."""
@@ -515,7 +515,7 @@ class TestScenarioEisode(unittest.TestCase):
 
         fire(self.bridge, 'stop', {})
         self.assertFalse(timer.is_alive())
-        self.xenopi.send_message.assert_called_once_with('/xeno/control/stop', 1)
+        self.xenopi.send_message.assert_called_once_with('/xeno/control/stop', [])
 
     def test_standby_resets_volume(self):
         """Volume is reset to 1.0 when /standby is received."""
@@ -551,7 +551,7 @@ class TestScenarioProximity(unittest.TestCase):
     def test_first_detection_starts_experiment(self):
         self.bridge._experiment_active = False
         fire(self.bridge, 'start', self.PARAMS)
-        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', 1)
+        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', [])
 
     def test_detection_while_active_is_ignored(self):
         self.bridge._experiment_active = True
@@ -573,17 +573,17 @@ class TestScenarioProximity(unittest.TestCase):
 
         self.bridge._last_experiment_start = None  # no cooldown to worry about
         fire(self.bridge, 'start', self.PARAMS)
-        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', 1)
+        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', [])
 
     def test_stop_sends_idle_to_xenopi(self):
         fire(self.bridge, 'stop', {})
-        self.xenopi.send_message.assert_called_once_with('/xeno/control/stop', 1)
+        self.xenopi.send_message.assert_called_once_with('/xeno/control/stop', [])
 
     def test_manual_start_bypasses_all_guards(self):
         """Operator /start works even while an experiment is active."""
         self.bridge._experiment_active = True
         fire(self.bridge, 'start', {})  # no guards
-        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', 1)
+        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', [])
 
     def test_full_cycle(self):
         """
@@ -594,7 +594,7 @@ class TestScenarioProximity(unittest.TestCase):
 
         # 2. Someone approaches — experiment starts.
         fire(self.bridge, 'start', self.PARAMS)
-        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', 1)
+        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', [])
         self.xenopi.reset_mock()
 
         # 3. XenoPi reports experiment is running.
@@ -607,7 +607,7 @@ class TestScenarioProximity(unittest.TestCase):
 
         # 5. Operator stops the piece.
         fire(self.bridge, 'stop', {})
-        self.xenopi.send_message.assert_called_once_with('/xeno/control/stop', 1)
+        self.xenopi.send_message.assert_called_once_with('/xeno/control/stop', [])
         self.xenopi.reset_mock()
 
         # 6. XenoPi transitions to IDLE.
@@ -617,7 +617,7 @@ class TestScenarioProximity(unittest.TestCase):
         # 7. New visitor — starts again.
         self.bridge._last_experiment_start = None
         fire(self.bridge, 'start', self.PARAMS)
-        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', 1)
+        self.xenopi.send_message.assert_called_once_with('/xeno/control/begin', [])
 
 
 if __name__ == '__main__':

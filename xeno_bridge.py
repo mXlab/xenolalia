@@ -143,7 +143,7 @@ class VenueBridge:
     def _trigger_start(self):
         log.info("Bridge: → /xeno/control/begin")
         self._last_experiment_start = time.time()
-        self._xenopi_client.send_message("/xeno/control/begin", 1)
+        self._xenopi_client.send_message("/xeno/control/begin", [])
 
     def _cancel_pending_start(self):
         if self._pending_start_timer is not None and self._pending_start_timer.is_alive():
@@ -256,7 +256,7 @@ class VenueBridge:
         """Stop the current experiment. XenoPi transitions to IDLE (black screen)."""
         self._cancel_pending_start()
         log.info("Bridge: stop → /xeno/control/stop")
-        self._xenopi_client.send_message("/xeno/control/stop", 1)
+        self._xenopi_client.send_message("/xeno/control/stop", [])
 
     def _handle_volume(self, params, *osc_args):
         """/volume f <level> — Forward to Pd at the configured address."""
