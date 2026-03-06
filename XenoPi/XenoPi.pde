@@ -133,6 +133,7 @@ void setup() {
   oscP5.plug(this, "apparatusHandshake", "/xeno/handshake");
 
   oscP5.plug(this, "begin", "/xeno/control/begin");
+  oscP5.plug(this, "stop",  "/xeno/control/stop");
 
   log("XenoPi started");
 }
@@ -168,6 +169,12 @@ void apparatusHandshake() {
 void begin() {
   log("Begin generative process.");
   generativeMode();
+}
+
+void stop() {
+  log("Stop generative process.");
+  if (mode instanceof GenerativeMode)
+    ((GenerativeMode)mode).requestStop();
 }
 
 void cameraCalibrationMode() {

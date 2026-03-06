@@ -1,14 +1,15 @@
 // Capture FSM state enum.
 enum State {
-    INIT, 
-    NEW, 
+    INIT,
+    NEW,
     REFRESH,
     POST_REFRESH,
-    MAIN, 
-    FLASH, 
-    SNAPSHOT, 
+    MAIN,
+    FLASH,
+    SNAPSHOT,
     WAIT_FOR_GLYPH,
-    PRESENTATION
+    PRESENTATION,
+    IDLE
 }
 
 // This mode runs the generative process through interoperability
@@ -390,6 +391,11 @@ class GenerativeMode extends AbstractMode {
       }
     }
     
+    // IDLE : Stopped externally. Black screen. Wait for /xeno/control/begin to restart.
+    else if (state == State.IDLE) {
+      background(0);
+    }
+
     // PRESENTATION loop : Display flash background to show result.
     else if (state == State.PRESENTATION) {
       if (enteredState()) {
@@ -474,6 +480,16 @@ class GenerativeMode extends AbstractMode {
 
   void requestNewExperiment() {
     newExperimentRequested = true;
+  }
+
+  // Called when receiving /xeno/control/stop from xeno_server.py.
+  // Immediately transitions to IDLE (black screen) regardless of current state.
+  // Resume by sending /xeno/control/begin.
+  void requestStop() {
+    log("Stop received — going to IDLE.");
+    glow(false);
+    idle(false);
+    transitionTo(State.IDLE);
   }
 
   // Take a snapshot of reference image with the camera.
