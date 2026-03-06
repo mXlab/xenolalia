@@ -109,3 +109,9 @@ ENV/
 *.autosave
 letters
 documents
+
+# Venue configs (contain IPs, ports, and scheduling details specific to each exhibition).
+# Only committed: default.yaml (template) and *_example.yaml (example patterns).
+venues/*.yaml
+!venues/default.yaml
+!venues/*_example.yaml
