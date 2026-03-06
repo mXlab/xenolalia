@@ -32,8 +32,8 @@ namespace xenolalia{
         out_pump.init();
         pixel_ring::init();
         liquid_sensor.init();
-        euglena_mixer::init(); 
-        pq::Plaquette.begin(); 
+        euglena_mixer::init();
+        pq::Plaquette.begin();
     }
 
     void update() {

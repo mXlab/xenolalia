@@ -225,12 +225,18 @@ void draw() {
   // Display current scene.
   scenes.currentScene().display();
 
-  // Apply mask.
+  // Snapshot overlay: fade scene to black, then show message.
   if (takingSnapshot) {
-    float maskOpacity = map(snapshotFadeTimer.progress(), 0, 1, 1-snapshotFadeTarget, snapshotFadeTarget) * 255;
+    float p = map(snapshotFadeTimer.progress(), 0, 1, 1-snapshotFadeTarget, snapshotFadeTarget);
+    float maskOpacity = p * 255;
     noStroke();
-    fill(0, maskOpacity); 
+    fill(0, maskOpacity);
     rect(width/2, height/2, width, height);
+
+    fill(255, maskOpacity);
+    textAlign(CENTER, CENTER);
+    textSize(48);
+    text("Mesoscope taking snapshot", width/2, height/2);
   }
 }
 
