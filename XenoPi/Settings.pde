@@ -38,6 +38,11 @@ class Settings {
   // If false (default), it returns to IDLE and waits for /xeno/control/begin or 'n' key.
   boolean autoRestart;
 
+  // Duration of a single experiment in minutes. Combined with exposure_time (seconds),
+  // determines how many snapshots are taken: floor(duration_min * 60 / exposure_time_s).
+  // Default 0 falls back to 12 snapshots.
+  float experimentDurationMinutes;
+
   // Startup mode: "calibration" (default), "generative", "idle", "resume".
   // "calibration"  — open camera calibration screen.
   // "generative"   — start generative process immediately (former autostart: true).
@@ -94,6 +99,15 @@ class Settings {
   boolean autoRestart()  { return autoRestart; }
   String startupMode()   { return startupMode; }
 
+  float experimentDurationMinutes() { return experimentDurationMinutes; }
+
+  // Computes the number of snapshots per experiment from duration and exposure time.
+  // Falls back to 12 if experiment_duration_minutes is 0 or not set.
+  int nSnapshotsPerExperiment() {
+    if (experimentDurationMinutes <= 0) return 12;
+    return max(1, round(experimentDurationMinutes * 60.0f / exposureTime));
+  }
+
   String squircleMode() { return squircleMode; }
   boolean usesSquircle() { return !squircleMode.equals("none"); }
 
@@ -143,6 +157,7 @@ class Settings {
       settings.setBoolean("autostart", startupMode.equals("generative"));
 
       settings.setFloat("exposure_time", exposureTime);
+      settings.setFloat("experiment_duration_minutes", experimentDurationMinutes);
 
       settings.setString("model_name", modelName);
       settings.setBoolean("use_convolutional", useConvolutional);
@@ -200,6 +215,7 @@ class Settings {
       }
 
       exposureTime = settings.getFloat("exposure_time");
+      experimentDurationMinutes = settings.hasKey("experiment_duration_minutes") ? settings.getFloat("experiment_duration_minutes") : 0;
       
       modelName = settings.getString("model_name");
       useConvolutional = settings.getBoolean("use_convolutional");
@@ -241,6 +257,7 @@ class Settings {
 
     cameraId = 0;
     exposureTime = 60.0f;
+    experimentDurationMinutes = 0;
     squircleMode = "none";
     autoRestart = false;
     startupMode = "calibration";

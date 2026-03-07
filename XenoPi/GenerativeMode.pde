@@ -53,8 +53,8 @@ class GenerativeMode extends AbstractMode {
   final int SNAPSHOT_INTER_SHOT_TIME = 2000;
   final int SNAPSHOT_CAMERA_TIMEOUT = 60000; // restart camera if no frame within this time
   
-  final int N_SNAPSHOTS_PER_EXPERIMENT = 12;
-  //final int N_SNAPSHOTS_PER_EXPERIMENT = 3;
+  // Computed from settings: experiment_duration_minutes / exposure_time_s.
+  // Falls back to 12 if experiment_duration_minutes is 0.
   
   // Time to wait for liquid to settle after refresh.
   final int POST_REFRESH_TIME = 120000; // 2 minutes
@@ -371,7 +371,7 @@ class GenerativeMode extends AbstractMode {
       // In auto-mode: collect snapshots at a regular pace.
       if (autoMode && exposureTimer.isFinished()) {
         
-         if (experiment.nSnapshots() < N_SNAPSHOTS_PER_EXPERIMENT)
+         if (experiment.nSnapshots() < settings.nSnapshotsPerExperiment())
            requestSnapshot();
          else {
            setRingStyle(RING_DARK);
