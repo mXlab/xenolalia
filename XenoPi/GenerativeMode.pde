@@ -423,10 +423,10 @@ class GenerativeMode extends AbstractMode {
       background(FLASH_COLOR);
 
       if (stateTimer.isFinished()) {
-        transitionTo(State.NEW);
-        newExperimentRequested = false;
         experiment.updateServer("end"); // tell server current experiment is over
         setRingStyle(RING_DARK);
+        // Return to IDLE by default; go straight to NEW only when auto_restart is set.
+        transitionTo(settings.autoRestart() ? State.NEW : State.IDLE);
       }
 
     }

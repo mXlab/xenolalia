@@ -34,6 +34,10 @@ class Settings {
   // Apparatus.
   boolean useApparatus;
 
+  // If true, XenoPi automatically starts a new experiment after each cycle completes.
+  // If false (default), it returns to IDLE and waits for /xeno/control/begin or 'n' key.
+  boolean autoRestart;
+
   // Startup mode: "calibration" (default), "generative", "idle", "resume".
   // "calibration"  — open camera calibration screen.
   // "generative"   — start generative process immediately (former autostart: true).
@@ -87,6 +91,7 @@ class Settings {
   boolean useBaseImage() { return useBaseImage; }
 
   boolean useApparatus()  { return useApparatus; }
+  boolean autoRestart()  { return autoRestart; }
   String startupMode()   { return startupMode; }
 
   String squircleMode() { return squircleMode; }
@@ -132,6 +137,7 @@ class Settings {
       settings.setBoolean("use_base_image", useBaseImage);
 
       settings.setBoolean("use_apparatus", useApparatus);
+      settings.setBoolean("auto_restart", autoRestart);
       settings.setString("startup_mode", startupMode);
       // Keep "autostart" for backward compatibility with older XenoPi versions.
       settings.setBoolean("autostart", startupMode.equals("generative"));
@@ -183,6 +189,7 @@ class Settings {
       useBaseImage = settings.getBoolean("use_base_image");
 
       useApparatus = settings.getBoolean("use_apparatus");
+      autoRestart  = settings.hasKey("auto_restart") && settings.getBoolean("auto_restart");
       // startup_mode takes precedence; fall back to autostart boolean for backward compat.
       if (settings.hasKey("startup_mode") && settings.getString("startup_mode") != null) {
         startupMode = settings.getString("startup_mode");
@@ -235,6 +242,7 @@ class Settings {
     cameraId = 0;
     exposureTime = 60.0f;
     squircleMode = "none";
+    autoRestart = false;
     startupMode = "calibration";
   }
 
