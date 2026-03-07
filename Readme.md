@@ -15,7 +15,7 @@ Xenolalia consists mainly of 4 different components:
 
 | IP              | Machine                     | Programs & OSC input ports                              |
 |-----------------|-----------------------------|---------------------------------------------------------|
-|192.168.0.**100**|xenopc                       |xeno_server.py (7000), XenoProjection (7001)             |
+|192.168.0.**100**|xenopc                       |xeno_server.py (7000), XenoProjection (7001), xeno_sonoscope.pd (7002) |
 |192.168.0.**101**|xenopi (RPi)                 |xeno_osc.py (7000), XenoPi (7001), xeno_orbiter.py (7002)|
 |192.168.0.**102**|Apparatus (ESP32)            |XenolaliaApparatus (7000)                                |
 |192.168.0.**103**|Xenoscope (microscope) (RPi) |Xenoscope (n/a)                                          |
