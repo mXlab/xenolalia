@@ -5,6 +5,7 @@ import netP5.*;
 final int OSC_RECEIVE_PORT = 7001;
 final int OSC_SEND_PORT = 7002; // sonoscope
 final int VIGNETTE_SIDE = 480;
+final String ACTIVATION_VECTOR = "avg"; // which code signature vector to send to sonoscope: "min", "max", or "avg"
 
 final float TITLES_FONT_SIZE_PROPORTION = 0.075;
 
@@ -305,7 +306,7 @@ void experimentStep(String uid) {
 
   // Load latest encoder activations so they are sent when scene 0 starts.
   if (singleGlyphScene != null)
-    singleGlyphScene.setActivations(currentExperiment.getLatestActivations());
+    singleGlyphScene.setActivations(currentExperiment.getLatestActivations(ACTIVATION_VECTOR));
 
   // Go to first scene.
   hideOverlay();
