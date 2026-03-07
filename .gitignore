@@ -110,8 +110,11 @@ ENV/
 letters
 documents
 
+# XenoPC local config (IPs, passwords, session name — not committed).
+config/xenopc.yaml
+
 # Venue configs (contain IPs, ports, and scheduling details specific to each exhibition).
 # Only committed: default.yaml (template) and *_example.yaml (example patterns).
-venues/*.yaml
-!venues/default.yaml
-!venues/*_example.yaml
+config/venues/*.yaml
+!config/venues/default.yaml
+!config/venues/*_example.yaml

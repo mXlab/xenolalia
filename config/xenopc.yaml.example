@@ -1,0 +1,23 @@
+# xenopc.yaml — XenoPC local configuration (not committed to git).
+# Copy this file to config/xenopc.yaml and fill in your values.
+
+# Session name: maps to config/venues/<session>.yaml
+session: <venue_name>
+
+# Alternatively, specify an explicit venue config path:
+# venue_config: config/venues/<venue_name>.yaml
+
+# XenoPi connection.
+xenopi_ip: 192.168.x.x
+xenopi_send_port: 7001
+xenopi_username: <username>
+xenopi_password: <password>
+xenopi_snapshots_dir: /home/<username>/xenolalia/XenoPi/snapshots
+
+# Macroscope (XenoProjection) connection.
+macroscope_ip: 127.0.0.1
+macroscope_send_port: 7001
+
+# Local server.
+receive_port: 7000
+local_snapshots_dir: ./contents

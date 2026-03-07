@@ -7,6 +7,8 @@ import sys
 import signal
 import argparse
 
+import yaml
+
 from subprocess import Popen, PIPE
 
 from pythonosc import dispatcher
@@ -24,8 +26,32 @@ logging.basicConfig(
     datefmt='%H:%M:%S',
 )
 
+_DEFAULT_CONFIG = "config/xenopc.yaml"
+
+# Pre-parse just -C so we can load the config file before setting arg defaults.
+_pre = argparse.ArgumentParser(add_help=False)
+_pre.add_argument("-C", "--config", default=_DEFAULT_CONFIG)
+_pre_args, _ = _pre.parse_known_args()
+
+# Load config file and build defaults dict.
+_cfg = {}
+if os.path.exists(_pre_args.config):
+    with open(_pre_args.config, "r") as _f:
+        _cfg = yaml.safe_load(_f) or {}
+    logging.getLogger(__name__).info("Loaded config: {}".format(_pre_args.config))
+else:
+    if _pre_args.config != _DEFAULT_CONFIG:
+        logging.getLogger(__name__).warning("Config file not found: {}".format(_pre_args.config))
+
+# Resolve session name → venue_config path.
+_session = _cfg.pop("session", None)
+if _session and "venue_config" not in _cfg:
+    _cfg["venue_config"] = "config/venues/{}.yaml".format(_session)
+
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
+parser.add_argument("-C", "--config", default=_DEFAULT_CONFIG,
+                    help="Path to XenoPC config file.")
 parser.add_argument("-u", "--xenopi-username", default="pi",
                     help="The username for the xeno Pi.")
 parser.add_argument("-p", "--xenopi-password", default="xenolalia",
@@ -41,7 +67,7 @@ parser.add_argument("-ix", "--xenopi-ip", default="192.168.0.101",
 parser.add_argument("-sx", "--xenopi-send-port", default="7001",
                     type=int, help="The port number used to send data to XenoPi.")
 
-parser.add_argument("-im", "---macroscope-ip", default="127.0.0.1",
+parser.add_argument("-im", "--macroscope-ip", default="127.0.0.1",
                     help="The IP address where the macroscope program runs.")
 parser.add_argument("-sm", "--macroscope-send-port", default="7001",
                     type=int, help="The port number used to send data to the macroscope.")
@@ -50,8 +76,10 @@ parser.add_argument("-r", "--receive-port", default="7000",
                     type=int, help="The port number to listen on.")
 
 parser.add_argument("-V", "--venue-config", default=None,
-                    help="Path to venue bridge config (e.g. venues/bian_2026.yaml). "
-                         "Omit to disable the exhibition bridge.")
+                    help="Path to venue bridge config. Overrides config file if given.")
+
+# Apply config file values as defaults (CLI args still take precedence).
+parser.set_defaults(**_cfg)
 
 args = parser.parse_args()
 
