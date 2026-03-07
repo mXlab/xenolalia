@@ -22,12 +22,30 @@ macroscope_send_port: 7001
 receive_port: 7000
 local_snapshots_dir: /home/xeno/xenolalia/contents
 
-# Adapter targets (used by schedule and handler forwarding).
-# These are defined in the adapter YAML, not here — shown for reference:
-# targets:
-#   apparatus:
-#     host: 192.168.x.x
-#     port: 7000
-#   pd:
-#     host: 127.0.0.1
-#     port: 9000
+# Named OSC targets — referenced by adapter configs (schedule, osc: side effects).
+# 'xenopi' is always built-in; all others are defined here.
+targets:
+  # 192.168.0.100 — XenoPC (local machine)
+  server:
+    host: 127.0.0.1
+    port: 7000
+  macroscope:          # XenoProjection display
+    host: 127.0.0.1
+    port: 7001
+  sonoscope:           # xeno_sonoscope.pd
+    host: 127.0.0.1
+    port: 7002
+  # 192.168.0.101 — XenoPi (Raspberry Pi)
+  neurons:             # xeno_osc.py (neural network server)
+    host: 192.168.0.101
+    port: 7000
+  mesoscope:           # XenoPi Processing sketch
+    host: 192.168.0.101
+    port: 7001
+  orbiter:             # xeno_orbiter.py (OLED)
+    host: 192.168.0.101
+    port: 7002
+  # 192.168.0.102 — Apparatus (ESP32)
+  apparatus:
+    host: 192.168.0.102
+    port: 7000

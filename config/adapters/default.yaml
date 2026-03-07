@@ -9,9 +9,10 @@ adapter: "Default (manual control only)"
 
 receive_port: 8001
 
-# No pd target needed. Uncomment and configure if volume control is required:
+# Named targets (apparatus, macroscope, sonoscope, etc.) are defined in
+# xenopc.yaml, not here. Adapter-local targets can be added below if needed:
 # targets:
-#   pd:
+#   custom:
 #     host: 127.0.0.1
 #     port: 9000
 

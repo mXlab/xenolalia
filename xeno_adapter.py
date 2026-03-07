@@ -23,13 +23,39 @@ start    Trigger an experiment, with optional guards:
              late_threshold_minutes (default 30): minutes of grace after reservation start
            require_inactive (default false): only start if no experiment is running
              cooldown_minutes (default 0): heuristic fallback if XenoPi state unknown
-standby  /standby i <minutes>   Record reservation timing; reset volume.
-stop     <any>                  Send stop signal to XenoPi (→ IDLE state).
-volume   /volume  f <level>     Forward volume to Pd.
+standby  Record reservation timing, notify XenoPi, then fire osc: side effects.
+stop     Cancel any pending start, send stop to XenoPi, then fire osc: side effects.
+route    Forward incoming args to configured OSC targets (no built-in logic).
+
+All handler types support an osc: list of side-effect messages:
+
+  /standby:
+    type: standby
+    osc:
+      - target: pd
+        address: /volume
+        type: f
+        value: 1.0          # fixed value
+
+  /volume:
+    type: route
+    osc:
+      - target: pd
+        address: /volume
+        type: f
+        value: "{0}"        # incoming arg passthrough
+      - target: pd
+        address: /volume_db
+        type: f
+        value: "{0} * 0.5"  # math expression on incoming arg
+
+Values in osc: items may be literals or expressions using {0}, {1}, ...
+to reference incoming OSC arguments. Arithmetic operators are supported
+(+, -, *, /, //, **, ()). Supported types: i (int), f (float), s (string).
 
 Schedule
 --------
-A schedule section fires OSC messages at specific times of day:
+Fires OSC messages at specific times of day:
 
   schedule:
     - time: "22:30"
@@ -43,9 +69,19 @@ A schedule section fires OSC messages at specific times of day:
       type: f
       value: 0.5
 
-Targets are resolved from the targets: section of the config.
-The built-in target name 'xenopi' always resolves to the XenoPi client.
-Supported types: i (int), f (float), s (string).
+Targets are resolved first from the targets: section of xenopc.yaml (the
+venue-level config loaded by xeno_server.py), then from any targets: section
+in the adapter config. xenopc.yaml takes precedence. The built-in target
+'xenopi' always resolves to the XenoPi client.
+
+Standard named targets (defined in xenopc.yaml):
+  server     xeno_server.py          192.168.0.100:7000
+  macroscope XenoProjection display  192.168.0.100:7001
+  sonoscope  xeno_sonoscope.pd       192.168.0.100:7002
+  neurons    xeno_osc.py (neural net)192.168.0.101:7000
+  mesoscope  XenoPi Processing       192.168.0.101:7001
+  orbiter    xeno_orbiter.py (OLED)  192.168.0.101:7002
+  apparatus  ESP32 apparatus         192.168.0.102:7000
 """
 
 import logging
@@ -80,9 +116,13 @@ class OscAdapter:
         Path to the adapter YAML config file.
     xenopi_client : udp_client.SimpleUDPClient
         Shared OSC client from xeno_server.py, already pointed at XenoPi.
+    extra_targets : dict, optional
+        Additional named targets as ``{name: {host, port}}`` dicts, typically
+        loaded from xenopc.yaml. These take precedence over targets defined
+        in the adapter config.
     """
 
-    def __init__(self, config_path, xenopi_client):
+    def __init__(self, config_path, xenopi_client, extra_targets=None):
         with open(config_path, "r") as f:
             self._config = yaml.safe_load(f)
 
@@ -91,6 +131,7 @@ class OscAdapter:
         self._xenopi_client = xenopi_client
 
         # Build named target dict. 'xenopi' is always available.
+        # Adapter-config targets are loaded first; xenopc.yaml targets override.
         self._targets = {"xenopi": xenopi_client}
         for name, cfg in self._config.get("targets", {}).items():
             client = udp_client.SimpleUDPClient(
@@ -99,9 +140,13 @@ class OscAdapter:
             )
             self._targets[name] = client
             log.info(f"  Target '{name}': {cfg.get('host')}:{cfg.get('port')}")
-
-        # Convenience reference for volume handler backward compat.
-        self._pd_client = self._targets.get("pd")
+        for name, cfg in (extra_targets or {}).items():
+            client = udp_client.SimpleUDPClient(
+                cfg.get("host", "127.0.0.1"),
+                int(cfg.get("port", 9000)),
+            )
+            self._targets[name] = client
+            log.info(f"  Target '{name}': {cfg.get('host')}:{cfg.get('port')} (from xenopc.yaml)")
 
         # Schedule: list of timed OSC items.
         self._schedule = self._config.get("schedule", [])
@@ -113,7 +158,7 @@ class OscAdapter:
         self._last_experiment_start  = None  # epoch seconds, heuristic fallback
 
         # OSC server and scheduler thread (created by start_server()).
-        self._server    = None
+        self._server     = None
         self._stop_event = threading.Event()
 
     # -----------------------------------------------------------------------
@@ -172,7 +217,43 @@ class OscAdapter:
             self._server.server_close()
 
     # -----------------------------------------------------------------------
-    # Internals
+    # OSC item helpers
+    # -----------------------------------------------------------------------
+
+    def _resolve_value(self, value, osc_args, type_):
+        """
+        Resolve a value that may contain {n} arg references and math expressions.
+        e.g. "{0}/100" with osc_args=(75,) → 0.75 (as float).
+        """
+        if isinstance(value, str) and '{' in value:
+            expr = value.format(*[str(a) for a in osc_args])
+            value = eval(expr, {"__builtins__": {}}, {})
+        return {'f': float, 's': str}.get(type_, int)(value)
+
+    def _fire_osc_items(self, items, osc_args):
+        """Send a list of OSC items, resolving {n} templates and math expressions."""
+        for item in items:
+            target_name = item.get('target', 'xenopi')
+            client = self._targets.get(target_name)
+            if client is None:
+                log.warning(f"Adapter: unknown target '{target_name}'")
+                continue
+            address = item.get('address')
+            if not address:
+                log.warning(f"Adapter: missing address in osc item {item}")
+                continue
+            type_ = item.get('type', 'i')
+            raw   = item.get('value', '{0}')
+            try:
+                value = self._resolve_value(raw, osc_args, type_)
+            except Exception as e:
+                log.warning(f"Adapter: could not resolve value '{raw}': {e}")
+                continue
+            client.send_message(address, value)
+            log.debug(f"Adapter: → [{target_name}] {address} {value}")
+
+    # -----------------------------------------------------------------------
+    # Scheduler
     # -----------------------------------------------------------------------
 
     def _run_schedule(self):
@@ -186,36 +267,15 @@ class OscAdapter:
             if current_minute != last_fired_minute:
                 for item in self._schedule:
                     if item.get("time") == current_hhmm:
-                        self._fire_schedule_item(item, current_hhmm)
+                        log.info(f"Schedule {current_hhmm}: firing")
+                        self._fire_osc_items([item], ())
                 last_fired_minute = current_minute
 
-            # Sleep until the next minute boundary.
-            seconds_until_next_minute = 60 - now.tm_sec
-            self._stop_event.wait(seconds_until_next_minute)
+            self._stop_event.wait(60 - now.tm_sec)
 
-    def _fire_schedule_item(self, item, hhmm):
-        target_name = item.get("target", "xenopi")
-        client = self._targets.get(target_name)
-        if client is None:
-            log.warning(f"Schedule {hhmm}: unknown target '{target_name}'")
-            return
-
-        address = item.get("address")
-        if not address:
-            log.warning(f"Schedule {hhmm}: missing address in item {item}")
-            return
-
-        type_ = item.get("type", "i")
-        value = item.get("value", 1)
-        if type_ == "f":
-            arg = float(value)
-        elif type_ == "s":
-            arg = str(value)
-        else:
-            arg = int(value)
-
-        client.send_message(address, arg)
-        log.info(f"Schedule {hhmm}: [{target_name}] {address} {type_} {value}")
+    # -----------------------------------------------------------------------
+    # Internals
+    # -----------------------------------------------------------------------
 
     def _trigger_start(self):
         log.info("Adapter: → /xeno/control/begin")
@@ -238,7 +298,7 @@ class OscAdapter:
             "start":   self._handle_start,
             "standby": self._handle_standby,
             "stop":    self._handle_stop,
-            "volume":  self._handle_volume,
+            "route":   self._handle_route,
         }
         fn = _handler_map.get(handler_type)
         if fn is None:
@@ -260,8 +320,7 @@ class OscAdapter:
 
     def _handle_standby(self, params, *osc_args):
         """
-        /standby i <minutes>
-        Reservation starts in N minutes. Reset volume and record timing.
+        Record reservation timing, fire osc: side effects, notify XenoPi.
         """
         self._cancel_pending_start()
         minutes_ahead = int(osc_args[0]) if osc_args else 0
@@ -270,10 +329,7 @@ class OscAdapter:
             f"Adapter: standby — reservation in {minutes_ahead} min "
             f"(at {time.strftime('%H:%M:%S', time.localtime(self._reservation_start_time))})."
         )
-        # Reset volume.
-        reset_volume = float(params.get("reset_volume", 1.0))
-        self._send_volume(params.get("pd_volume_address", "/volume"), reset_volume)
-        # Inform XenoPi (informational; XenoPi may use this for display in the future).
+        self._fire_osc_items(params.get('osc', []), osc_args)
         self._xenopi_client.send_message("/xeno/control/standby", minutes_ahead)
 
     def _handle_start(self, params, *osc_args):
@@ -317,6 +373,9 @@ class OscAdapter:
                     )
                     return
 
+        # Fire osc side effects immediately (before any delay timer).
+        self._fire_osc_items(params.get('osc', []), osc_args)
+
         # Schedule or fire.
         delay = float(params.get("delay_minutes", 0.0))
         self._cancel_pending_start()
@@ -330,20 +389,12 @@ class OscAdapter:
             self._trigger_start()
 
     def _handle_stop(self, params, *osc_args):
-        """Stop the current experiment. XenoPi transitions to IDLE (black screen)."""
+        """Cancel any pending start, send stop to XenoPi, fire osc: side effects."""
         self._cancel_pending_start()
         log.info("Adapter: stop → /xeno/control/stop")
         self._xenopi_client.send_message("/xeno/control/stop", [])
+        self._fire_osc_items(params.get('osc', []), osc_args)
 
-    def _handle_volume(self, params, *osc_args):
-        """/volume f <level> — Forward to Pd at the configured address."""
-        level      = float(osc_args[0]) if osc_args else 1.0
-        pd_address = params.get("pd_volume_address", "/volume")
-        self._send_volume(pd_address, level)
-
-    def _send_volume(self, address, level):
-        if self._pd_client:
-            self._pd_client.send_message(address, float(level))
-            log.info(f"Adapter: volume {level:.3f} → {address}")
-        else:
-            log.debug("Adapter: volume message skipped — no Pd target configured.")
+    def _handle_route(self, params, *osc_args):
+        """Forward incoming args to configured OSC targets."""
+        self._fire_osc_items(params.get('osc', []), osc_args)

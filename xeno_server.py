@@ -48,6 +48,9 @@ _adapter = _cfg.pop("adapter", None)
 if _adapter and "adapter_config" not in _cfg:
     _cfg["adapter_config"] = "config/adapters/{}.yaml".format(_adapter)
 
+# Pop targets dict before set_defaults — dicts are not valid argparse defaults.
+_targets_cfg = _cfg.pop("targets", {})
+
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 parser.add_argument("-C", "--config", default=_DEFAULT_CONFIG,
@@ -210,7 +213,8 @@ macroscope_client = udp_client.SimpleUDPClient(args.macroscope_ip, args.macrosco
 
 # Load OSC adapter if an adapter config is given.
 if args.adapter_config:
-    adapter = xeno_adapter.OscAdapter(args.adapter_config, xenopi_client)
+    adapter = xeno_adapter.OscAdapter(args.adapter_config, xenopi_client,
+                                      extra_targets=_targets_cfg)
     adapter.start_server()  # listens on receive_port from the adapter YAML
 
 # Allows program to end cleanly on a CTRL-C command.
