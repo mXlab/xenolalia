@@ -13,8 +13,8 @@ mkdir -p $xeno_logs_dir
 prevent_sleep_pid=$!
 echo "Launching prevent_sleep (PID=$prevent_sleep_pid)"
 
-# Launch xeno_osc.
-$xeno_env_dir/bin/python3 $xeno_dir/xeno_server.py --local-snapshots-dir $xeno_dir/contents > $xeno_logs_dir/xeno_server.log 2>&1 &
+# Launch xeno_server (cd first so relative paths like config/xenopc.yaml resolve correctly).
+cd $xeno_dir && $xeno_env_dir/bin/python3 -u $xeno_dir/xeno_server.py --local-snapshots-dir $xeno_dir/contents > $xeno_logs_dir/xeno_server.log 2>&1 &
 xeno_server_pid=$!
 echo "Launching xeno_server (PID=$xeno_server_pid)"
 
