@@ -30,3 +30,18 @@ handlers:
   #   type: volume
   #   params:
   #     pd_volume_address: /volume
+
+# Timed OSC messages. Each item fires once per day at the given HH:MM.
+# Targets are resolved from the targets: section above; 'xenopi' is always available.
+# Supported types: i (int), f (float), s (string).
+# schedule:
+#   - time: "22:30"
+#     target: apparatus
+#     address: /xeno/ring/grow
+#     type: i
+#     value: 1
+#   - time: "09:00"
+#     target: apparatus
+#     address: /xeno/ring/dark
+#     type: i
+#     value: 1

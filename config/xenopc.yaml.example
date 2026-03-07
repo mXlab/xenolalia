@@ -21,3 +21,13 @@ macroscope_send_port: 7001
 # Local server.
 receive_port: 7000
 local_snapshots_dir: /home/xeno/xenolalia/contents
+
+# Adapter targets (used by schedule and handler forwarding).
+# These are defined in the adapter YAML, not here — shown for reference:
+# targets:
+#   apparatus:
+#     host: 192.168.x.x
+#     port: 7000
+#   pd:
+#     host: 127.0.0.1
+#     port: 9000

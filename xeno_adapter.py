@@ -2,7 +2,8 @@
 xeno_adapter.py — Exhibition OSC adapter for Xenolalia.
 
 Imported as a module by xeno_server.py. Translates external OSC
-messages into canonical Xenolalia control commands.
+messages into canonical Xenolalia control commands, and fires
+time-based scheduled OSC messages.
 
 Usage (in xeno_server.py):
     import xeno_adapter
@@ -25,6 +26,26 @@ start    Trigger an experiment, with optional guards:
 standby  /standby i <minutes>   Record reservation timing; reset volume.
 stop     <any>                  Send stop signal to XenoPi (→ IDLE state).
 volume   /volume  f <level>     Forward volume to Pd.
+
+Schedule
+--------
+A schedule section fires OSC messages at specific times of day:
+
+  schedule:
+    - time: "22:30"
+      target: apparatus
+      address: /xeno/ring/grow
+      type: i
+      value: 1
+    - time: "09:00"
+      target: pd
+      address: /volume
+      type: f
+      value: 0.5
+
+Targets are resolved from the targets: section of the config.
+The built-in target name 'xenopi' always resolves to the XenoPi client.
+Supported types: i (int), f (float), s (string).
 """
 
 import logging
@@ -69,15 +90,21 @@ class OscAdapter:
 
         self._xenopi_client = xenopi_client
 
-        # Optional Pd client, created from config if a 'pd' target is defined.
-        self._pd_client = None
-        pd_cfg = self._config.get("targets", {}).get("pd", {})
-        if pd_cfg:
-            self._pd_client = udp_client.SimpleUDPClient(
-                pd_cfg.get("host", "127.0.0.1"),
-                int(pd_cfg.get("port", 9000)),
+        # Build named target dict. 'xenopi' is always available.
+        self._targets = {"xenopi": xenopi_client}
+        for name, cfg in self._config.get("targets", {}).items():
+            client = udp_client.SimpleUDPClient(
+                cfg.get("host", "127.0.0.1"),
+                int(cfg.get("port", 9000)),
             )
-            log.info(f"  Pd target: {pd_cfg.get('host')}:{pd_cfg.get('port')}")
+            self._targets[name] = client
+            log.info(f"  Target '{name}': {cfg.get('host')}:{cfg.get('port')}")
+
+        # Convenience reference for volume handler backward compat.
+        self._pd_client = self._targets.get("pd")
+
+        # Schedule: list of timed OSC items.
+        self._schedule = self._config.get("schedule", [])
 
         # Internal state.
         self._reservation_start_time = None  # epoch seconds when reservation begins
@@ -85,8 +112,9 @@ class OscAdapter:
         self._experiment_active      = False  # updated by on_experiment_state()
         self._last_experiment_start  = None  # epoch seconds, heuristic fallback
 
-        # OSC server (created by start_server()).
-        self._server = None
+        # OSC server and scheduler thread (created by start_server()).
+        self._server    = None
+        self._stop_event = threading.Event()
 
     # -----------------------------------------------------------------------
     # Public interface
@@ -121,6 +149,11 @@ class OscAdapter:
         t.start()
         log.info(f"Adapter server listening on port {port} (adapter: {self._config.get('adapter', '?')})")
 
+        if self._schedule:
+            s = threading.Thread(target=self._run_schedule, daemon=True)
+            s.start()
+            log.info(f"Adapter scheduler started ({len(self._schedule)} item(s)).")
+
     def on_experiment_state(self, state):
         """
         Called by xeno_server.py whenever /xeno/exp/state is received from XenoPi.
@@ -132,7 +165,8 @@ class OscAdapter:
             log.info(f"Adapter: experiment {'started' if self._experiment_active else 'ended'} (state={state})")
 
     def shutdown(self):
-        """Stop the adapter server and cancel any pending timers."""
+        """Stop the adapter server, scheduler, and cancel any pending timers."""
+        self._stop_event.set()
         self._cancel_pending_start()
         if self._server:
             self._server.server_close()
@@ -140,6 +174,48 @@ class OscAdapter:
     # -----------------------------------------------------------------------
     # Internals
     # -----------------------------------------------------------------------
+
+    def _run_schedule(self):
+        """Background thread: fire scheduled OSC items at their configured times."""
+        last_fired_minute = None
+        while not self._stop_event.is_set():
+            now = time.localtime()
+            current_minute = (now.tm_hour, now.tm_min)
+            current_hhmm   = f"{now.tm_hour:02d}:{now.tm_min:02d}"
+
+            if current_minute != last_fired_minute:
+                for item in self._schedule:
+                    if item.get("time") == current_hhmm:
+                        self._fire_schedule_item(item, current_hhmm)
+                last_fired_minute = current_minute
+
+            # Sleep until the next minute boundary.
+            seconds_until_next_minute = 60 - now.tm_sec
+            self._stop_event.wait(seconds_until_next_minute)
+
+    def _fire_schedule_item(self, item, hhmm):
+        target_name = item.get("target", "xenopi")
+        client = self._targets.get(target_name)
+        if client is None:
+            log.warning(f"Schedule {hhmm}: unknown target '{target_name}'")
+            return
+
+        address = item.get("address")
+        if not address:
+            log.warning(f"Schedule {hhmm}: missing address in item {item}")
+            return
+
+        type_ = item.get("type", "i")
+        value = item.get("value", 1)
+        if type_ == "f":
+            arg = float(value)
+        elif type_ == "s":
+            arg = str(value)
+        else:
+            arg = int(value)
+
+        client.send_message(address, arg)
+        log.info(f"Schedule {hhmm}: [{target_name}] {address} {type_} {value}")
 
     def _trigger_start(self):
         log.info("Adapter: → /xeno/control/begin")
