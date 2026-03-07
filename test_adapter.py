@@ -434,10 +434,10 @@ class TestDispatcherRegistration(unittest.TestCase):
     def test_handlers_are_registered_from_config(self):
         config = {
             'handlers': {
-                '/standby': {'type': 'standby', 'params': {}},
-                '/porte':   {'type': 'start',   'params': {'delay_minutes': 5}},
-                '/stop':    {'type': 'stop',     'params': {}},
-                '/volume':  {'type': 'route',    'params': {}},
+                '/standby': {'type': 'standby'},
+                '/porte':   {'type': 'start',  'delay_minutes': 5},
+                '/stop':    {'type': 'stop'},
+                '/volume':  {'type': 'route'},
             }
         }
         adapter, _, _ = make_adapter(config)

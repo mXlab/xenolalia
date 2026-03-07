@@ -169,7 +169,7 @@ class OscAdapter:
         """Register all adapter handlers into the given pythonosc Dispatcher."""
         for address, handler_cfg in self._config.get("handlers", {}).items():
             handler_type = handler_cfg.get("type")
-            params       = handler_cfg.get("params", {})
+            params       = {k: v for k, v in handler_cfg.items() if k != "type"}
             fn = self._make_handler(handler_type, params)
             if fn:
                 osc_dispatcher.map(address, fn)
