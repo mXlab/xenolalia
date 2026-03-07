@@ -50,6 +50,46 @@ class ExperimentData {
     return filenames;
   }
 
+  // Lists code signature JSON files for this experiment.
+  ArrayList<String> listCodeSignatureFiles() {
+    File[] files = new File(this.directory).listFiles(new FilenameFilter() {
+      public boolean accept(File dir, String name) {
+        return name.matches(".*_raw_code_signature\\.json");
+      }
+    });
+    if (files == null) return new ArrayList<String>();
+    ArrayList<String> filenames = new ArrayList<String>();
+    for (File f : files)
+      filenames.add(f.getPath());
+    Collections.sort(filenames);
+    return filenames;
+  }
+
+  // Returns the code signature from the most recent step as a flat float array
+  // [min[0..n-1], max[0..n-1], avg[0..n-1]], or null if unavailable.
+  float[] getLatestActivations() {
+    ArrayList<String> files = listCodeSignatureFiles();
+    if (files.isEmpty()) return null;
+    String path = files.get(files.size() - 1);
+    try {
+      JSONObject obj = loadJSONObject(path);
+      JSONArray minArr = obj.getJSONArray("min");
+      JSONArray maxArr = obj.getJSONArray("max");
+      JSONArray avgArr = obj.getJSONArray("avg");
+      int n = minArr.size();
+      float[] values = new float[n * 3];
+      for (int i = 0; i < n; i++) {
+        values[i]       = minArr.getFloat(i);
+        values[i + n]   = maxArr.getFloat(i);
+        values[i + 2*n] = avgArr.getFloat(i);
+      }
+      return values;
+    } catch (Exception e) {
+      println("Warning: could not load code signature from " + path + ": " + e.getMessage());
+      return null;
+    }
+  }
+
   PImage getLastPipelineImage(String stage) {
     // "col" = color perspective-corrected source; fall back to _bio_N.png for older experiments.
     if (stage.equals("col")) {

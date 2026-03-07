@@ -30,6 +30,7 @@ class Scene {
   boolean enabled    = true;   // if false, scene is skipped immediately
 
   String oscAddress = null;
+  float[] activations = null;
 
   Scene(int nColumns, int nRows) {
     this(nColumns, nRows, new Rect());
@@ -59,6 +60,10 @@ class Scene {
     oscAddress = addr;
   }
 
+  void setActivations(float[] a) {
+    activations = a;
+  }
+
   boolean usesOsc() {
     return oscAddress != null;
   }
@@ -66,11 +71,19 @@ class Scene {
   void oscSendMessage(String path) {
     oscSendMessage(path, 0);
   }
-  
+
   void oscSendMessage(String path, int value) {
     if (usesOsc()) {
       OscMessage msg = new OscMessage(oscAddress + path);
       msg.add(value);
+      oscP5.send(msg, sonoscope);
+    }
+  }
+
+  void oscSendMessage(String path, float[] values) {
+    if (usesOsc()) {
+      OscMessage msg = new OscMessage(oscAddress + path);
+      for (float v : values) msg.add(v);
       oscP5.send(msg, sonoscope);
     }
   }
@@ -150,7 +163,10 @@ class Scene {
   }
   
   void start() {
-    oscSendMessage("/start");    
+    if (activations != null)
+      oscSendMessage("/start", activations);
+    else
+      oscSendMessage("/start");
   }
   
   void end() {

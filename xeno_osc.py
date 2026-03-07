@@ -37,10 +37,6 @@ parser.add_argument("-ie", "--orbiter-ip", default="127.0.0.1",
 parser.add_argument("-se", "--orbiter-send-port", default="7002",
                     type=int, help="The port number used to send data to the orbiter.")
 
-parser.add_argument("-ip", "--sonoscope-ip", default="192.168.0.100",
-                    help="IP address where the Pd sonoscope patch runs.")
-parser.add_argument("-sp", "--sonoscope-send-port", default=9000,
-                    type=int, help="Port number to send activations to Pd.")
 
 parser.add_argument("-is", "---server-ip", default="192.168.0.100",
                     help="The IP address where the server program runs.")
@@ -223,17 +219,36 @@ def save_encoded_json(
     with open(filepath, "w") as f:
         json.dump(channels, f, indent=2)
     
-def send_encoder_activations(encoded):
-    """Send flattened, normalized encoder activations to the sonoscope."""
+def save_code_signature(encoded, filepath, n_bins=40, precision=4):
+    """Save a compact code signature of encoder activations to a JSON file.
+
+    Produces a model-agnostic summary with three vectors of n_bins values each
+    (min, max, avg over equal-sized bins of the flattened, normalized activation
+    vector) plus metadata. The format is intentionally open-ended: vector length
+    and structure may vary across signature types.
+    """
     if encoded is None:
         return
-    # Remove batch dim if present, flatten to 1D, normalize to [0, 1].
+    # Remove batch dim if present, flatten to 1D.
     arr = encoded[0] if encoded.ndim == 4 else encoded
     flat = arr.flatten().astype(np.float32)
+    # Normalize to [0, 1].
     vmin, vmax = flat.min(), flat.max()
     if vmax > vmin:
         flat = (flat - vmin) / (vmax - vmin)
-    sonoscope_client.send_message("/xeno/sonoscope/activations", flat.tolist())
+    # Split into n_bins equal-sized bins and compute per-bin statistics.
+    bins = np.array_split(flat, n_bins)
+    data = {
+        "model": model_name,
+        "encoder_layer": encoder_layer,
+        "encoder_shape": list(arr.shape),
+        "n_values": int(flat.size),
+        "min": [round(float(b.min()), precision) for b in bins],
+        "max": [round(float(b.max()), precision) for b in bins],
+        "avg": [round(float(b.mean()), precision) for b in bins],
+    }
+    with open(filepath, "w") as f:
+        json.dump(data, f, indent=2)
 
 # Processes next image based on image path and sends an OSC message back to the XenoPi program.
 # At each step, this function will save the following images:
@@ -279,7 +294,6 @@ def next_image(image_path, base_image_path, starting_frame_random):
     # Generate new image.
     encoded, frame = generate(n_feedback_steps, starting_frame, prev_frame)
     prev_frame = np.copy(frame)
-    send_encoder_activations(encoded)
     # Save raw AE output (before postprocessing).
     image = xeno_image.array_to_image(frame, image_side, image_side)
     image.save("{}/{}_3ann.png".format(dirname, basename))
@@ -303,6 +317,7 @@ def next_image(image_path, base_image_path, starting_frame_random):
     # Save encoded data (only when encoder output is available).
     if encoded is not None:
         save_encoded_json(encoded, "{}/{}_code.json".format(dirname, basename))
+        save_code_signature(encoded, "{}/{}_code_signature.json".format(dirname, basename))
     # Return back OSC message.
     send_message("/xeno/neurons/step", [nn_image_path])
 
@@ -368,7 +383,6 @@ dispatcher.map("/xeno/euglenas/test-camera", handle_test_camera)
 server = osc_server.BlockingOSCUDPServer(("0.0.0.0", args.receive_port), dispatcher)
 xenopi_client = udp_client.SimpleUDPClient(args.xenopi_ip, args.xenopi_send_port)
 orbiter_client = udp_client.SimpleUDPClient(args.orbiter_ip, args.orbiter_send_port)
-sonoscope_client = udp_client.SimpleUDPClient(args.sonoscope_ip, args.sonoscope_send_port)
 
 # Allows program to end cleanly on a CTRL-C command.
 def interrupt(signup, frame):

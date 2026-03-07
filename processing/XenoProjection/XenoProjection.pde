@@ -26,6 +26,7 @@ ExperimentData previousExperiment;
 ArrayList<Scene> currentExperimentScenes = new ArrayList<Scene>();
 ArrayList<Scene> previousExperimentScenes = new ArrayList<Scene>();
 
+Scene singleGlyphScene;
 SequentialScene sequentialScene;
 SequentialScene nextSequentialScene; // sequential scene that will be loaded next
 Scene recentGlyphsScene;
@@ -92,12 +93,14 @@ void setup() {
   if (true)
   {
     Scene scene = new Scene(1, 1, singleVignetteRect);
+    scene.setOscAddress("/xeno/sonoscope/activations");
     GlyphVignette v = new GlyphVignette(currentExperiment);
     v.setArtificialPalette(ArtificialPalette.MAGENTA);
     v.setDataType(DataType.ARTIFICIAL);
     scene.putVignette(0, v);
     scenes.add(scene);
     currentExperimentScenes.add(scene);
+    singleGlyphScene = scene;
   }
 
   // Side-by-side animation of last experiment.
@@ -299,7 +302,11 @@ void experimentStep(String uid) {
   // randomly-seeded step, which only produces 3ann + 4prj).
   if (pipelineScene != null)
     pipelineScene.setEnabled(!currentExperiment.listPipelineFiles("1fil").isEmpty());
-  
+
+  // Load latest encoder activations so they are sent when scene 0 starts.
+  if (singleGlyphScene != null)
+    singleGlyphScene.setActivations(currentExperiment.getLatestActivations());
+
   // Go to first scene.
   hideOverlay();
   scenes.setCurrentScene(0);
