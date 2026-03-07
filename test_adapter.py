@@ -42,7 +42,7 @@ def make_adapter(config=None):
     finally:
         os.unlink(path)
     pd = MagicMock()
-    adapter._pd_client = pd
+    adapter._targets['pd'] = pd
     return adapter, xenopi, pd
 
 
@@ -88,12 +88,13 @@ class TestStandby(unittest.TestCase):
 
     def test_records_reservation_start_time(self):
         with patch('xeno_adapter.time.time', return_value=NOW):
-            fire(self.adapter, 'standby', {'reset_volume': 1.0}, 15)
+            fire(self.adapter, 'standby', {}, 15)
         self.assertAlmostEqual(self.adapter._reservation_start_time, NOW + 15 * 60, places=1)
 
     def test_sends_volume_reset_to_pd(self):
+        params = {'osc': [{'target': 'pd', 'address': '/vol', 'type': 'f', 'value': 0.8}]}
         with patch('xeno_adapter.time.time', return_value=NOW):
-            fire(self.adapter, 'standby', {'reset_volume': 0.8, 'pd_volume_address': '/vol'}, 10)
+            fire(self.adapter, 'standby', params, 10)
         self.pd.send_message.assert_called_once_with('/vol', 0.8)
 
     def test_informs_xenopi(self):
@@ -326,29 +327,49 @@ class TestStop(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# Volume handler
+# Route handler and value resolution
 # ---------------------------------------------------------------------------
 
-class TestVolume(unittest.TestCase):
+class TestRoute(unittest.TestCase):
 
     def setUp(self):
         self.adapter, self.xenopi, self.pd = make_adapter()
 
-    def test_forwards_level_to_pd(self):
-        fire(self.adapter, 'volume', {'pd_volume_address': '/volume'}, 0.7)
+    def test_forwards_fixed_value_to_target(self):
+        params = {'osc': [{'target': 'pd', 'address': '/volume', 'type': 'f', 'value': 0.7}]}
+        fire(self.adapter, 'route', params, 0.7)
         self.pd.send_message.assert_called_once_with('/volume', 0.7)
 
-    def test_default_pd_address(self):
-        fire(self.adapter, 'volume', {}, 0.5)
+    def test_arg_passthrough(self):
+        params = {'osc': [{'target': 'pd', 'address': '/volume', 'type': 'f', 'value': '{0}'}]}
+        fire(self.adapter, 'route', params, 0.5)
         self.pd.send_message.assert_called_once_with('/volume', 0.5)
 
-    def test_does_not_send_to_xenopi(self):
-        fire(self.adapter, 'volume', {}, 0.5)
+    def test_math_expression(self):
+        params = {'osc': [{'target': 'pd', 'address': '/vol_db', 'type': 'f', 'value': '{0} * 0.5'}]}
+        fire(self.adapter, 'route', params, 1.0)
+        self.pd.send_message.assert_called_once_with('/vol_db', 0.5)
+
+    def test_multiple_targets(self):
+        params = {'osc': [
+            {'target': 'pd',     'address': '/volume',    'type': 'f', 'value': '{0}'},
+            {'target': 'xenopi', 'address': '/xeno/test', 'type': 'i', 'value': 1},
+        ]}
+        fire(self.adapter, 'route', params, 0.8)
+        self.pd.send_message.assert_called_once_with('/volume', 0.8)
+        self.xenopi.send_message.assert_called_once_with('/xeno/test', 1)
+
+    def test_does_not_send_to_xenopi_by_default(self):
+        params = {'osc': [{'target': 'pd', 'address': '/volume', 'type': 'f', 'value': 0.5}]}
+        fire(self.adapter, 'route', params, 0.5)
         self.xenopi.send_message.assert_not_called()
 
-    def test_no_pd_client_does_not_crash(self):
-        self.adapter._pd_client = None
-        fire(self.adapter, 'volume', {}, 0.5)  # must not raise
+    def test_unknown_target_does_not_crash(self):
+        params = {'osc': [{'target': 'nonexistent', 'address': '/x', 'type': 'i', 'value': 1}]}
+        fire(self.adapter, 'route', params)  # must not raise
+
+    def test_no_osc_items_does_not_crash(self):
+        fire(self.adapter, 'route', {})  # must not raise
 
 
 # ---------------------------------------------------------------------------
@@ -416,7 +437,7 @@ class TestDispatcherRegistration(unittest.TestCase):
                 '/standby': {'type': 'standby', 'params': {}},
                 '/porte':   {'type': 'start',   'params': {'delay_minutes': 5}},
                 '/stop':    {'type': 'stop',     'params': {}},
-                '/volume':  {'type': 'volume',   'params': {}},
+                '/volume':  {'type': 'route',    'params': {}},
             }
         }
         adapter, _, _ = make_adapter(config)
@@ -455,7 +476,7 @@ class TestScenarioEisode(unittest.TestCase):
       /standby → /porte → delayed experiment start (or rejection if too late).
     """
 
-    STANDBY_PARAMS  = {'reset_volume': 1.0, 'pd_volume_address': '/volume'}
+    STANDBY_PARAMS  = {'osc': [{'target': 'pd', 'address': '/volume', 'type': 'f', 'value': 1.0}]}
     PORTE_PARAMS    = {'require_on_time': True, 'late_threshold_minutes': 30, 'delay_minutes': 10}
 
     def setUp(self):
@@ -526,7 +547,8 @@ class TestScenarioEisode(unittest.TestCase):
         self.pd.send_message.assert_called_with('/volume', 1.0)
 
     def test_volume_forwarded_to_pd(self):
-        fire(self.adapter, 'volume', {'pd_volume_address': '/volume'}, 0.75)
+        params = {'osc': [{'target': 'pd', 'address': '/volume', 'type': 'f', 'value': '{0}'}]}
+        fire(self.adapter, 'route', params, 0.75)
         self.pd.send_message.assert_called_once_with('/volume', 0.75)
 
 
