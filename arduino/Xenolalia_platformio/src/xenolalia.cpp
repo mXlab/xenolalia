@@ -23,8 +23,8 @@ namespace xenolalia{
     RgbColor glowColorA(255, 0, 255);
     RgbColor glowColorB(255, 255, 255);
 
-    pq::SineOsc idleLfo(20.0f);
-    RgbColor idleColorA(0, 0, 16);
+    pq::SineOsc idleLfo(30.0f);
+    RgbColor idleColorA(0, 0, 24);
     RgbColor idleColorB(0, 0, 0);
 
     void init(){
@@ -46,10 +46,10 @@ namespace xenolalia{
       // Animated ring styles: update color each loop.
       switch (ringStyle) {
         case RingStyle::GLOW:
-          pixel_ring::set_color(RgbColor::LinearBlend(glowColorA, glowColorB, glowLfo));
+          pixel_ring::apply_wave(glowLfo, glowColorA, glowColorB, 3); // 2 cycles
           break;
         case RingStyle::IDLE:
-          pixel_ring::set_color(RgbColor::LinearBlend(idleColorA, idleColorB, idleLfo));
+          pixel_ring::apply_wave(idleLfo, idleColorA, idleColorB, 5); // 4 cycles
           break;
         default: break;  // DARK, GROW, and CUSTOM are set once, not animated
       }

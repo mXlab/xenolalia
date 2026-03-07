@@ -1,6 +1,6 @@
 {
   "createdWith": "Open Stage Control",
-  "version": "1.27.1",
+  "version": "1.26.2",
   "type": "session",
   "content": {
     "type": "root",
@@ -310,7 +310,7 @@
             "value": "",
             "default": "",
             "linkId": "",
-            "address": "/xeno/glow",
+            "address": "/xeno/ring/glow",
             "preArgs": "",
             "typeTags": "i",
             "decimals": 2,

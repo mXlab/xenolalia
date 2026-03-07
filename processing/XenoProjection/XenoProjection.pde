@@ -55,7 +55,7 @@ void setup() {
   noCursor();
 
   // Load font for overlay text (required for P2D renderer).
-  overlayFont = createFont("SansSerif", height * 0.25f);
+  overlayFont = createFont("Saira-Regular.ttf", height * 0.25f);
 
   // Init data directory.
   DATA_DIR =  sketchPath("") + "contents/";

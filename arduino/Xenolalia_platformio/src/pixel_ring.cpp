@@ -29,6 +29,15 @@ namespace pixel_ring{
         ring.Show();
     }
 
+    void apply_wave(pq::SineOsc& wave, const RgbColor& colorA, const RgbColor& colorB, uint8_t nCycles) {
+        for (int i = 0; i < PixelCount; i++) {
+            float t =  wave.shiftBy(pq::mapFloat(i, 0, PixelCount-1, 0, nCycles));
+            ring.SetPixelColor(i, RgbColor::LinearBlend(colorA, colorB, t));
+        }
+        ring.Show();
+    }
+
+
 
     void test(const int time){
         
