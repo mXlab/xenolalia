@@ -140,7 +140,7 @@ namespace xenolalia{
       ringStyle = style;
       switch (style) {
         case RingStyle::DARK:       pixel_ring::set_color(pixel_ring::black); break;
-        case RingStyle::ILLUMINATE: pixel_ring::set_color(pixel_ring::white); break;
+        case RingStyle::GROW:       pixel_ring::set_color(pixel_ring::white); break;
         default: break;  // GLOW and IDLE are updated each loop
       }
     }

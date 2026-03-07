@@ -109,9 +109,9 @@ void ring_glow(OSCMessage &msg){
   xenolalia::setRingStyle(xenolalia::RingStyle::GLOW);
 }
 
-void ring_illuminate(OSCMessage &msg){
+void ring_grow(OSCMessage &msg){
   osc::send("/xeno/handshake");
-  xenolalia::setRingStyle(xenolalia::RingStyle::ILLUMINATE);
+  xenolalia::setRingStyle(xenolalia::RingStyle::GROW);
 }
 
 namespace osc
@@ -228,7 +228,7 @@ void send( const char* adress ){
         msg.dispatch("/xeno/ring/dark",        ring_dark);
         msg.dispatch("/xeno/ring/idle",        ring_idle);
         msg.dispatch("/xeno/ring/glow",        ring_glow);
-        msg.dispatch("/xeno/ring/illuminate",  ring_illuminate);
+        msg.dispatch("/xeno/ring/grow",        ring_grow);
       }
       else
       {

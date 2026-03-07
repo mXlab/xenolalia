@@ -554,7 +554,7 @@ class GenerativeMode extends AbstractMode {
   static final String RING_DARK       = "/xeno/ring/dark";
   static final String RING_IDLE       = "/xeno/ring/idle";
   static final String RING_GLOW       = "/xeno/ring/glow";
-  static final String RING_ILLUMINATE = "/xeno/ring/illuminate";
+  static final String RING_GROW       = "/xeno/ring/grow";
 
   void setRingStyle(String address) {
     OscMessage msg = new OscMessage(address);
