@@ -1,17 +1,18 @@
 """
-xeno_bridge.py — Exhibition context bridge for Xenolalia.
+xeno_adapter.py — Exhibition OSC adapter for Xenolalia.
 
-Imported as a module by xeno_server.py. Translates venue-specific OSC
+Imported as a module by xeno_server.py. Translates external OSC
 messages into canonical Xenolalia control commands.
 
 Usage (in xeno_server.py):
-    import xeno_bridge
-    bridge = xeno_bridge.VenueBridge("venues/eisode2026.yaml", xenopi_client)
-    bridge.start_server()   # starts listening on receive_port from the venue YAML
-    # Then in handle_state: bridge.on_experiment_state(state)
+    import xeno_adapter
+    adapter = xeno_adapter.OscAdapter("config/adapters/eisode2026.yaml", xenopi_client)
+    adapter.start_server()   # starts listening on receive_port from the adapter YAML
+    # Then in handle_state: adapter.on_experiment_state(state)
 
-Venue configs live in venues/<name>.yaml. See venues/bian_2026.yaml for
-a full example and venues/default.yaml for a minimal starting point.
+Adapter configs live in config/adapters/<name>.yaml. See
+config/adapters/default.yaml for a minimal starting point and
+config/adapters/proximity_example.yaml for an example with guards.
 
 Built-in handler types
 ----------------------
@@ -48,14 +49,14 @@ _EXPERIMENT_ACTIVE_STATES = {
 }
 
 
-class VenueBridge:
+class OscAdapter:
     """
-    Translates venue-specific OSC into canonical Xenolalia control messages.
+    Translates external OSC messages into canonical Xenolalia control commands.
 
     Parameters
     ----------
     config_path : str
-        Path to the venue YAML config file.
+        Path to the adapter YAML config file.
     xenopi_client : udp_client.SimpleUDPClient
         Shared OSC client from xeno_server.py, already pointed at XenoPi.
     """
@@ -64,7 +65,7 @@ class VenueBridge:
         with open(config_path, "r") as f:
             self._config = yaml.safe_load(f)
 
-        log.info(f"Bridge loaded venue: {self._config.get('venue', config_path)}")
+        log.info(f"Adapter loaded: {self._config.get('adapter', config_path)}")
 
         self._xenopi_client = xenopi_client
 
@@ -92,24 +93,24 @@ class VenueBridge:
     # -----------------------------------------------------------------------
 
     def register_handlers(self, osc_dispatcher):
-        """Register all venue handlers into the given pythonosc Dispatcher."""
+        """Register all adapter handlers into the given pythonosc Dispatcher."""
         for address, handler_cfg in self._config.get("handlers", {}).items():
             handler_type = handler_cfg.get("type")
             params       = handler_cfg.get("params", {})
             fn = self._make_handler(handler_type, params)
             if fn:
                 osc_dispatcher.map(address, fn)
-                log.info(f"  Bridge: {address} → [{handler_type}]")
+                log.info(f"  Adapter: {address} → [{handler_type}]")
 
     def start_server(self):
         """
-        Start the bridge's own OSC server on the port defined by receive_port
-        in the venue config. Runs in a daemon thread so it does not block
+        Start the adapter's own OSC server on the port defined by receive_port
+        in the adapter config. Runs in a daemon thread so it does not block
         xeno_server.py's main loop.
         """
         disp = _dispatcher_mod.Dispatcher()
         disp.set_default_handler(
-            lambda addr, *args: log.debug(f"Bridge: unhandled {addr} {args}")
+            lambda addr, *args: log.debug(f"Adapter: unhandled {addr} {args}")
         )
         self.register_handlers(disp)
 
@@ -118,7 +119,7 @@ class VenueBridge:
 
         t = threading.Thread(target=self._server.serve_forever, daemon=True)
         t.start()
-        log.info(f"Bridge server listening on port {port} (venue: {self._config.get('venue', '?')})")
+        log.info(f"Adapter server listening on port {port} (adapter: {self._config.get('adapter', '?')})")
 
     def on_experiment_state(self, state):
         """
@@ -128,10 +129,10 @@ class VenueBridge:
         was_active = self._experiment_active
         self._experiment_active = state in _EXPERIMENT_ACTIVE_STATES
         if self._experiment_active != was_active:
-            log.info(f"Bridge: experiment {'started' if self._experiment_active else 'ended'} (state={state})")
+            log.info(f"Adapter: experiment {'started' if self._experiment_active else 'ended'} (state={state})")
 
     def shutdown(self):
-        """Stop the bridge server and cancel any pending timers."""
+        """Stop the adapter server and cancel any pending timers."""
         self._cancel_pending_start()
         if self._server:
             self._server.server_close()
@@ -141,14 +142,14 @@ class VenueBridge:
     # -----------------------------------------------------------------------
 
     def _trigger_start(self):
-        log.info("Bridge: → /xeno/control/begin")
+        log.info("Adapter: → /xeno/control/begin")
         self._last_experiment_start = time.time()
         self._xenopi_client.send_message("/xeno/control/begin", [])
 
     def _cancel_pending_start(self):
         if self._pending_start_timer is not None and self._pending_start_timer.is_alive():
             self._pending_start_timer.cancel()
-            log.info("Bridge: cancelled pending experiment start.")
+            log.info("Adapter: cancelled pending experiment start.")
         self._pending_start_timer = None
 
     def _minutes_since_reservation_start(self):
@@ -165,15 +166,15 @@ class VenueBridge:
         }
         fn = _handler_map.get(handler_type)
         if fn is None:
-            log.error(f"Bridge: unknown handler type {handler_type!r}. Known: {list(_handler_map)}")
+            log.error(f"Adapter: unknown handler type {handler_type!r}. Known: {list(_handler_map)}")
             return None
 
         def handler(addr, *args):
-            log.debug(f"Bridge received {addr} {args}")
+            log.debug(f"Adapter received {addr} {args}")
             try:
                 fn(params, *args)
             except Exception as e:
-                log.exception(f"Bridge error in handler for {addr}: {e}")
+                log.exception(f"Adapter error in handler for {addr}: {e}")
 
         return handler
 
@@ -190,7 +191,7 @@ class VenueBridge:
         minutes_ahead = int(osc_args[0]) if osc_args else 0
         self._reservation_start_time = time.time() + minutes_ahead * 60.0
         log.info(
-            f"Bridge: standby — reservation in {minutes_ahead} min "
+            f"Adapter: standby — reservation in {minutes_ahead} min "
             f"(at {time.strftime('%H:%M:%S', time.localtime(self._reservation_start_time))})."
         )
         # Reset volume.
@@ -217,26 +218,26 @@ class VenueBridge:
             threshold = float(params.get("late_threshold_minutes", 30.0))
             elapsed   = self._minutes_since_reservation_start()
             if elapsed is None:
-                log.warning("Bridge: require_on_time but no /standby seen — proceeding anyway.")
+                log.warning("Adapter: require_on_time but no /standby seen — proceeding anyway.")
             elif elapsed > threshold:
                 log.warning(
-                    f"Bridge: {elapsed:.1f} min late (threshold: {threshold} min) — NOT starting."
+                    f"Adapter: {elapsed:.1f} min late (threshold: {threshold} min) — NOT starting."
                 )
                 return
             else:
-                log.info(f"Bridge: on time ({elapsed:.1f}/{threshold} min elapsed).")
+                log.info(f"Adapter: on time ({elapsed:.1f}/{threshold} min elapsed).")
 
         # Guard: inactive check.
         if params.get("require_inactive", False):
             if self._experiment_active:
-                log.info("Bridge: experiment already active — ignoring.")
+                log.info("Adapter: experiment already active — ignoring.")
                 return
             cooldown = float(params.get("cooldown_minutes", 0.0))
             if cooldown > 0 and self._last_experiment_start is not None:
                 elapsed = (time.time() - self._last_experiment_start) / 60.0
                 if elapsed < cooldown:
                     log.info(
-                        f"Bridge: cooldown not elapsed ({elapsed:.0f}/{cooldown:.0f} min) — ignoring."
+                        f"Adapter: cooldown not elapsed ({elapsed:.0f}/{cooldown:.0f} min) — ignoring."
                     )
                     return
 
@@ -244,18 +245,18 @@ class VenueBridge:
         delay = float(params.get("delay_minutes", 0.0))
         self._cancel_pending_start()
         if delay > 0:
-            log.info(f"Bridge: scheduling start in {delay:.0f} min.")
+            log.info(f"Adapter: scheduling start in {delay:.0f} min.")
             self._pending_start_timer = threading.Timer(delay * 60.0, self._trigger_start)
             self._pending_start_timer.daemon = True
             self._pending_start_timer.start()
         else:
-            log.info("Bridge: starting immediately.")
+            log.info("Adapter: starting immediately.")
             self._trigger_start()
 
     def _handle_stop(self, params, *osc_args):
         """Stop the current experiment. XenoPi transitions to IDLE (black screen)."""
         self._cancel_pending_start()
-        log.info("Bridge: stop → /xeno/control/stop")
+        log.info("Adapter: stop → /xeno/control/stop")
         self._xenopi_client.send_message("/xeno/control/stop", [])
 
     def _handle_volume(self, params, *osc_args):
@@ -267,6 +268,6 @@ class VenueBridge:
     def _send_volume(self, address, level):
         if self._pd_client:
             self._pd_client.send_message(address, float(level))
-            log.info(f"Bridge: volume {level:.3f} → {address}")
+            log.info(f"Adapter: volume {level:.3f} → {address}")
         else:
-            log.debug("Bridge: volume message skipped — no Pd target configured.")
+            log.debug("Adapter: volume message skipped — no Pd target configured.")

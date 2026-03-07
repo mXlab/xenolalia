@@ -18,7 +18,7 @@ from pythonosc import osc_message_builder
 from pythonosc import udp_client
 
 from xeno_video import experiment_to_gif
-import xeno_bridge
+import xeno_adapter
 
 logging.basicConfig(
     level=logging.INFO,
@@ -43,10 +43,10 @@ else:
     if _pre_args.config != _DEFAULT_CONFIG:
         logging.getLogger(__name__).warning("Config file not found: {}".format(_pre_args.config))
 
-# Resolve session name → venue_config path.
-_session = _cfg.pop("session", None)
-if _session and "venue_config" not in _cfg:
-    _cfg["venue_config"] = "config/venues/{}.yaml".format(_session)
+# Resolve adapter name → adapter_config path.
+_adapter = _cfg.pop("adapter", None)
+if _adapter and "adapter_config" not in _cfg:
+    _cfg["adapter_config"] = "config/adapters/{}.yaml".format(_adapter)
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
@@ -75,15 +75,15 @@ parser.add_argument("-sm", "--macroscope-send-port", default="7001",
 parser.add_argument("-r", "--receive-port", default="7000",
                     type=int, help="The port number to listen on.")
 
-parser.add_argument("-V", "--venue-config", default=None,
-                    help="Path to venue bridge config. Overrides config file if given.")
+parser.add_argument("-A", "--adapter-config", default=None,
+                    help="Path to adapter config. Overrides config file if given.")
 
 # Apply config file values as defaults (CLI args still take precedence).
 parser.set_defaults(**_cfg)
 
 args = parser.parse_args()
 
-bridge = None  # set after clients are created
+adapter = None  # set after clients are created
 
 # Broadcast message.
 def send_message(addr, data=[], client=False):
@@ -163,8 +163,8 @@ def handle_end(addr, uid):
 
 def handle_state(addr, state):
     print("** Received STATE {}".format(state))
-    if bridge:
-        bridge.on_experiment_state(state)
+    if adapter:
+        adapter.on_experiment_state(state)
     if state == "FLASH":
         send_message("/xeno/server/snapshot")
     elif state == "REFRESH":
@@ -208,16 +208,16 @@ server = osc_server.BlockingOSCUDPServer(("0.0.0.0", args.receive_port), dispatc
 xenopi_client = udp_client.SimpleUDPClient(args.xenopi_ip, args.xenopi_send_port)
 macroscope_client = udp_client.SimpleUDPClient(args.macroscope_ip, args.macroscope_send_port)
 
-# Load exhibition bridge if a venue config is given.
-if args.venue_config:
-    bridge = xeno_bridge.VenueBridge(args.venue_config, xenopi_client)
-    bridge.start_server()  # listens on receive_port from the venue YAML
+# Load OSC adapter if an adapter config is given.
+if args.adapter_config:
+    adapter = xeno_adapter.OscAdapter(args.adapter_config, xenopi_client)
+    adapter.start_server()  # listens on receive_port from the adapter YAML
 
 # Allows program to end cleanly on a CTRL-C command.
 def interrupt(signup, frame):
     global xenopi_client, macroscope_client, server
-    if bridge:
-        bridge.shutdown()
+    if adapter:
+        adapter.shutdown()
     send_message("/xeno/server/end")
     server.server_close()
     sys.exit()

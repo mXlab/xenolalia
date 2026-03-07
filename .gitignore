@@ -113,8 +113,8 @@ documents
 # XenoPC local config (IPs, passwords, session name — not committed).
 config/xenopc.yaml
 
-# Venue configs (contain IPs, ports, and scheduling details specific to each exhibition).
+# Adapter configs (contain scheduling and routing rules specific to each exhibition context).
 # Only committed: default.yaml (template) and *_example.yaml (example patterns).
-config/venues/*.yaml
-!config/venues/default.yaml
-!config/venues/*_example.yaml
+config/adapters/*.yaml
+!config/adapters/default.yaml
+!config/adapters/*_example.yaml

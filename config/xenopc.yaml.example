@@ -1,11 +1,11 @@
 # xenopc.yaml — XenoPC local configuration (not committed to git).
 # Copy this file to config/xenopc.yaml and fill in your values.
 
-# Session name: maps to config/venues/<session>.yaml
-session: <session>
+# Adapter name: maps to config/adapters/<adapter>.yaml
+adapter: <adapter>
 
-# Alternatively, specify an explicit venue config path:
-# venue_config: config/venues/<venue_name>.yaml
+# Alternatively, specify an explicit adapter config path:
+# adapter_config: config/adapters/<adapter>.yaml
 
 # XenoPi connection.
 xenopi_ip: 192.168.0.101

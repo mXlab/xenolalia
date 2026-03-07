@@ -1,11 +1,11 @@
-# Venue configuration: default (manual-only)
-# Used with: python xeno_server.py --venue-config venues/default.yaml
+# Adapter configuration: default (manual-only)
+# Used with: python xeno_server.py -A config/adapters/default.yaml
 #
-# Minimal setup with no automated triggers. Use this at venues where
+# Minimal setup with no automated triggers. Use this at installations where
 # there is no external control system, or as a starting point for a
-# new venue configuration.
+# new adapter configuration.
 
-venue: "Default (manual control only)"
+adapter: "Default (manual control only)"
 
 receive_port: 8001
 
