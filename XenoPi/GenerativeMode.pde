@@ -550,17 +550,17 @@ class GenerativeMode extends AbstractMode {
     log("Sent call for refreshing");
   }
 
-  // Ring style constants (must match xenolalia::RingStyle enum order).
-  static final int RING_DARK       = 0;
-  static final int RING_IDLE       = 1;
-  static final int RING_GLOW       = 2;
-  static final int RING_ILLUMINATE = 3;
+  // Ring style OSC addresses.
+  static final String RING_DARK       = "/xeno/ring/dark";
+  static final String RING_IDLE       = "/xeno/ring/idle";
+  static final String RING_GLOW       = "/xeno/ring/glow";
+  static final String RING_ILLUMINATE = "/xeno/ring/illuminate";
 
-  void setRingStyle(int style) {
-    OscMessage msg = new OscMessage("/xeno/ring");
-    msg.add(style);
+  void setRingStyle(String address) {
+    OscMessage msg = new OscMessage(address);
+    msg.add(1);
     oscP5.send(msg, remoteLocationApparatus);
-    log("Ring style → " + style);
+    log("Ring style → " + address);
   }
 
   // Returns the path of the most recent file with the given suffix under dir,

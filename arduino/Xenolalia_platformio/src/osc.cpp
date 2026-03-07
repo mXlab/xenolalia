@@ -94,12 +94,24 @@ void setColor(OSCMessage &msg){
   xenolalia::setColor(r, g, b);
 }
 
-void ring(OSCMessage &msg){
-
+void ring_dark(OSCMessage &msg){
   osc::send("/xeno/handshake");
-  int style = msg.getInt(0);
-  xenolalia::setRingStyle(static_cast<xenolalia::RingStyle>(style));
-  osc::send("/debug", "Ring style set");
+  xenolalia::setRingStyle(xenolalia::RingStyle::DARK);
+}
+
+void ring_idle(OSCMessage &msg){
+  osc::send("/xeno/handshake");
+  xenolalia::setRingStyle(xenolalia::RingStyle::IDLE);
+}
+
+void ring_glow(OSCMessage &msg){
+  osc::send("/xeno/handshake");
+  xenolalia::setRingStyle(xenolalia::RingStyle::GLOW);
+}
+
+void ring_illuminate(OSCMessage &msg){
+  osc::send("/xeno/handshake");
+  xenolalia::setRingStyle(xenolalia::RingStyle::ILLUMINATE);
 }
 
 namespace osc
@@ -212,8 +224,11 @@ void send( const char* adress ){
         msg.dispatch("/xeno/drain", drain);
         msg.dispatch("/xeno/fill", fill);
         msg.dispatch("/xeno/mix", mix);
-        msg.dispatch("/xeno/color", setColor);
-        msg.dispatch("/xeno/ring", ring);
+        msg.dispatch("/xeno/color",            setColor);
+        msg.dispatch("/xeno/ring/dark",        ring_dark);
+        msg.dispatch("/xeno/ring/idle",        ring_idle);
+        msg.dispatch("/xeno/ring/glow",        ring_glow);
+        msg.dispatch("/xeno/ring/illuminate",  ring_illuminate);
       }
       else
       {
