@@ -65,24 +65,19 @@ class ExperimentData {
     return filenames;
   }
 
-  // Returns the code signature from the most recent step as a flat float array
-  // [min[0..n-1], max[0..n-1], avg[0..n-1]], or null if unavailable.
+  // Returns the avg vector from the most recent code signature as a float array,
+  // one value per encoder channel. Returns null if unavailable.
   float[] getLatestActivations() {
     ArrayList<String> files = listCodeSignatureFiles();
     if (files.isEmpty()) return null;
     String path = files.get(files.size() - 1);
     try {
       JSONObject obj = loadJSONObject(path);
-      JSONArray minArr = obj.getJSONArray("min");
-      JSONArray maxArr = obj.getJSONArray("max");
       JSONArray avgArr = obj.getJSONArray("avg");
-      int n = minArr.size();
-      float[] values = new float[n * 3];
-      for (int i = 0; i < n; i++) {
-        values[i]       = minArr.getFloat(i);
-        values[i + n]   = maxArr.getFloat(i);
-        values[i + 2*n] = avgArr.getFloat(i);
-      }
+      int n = avgArr.size();
+      float[] values = new float[n];
+      for (int i = 0; i < n; i++)
+        values[i] = avgArr.getFloat(i);
       return values;
     } catch (Exception e) {
       println("Warning: could not load code signature from " + path + ": " + e.getMessage());
