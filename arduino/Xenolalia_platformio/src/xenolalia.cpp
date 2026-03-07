@@ -51,7 +51,7 @@ namespace xenolalia{
         case RingStyle::IDLE:
           pixel_ring::set_color(RgbColor::LinearBlend(idleColorA, idleColorB, idleLfo));
           break;
-        default: break;  // DARK and GROW are set once in setRingStyle()
+        default: break;  // DARK, GROW, and CUSTOM are set once, not animated
       }
     }
 
@@ -132,6 +132,7 @@ namespace xenolalia{
     }
 
     void setColor(int r, int g, int b) {
+      ringStyle = RingStyle::CUSTOM;
       RgbColor color(r, g, b);
       pixel_ring::set_color(color);
     }
@@ -141,7 +142,7 @@ namespace xenolalia{
       switch (style) {
         case RingStyle::DARK:       pixel_ring::set_color(pixel_ring::black); break;
         case RingStyle::GROW:       pixel_ring::set_color(pixel_ring::white); break;
-        default: break;  // GLOW and IDLE are updated each loop
+        default: break;  // GLOW, IDLE, and CUSTOM are not reset here
       }
     }
 

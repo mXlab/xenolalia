@@ -10,7 +10,7 @@ namespace xenolalia{
    extern Pump out_pump;
    extern Pump in_pump;
 
-   enum class RingStyle { DARK, IDLE, GLOW, GROW };
+   enum class RingStyle { DARK, IDLE, GLOW, GROW, CUSTOM };
    extern RingStyle ringStyle;
 
    extern pq::SineOsc glowLfo;
@@ -59,7 +59,7 @@ namespace xenolalia{
    void setColor(int r, int g, int b);
 
    /** @brief Set the ambient lighting style of the LED ring.
-    *  DARK=0  IDLE=1  GLOW=2  GROW=3
+    *  DARK=0  IDLE=1  GLOW=2  GROW=3  CUSTOM=4 (set via setColor)
     */
    void setRingStyle(RingStyle style);
 
