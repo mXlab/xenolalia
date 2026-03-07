@@ -51,7 +51,7 @@ namespace xenolalia{
         case RingStyle::IDLE:
           pixel_ring::set_color(RgbColor::LinearBlend(idleColorA, idleColorB, idleLfo));
           break;
-        default: break;  // DARK and ILLUMINATE are set once in setRingStyle()
+        default: break;  // DARK and GROW are set once in setRingStyle()
       }
     }
 
