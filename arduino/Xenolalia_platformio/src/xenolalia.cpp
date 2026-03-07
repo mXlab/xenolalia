@@ -17,13 +17,13 @@ namespace xenolalia{
     Liquid_level_sensor liquid_sensor(pins::liquid_sensor);
     const int threshold{500};
 
+    RingStyle ringStyle{RingStyle::DARK};
+
     pq::SineOsc glowLfo(10.0f);
-    bool isGlowing{false};
     RgbColor glowColorA(255, 0, 255);
     RgbColor glowColorB(255, 255, 255);
 
     pq::SineOsc idleLfo(20.0f);
-    bool isIdling{false};
     RgbColor idleColorA(0, 0, 16);
     RgbColor idleColorB(0, 0, 0);
 
@@ -43,16 +43,15 @@ namespace xenolalia{
       if (out_pump.is_running() && petridish_full())
         out_pump.stop();
 
-      // Glowing: adjust color according to LFO.
-      if (isGlowing) {
-        RgbColor color = RgbColor::LinearBlend(glowColorA, glowColorB, glowLfo);
-        pixel_ring::set_color(color);
-      }
-
-      // Idling: very slow dark blue pulse.
-      if (isIdling) {
-        RgbColor color = RgbColor::LinearBlend(idleColorA, idleColorB, idleLfo);
-        pixel_ring::set_color(color);
+      // Animated ring styles: update color each loop.
+      switch (ringStyle) {
+        case RingStyle::GLOW:
+          pixel_ring::set_color(RgbColor::LinearBlend(glowColorA, glowColorB, glowLfo));
+          break;
+        case RingStyle::IDLE:
+          pixel_ring::set_color(RgbColor::LinearBlend(idleColorA, idleColorB, idleLfo));
+          break;
+        default: break;  // DARK and ILLUMINATE are set once in setRingStyle()
       }
     }
 
@@ -133,24 +132,17 @@ namespace xenolalia{
     }
 
     void setColor(int r, int g, int b) {
-      if (!isGlowing) { // ignore if glowing
-        RgbColor color(r, g, b);
-        pixel_ring::set_color(color);
+      RgbColor color(r, g, b);
+      pixel_ring::set_color(color);
+    }
+
+    void setRingStyle(RingStyle style) {
+      ringStyle = style;
+      switch (style) {
+        case RingStyle::DARK:       pixel_ring::set_color(pixel_ring::black); break;
+        case RingStyle::ILLUMINATE: pixel_ring::set_color(pixel_ring::white); break;
+        default: break;  // GLOW and IDLE are updated each loop
       }
-    }
-
-    void glow(bool on) {
-      isGlowing = on;
-      // When switching back to not glowing, clear light.
-      if (!isGlowing)
-        pixel_ring::set_color(pixel_ring::black);
-    }
-
-    void idle(bool on) {
-      isIdling = on;
-      // When switching back to not idling, clear light.
-      if (!isIdling)
-        pixel_ring::set_color(pixel_ring::black);
     }
 
     void test(){

@@ -94,20 +94,12 @@ void setColor(OSCMessage &msg){
   xenolalia::setColor(r, g, b);
 }
 
-void glow(OSCMessage &msg){
+void ring(OSCMessage &msg){
 
   osc::send("/xeno/handshake");
-  osc::send("/debug", "Glowing");
-  bool on = msg.getInt(0);
-  xenolalia::glow(on);
-}
-
-void idle(OSCMessage &msg){
-
-  osc::send("/xeno/handshake");
-  osc::send("/debug", "Idling");
-  bool on = msg.getInt(0);
-  xenolalia::idle(on);
+  int style = msg.getInt(0);
+  xenolalia::setRingStyle(static_cast<xenolalia::RingStyle>(style));
+  osc::send("/debug", "Ring style set");
 }
 
 namespace osc
@@ -221,8 +213,7 @@ void send( const char* adress ){
         msg.dispatch("/xeno/fill", fill);
         msg.dispatch("/xeno/mix", mix);
         msg.dispatch("/xeno/color", setColor);
-        msg.dispatch("/xeno/glow", glow);
-        msg.dispatch("/xeno/idle", idle);
+        msg.dispatch("/xeno/ring", ring);
       }
       else
       {

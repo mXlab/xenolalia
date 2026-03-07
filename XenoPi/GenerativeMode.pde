@@ -114,8 +114,7 @@ class GenerativeMode extends AbstractMode {
 
         exposureTimer = new Timer(settings.exposureTimeMs());
 
-        // Make sure to stop glow.
-        glow(false);
+        setRingStyle(RING_DARK);
       }
 
       // Send handshakes and wait for response.
@@ -206,7 +205,7 @@ class GenerativeMode extends AbstractMode {
         // Start timer.
         stateTimer = new Timer(FLASH_TIME);
         stateTimer.start();
-        glow(true);
+        setRingStyle(RING_GLOW);
       }
 
       // Set color to flash.
@@ -218,12 +217,12 @@ class GenerativeMode extends AbstractMode {
 
       // Stop glow early to prevent it from affecting snapshots.
       if (stateTimer.countdownTime() <= GLOW_STOP_BEFORE_SNAPSHOT_TIME) {
-        glow(false);
+        setRingStyle(RING_DARK);
       }
 
       // When finished: transit to snapshot mode.
       if (stateTimer.isFinished()) {
-        glow(false);
+        setRingStyle(RING_DARK);
         transitionTo(State.SNAPSHOT);
       }
     }
@@ -318,7 +317,7 @@ class GenerativeMode extends AbstractMode {
         exposureTimer.start();
 
         // Turn on idle light while projecting glyph.
-        idle(true);
+        setRingStyle(RING_IDLE);
       }
 
       // Capture video.
@@ -374,19 +373,19 @@ class GenerativeMode extends AbstractMode {
          if (experiment.nSnapshots() < N_SNAPSHOTS_PER_EXPERIMENT)
            requestSnapshot();
          else {
-           idle(false);
+           setRingStyle(RING_DARK);
            transitionTo(State.PRESENTATION);
          }
       }
 
       if (newExperimentRequested) {
-        idle(false);
+        setRingStyle(RING_DARK);
         transitionTo(State.NEW);
         newExperimentRequested = false;
         experiment.updateServer("end"); // tell server current experiment is over
       } else if (snapshotRequested) {
         println("Snap req.");
-        idle(false);
+        setRingStyle(RING_DARK);
         transitionTo(State.FLASH);
       }
     }
@@ -401,16 +400,16 @@ class GenerativeMode extends AbstractMode {
       if (enteredState()) {
         stateTimer = new Timer(PRESENTATION_TIME);
         stateTimer.start();
-        glow(true); // start glow
+        setRingStyle(RING_GLOW);
       }
 
       background(FLASH_COLOR);
-      
+
       if (stateTimer.isFinished()) {
         transitionTo(State.NEW);
         newExperimentRequested = false;
         experiment.updateServer("end"); // tell server current experiment is over
-        glow(false); // stop glow
+        setRingStyle(RING_DARK);
       }
 
     }
@@ -487,8 +486,7 @@ class GenerativeMode extends AbstractMode {
   // Resume by sending /xeno/control/begin.
   void requestStop() {
     log("Stop received — going to IDLE.");
-    glow(false);
-    idle(false);
+    setRingStyle(RING_DARK);
     transitionTo(State.IDLE);
   }
 
@@ -552,20 +550,17 @@ class GenerativeMode extends AbstractMode {
     log("Sent call for refreshing");
   }
 
-  void glow(boolean on) {
-    OscMessage msg = new OscMessage("/xeno/glow");
-    msg.add(on ? 1 : 0);
+  // Ring style constants (must match xenolalia::RingStyle enum order).
+  static final int RING_DARK       = 0;
+  static final int RING_IDLE       = 1;
+  static final int RING_GLOW       = 2;
+  static final int RING_ILLUMINATE = 3;
+
+  void setRingStyle(int style) {
+    OscMessage msg = new OscMessage("/xeno/ring");
+    msg.add(style);
     oscP5.send(msg, remoteLocationApparatus);
-
-    log("Sent call to " + (on ? "start" : "stop") + "glow.");
-  }
-
-  void idle(boolean on) {
-    OscMessage msg = new OscMessage("/xeno/idle");
-    msg.add(on ? 1 : 0);
-    oscP5.send(msg, remoteLocationApparatus);
-
-    log("Sent call to " + (on ? "start" : "stop") + " idle.");
+    log("Ring style → " + style);
   }
 
   // Returns the path of the most recent file with the given suffix under dir,

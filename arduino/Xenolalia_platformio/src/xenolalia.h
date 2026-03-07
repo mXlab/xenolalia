@@ -10,11 +10,11 @@ namespace xenolalia{
    extern Pump out_pump;
    extern Pump in_pump;
 
-   extern pq::SineOsc glowLfo;
-   extern bool isGlowing;
+   enum class RingStyle { DARK, IDLE, GLOW, ILLUMINATE };
+   extern RingStyle ringStyle;
 
+   extern pq::SineOsc glowLfo;
    extern pq::SineOsc idleLfo;
-   extern bool isIdling;
 
    /** @brief initialize project hardware
     */
@@ -54,17 +54,14 @@ namespace xenolalia{
     */
    void mix();
 
-   /** @brief Set the color of the LED ring.
+   /** @brief Set the color of the LED ring directly.
     */
    void setColor(int r, int g, int b);
-   
-   /** @brief Set the glowing state of the LED ring.
-    */
-   void glow(bool on);
 
-   /** @brief Set the idle state of the LED ring (very slow dark blue pulse).
+   /** @brief Set the ambient lighting style of the LED ring.
+    *  DARK=0  IDLE=1  GLOW=2  ILLUMINATE=3
     */
-   void idle(bool on);
+   void setRingStyle(RingStyle style);
 
    /**
     * @brief Get the petridish current level
