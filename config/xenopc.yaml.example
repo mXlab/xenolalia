@@ -2,17 +2,17 @@
 # Copy this file to config/xenopc.yaml and fill in your values.
 
 # Session name: maps to config/venues/<session>.yaml
-session: eisode2026
+session: <session>
 
 # Alternatively, specify an explicit venue config path:
-# venue_config: config/venues/eisode2026.yaml
+# venue_config: config/venues/<venue_name>.yaml
 
 # XenoPi connection.
 xenopi_ip: 192.168.0.101
 xenopi_send_port: 7001
-xenopi_username: pi
-xenopi_password: xenolalia
-xenopi_snapshots_dir: /home/pi/xenolalia/XenoPi/snapshots
+xenopi_username: <username>
+xenopi_password: <password>
+xenopi_snapshots_dir: /home/<username>/xenolalia/XenoPi/snapshots
 
 # Macroscope (XenoProjection) connection.
 macroscope_ip: 127.0.0.1
@@ -20,4 +20,4 @@ macroscope_send_port: 7001
 
 # Local server.
 receive_port: 7000
-local_snapshots_dir: ./contents
+local_snapshots_dir: /home/xeno/xenolalia/contents
