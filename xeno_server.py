@@ -159,8 +159,8 @@ def handle_step(addr, uid):
     fetch_experiment(uid)
     send_message("/xeno/server/step", uid)
 
-def handle_end(addr, uid):
-    print("** Received END {}".format(uid))
+def handle_end(addr, uid, visibility_class=0):
+    print("** Received END {} (visibility={})".format(uid, visibility_class))
     fetch_experiment(uid)
     send_message("/xeno/server/end", uid)
 
