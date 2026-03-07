@@ -106,6 +106,17 @@ void setup() {
   // Load configuration file.
   settings = new Settings();
 
+  // Setup OSC first — mode initialization calls log() which needs oscP5.
+  oscP5 = new OscP5(this, settings.oscReceivePort());
+  // xeno_osc.py on XenoPi (local)
+  remoteLocation = new NetAddress(settings.oscRemoteIp(), settings.oscSendPort());
+  // xeno_server.py on XenoPC
+  remoteLocationServer = new NetAddress(settings.oscServerRemoteIp(), settings.oscServerSendPort());
+  // apparatus on ESP32
+  remoteLocationApparatus = new NetAddress(settings.oscApparatusRemoteIp(), settings.oscApparatusSendPort());
+  // localhost
+  remoteLocationLogging = new NetAddress(LOGGING_IP, LOGGING_PORT);
+
   // Initialize mode based on startup_mode setting.
   String sm = settings.startupMode();
   if (sm.equals("generative"))
@@ -116,17 +127,6 @@ void setup() {
     resumeMode();
   else // "calibration" or unrecognized value
     cameraCalibrationMode();
-
-  // Setup OSC.
-  oscP5 = new OscP5(this, settings.oscReceivePort());
-  // xeno_osc.py on XenoPi (local)
-  remoteLocation = new NetAddress(settings.oscRemoteIp(), settings.oscSendPort());
-  // xeno_server.py on XenoPC
-  remoteLocationServer = new NetAddress(settings.oscServerRemoteIp(), settings.oscServerSendPort());
-  // apparatus on ESP32
-  remoteLocationApparatus = new NetAddress(settings.oscApparatusRemoteIp(), settings.oscApparatusSendPort());
-  // localhost
-  remoteLocationLogging = new NetAddress(LOGGING_IP, LOGGING_PORT);
   
   oscP5.plug(this, "nextImage", "/xeno/neurons/step");
   oscP5.plug(this, "ready", "/xeno/neurons/handshake");
