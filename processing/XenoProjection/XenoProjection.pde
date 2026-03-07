@@ -321,6 +321,7 @@ void experimentEndWithVisibility(String uid, int visClass) {
 }
 
 void experimentEnd(String uid) {
+  showOverlay("MESOSCOPE\nL'EXPÉRIENCE PRENDS FIN\nTHE EXPERIMENT ENDS");
   try {
     previousExperiment.reload(uid);
 

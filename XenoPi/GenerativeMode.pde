@@ -60,7 +60,7 @@ class GenerativeMode extends AbstractMode {
   final int POST_REFRESH_TIME = 120000; // 2 minutes
   
   // At the end of a cycle, wait for this time to present the result.
-  final int PRESENTATION_TIME = 300000; // 5 minutes
+  // Configured via presentation_time_minutes in settings.json; falls back to 5 minutes.
 
   State state;
 
@@ -415,7 +415,7 @@ class GenerativeMode extends AbstractMode {
     // PRESENTATION loop : Display flash background to show result.
     else if (state == State.PRESENTATION) {
       if (enteredState()) {
-        stateTimer = new Timer(PRESENTATION_TIME);
+        stateTimer = new Timer(settings.presentationDurationMs());
         stateTimer.start();
         setRingStyle(RING_GLOW);
       }

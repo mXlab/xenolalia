@@ -43,6 +43,10 @@ class Settings {
   // Default 0 falls back to 12 snapshots.
   float experimentDurationMinutes;
 
+  // Duration of the presentation phase (white screen after experiment ends) in minutes.
+  // Default 0 falls back to 5 minutes.
+  float presentationDurationMinutes;
+
   // Startup mode: "calibration" (default), "generative", "idle", "resume".
   // "calibration"  — open camera calibration screen.
   // "generative"   — start generative process immediately (former autostart: true).
@@ -108,6 +112,14 @@ class Settings {
     return max(1, round(experimentDurationMinutes * 60.0f / exposureTime));
   }
 
+  float presentationDurationMinutes() { return presentationDurationMinutes; }
+
+  // Returns presentation time in milliseconds. Falls back to 5 minutes if not set.
+  int presentationDurationMs() {
+    if (presentationDurationMinutes <= 0) return 300000;
+    return round(presentationDurationMinutes * 60.0f * 1000.0f);
+  }
+
   String squircleMode() { return squircleMode; }
   boolean usesSquircle() { return !squircleMode.equals("none"); }
 
@@ -158,6 +170,7 @@ class Settings {
 
       settings.setFloat("exposure_time", exposureTime);
       settings.setFloat("experiment_duration_minutes", experimentDurationMinutes);
+      settings.setFloat("presentation_duration_minutes", presentationDurationMinutes);
 
       settings.setString("model_name", modelName);
       settings.setBoolean("use_convolutional", useConvolutional);
@@ -216,6 +229,7 @@ class Settings {
 
       exposureTime = settings.getFloat("exposure_time");
       experimentDurationMinutes = settings.hasKey("experiment_duration_minutes") ? settings.getFloat("experiment_duration_minutes") : 0;
+      presentationDurationMinutes = settings.hasKey("presentation_duration_minutes") ? settings.getFloat("presentation_duration_minutes") : 0;
       
       modelName = settings.getString("model_name");
       useConvolutional = settings.getBoolean("use_convolutional");
@@ -258,6 +272,7 @@ class Settings {
     cameraId = 0;
     exposureTime = 60.0f;
     experimentDurationMinutes = 0;
+    presentationDurationMinutes = 0;
     squircleMode = "none";
     autoRestart = false;
     startupMode = "calibration";
