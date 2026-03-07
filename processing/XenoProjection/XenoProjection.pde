@@ -5,7 +5,7 @@ import netP5.*;
 final int OSC_RECEIVE_PORT = 7001;
 final int OSC_SEND_PORT = 7002; // sonoscope
 final int VIGNETTE_SIDE = 480;
-final String ACTIVATION_VECTOR = "avg"; // which code signature vector to send to sonoscope: "min", "max", or "avg"
+final String ACTIVATION_VECTOR = "max"; // which code signature vector to send to sonoscope: "min", "max", or "avg"
 
 final float TITLES_FONT_SIZE_PROPORTION = 0.075;
 
