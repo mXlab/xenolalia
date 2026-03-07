@@ -250,7 +250,7 @@ class OscAdapter:
                 log.warning(f"Adapter: could not resolve value '{raw}': {e}")
                 continue
             client.send_message(address, value)
-            log.debug(f"Adapter: → [{target_name}] {address} {value}")
+            log.info(f"Adapter: → [{target_name}] {address} {value}")
 
     # -----------------------------------------------------------------------
     # Scheduler
