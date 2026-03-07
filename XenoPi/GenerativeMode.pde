@@ -81,7 +81,8 @@ class GenerativeMode extends AbstractMode {
   boolean newExperimentRequested;
   boolean nextGlyphReceived;
 
-  boolean newState; // true when entering a new state
+  boolean newState;      // true when entering a new state
+  boolean _resumeMode;   // true when started via startResume()
 
 
   void setup() {
@@ -390,9 +391,25 @@ class GenerativeMode extends AbstractMode {
       }
     }
     
-    // IDLE : Stopped externally. Black screen. Wait for /xeno/control/begin to restart.
+    // IDLE : Stopped externally, or exhibition standby. Black screen.
+    //        In resume mode: reconnect to xeno_osc.py in background, then jump to MAIN.
+    //        Otherwise: wait for /xeno/control/begin.
     else if (state == State.IDLE) {
       background(0);
+      if (_resumeMode) {
+        if (!neuronsReady) {
+          // Keep sending handshakes until xeno_osc.py responds.
+          if (stateTimer.isFinished()) {
+            oscP5.send(new OscMessage("/xeno/euglenas/handshake"), remoteLocation);
+            stateTimer.start();
+          }
+        } else {
+          // Neurons ready: notify neural net that the experiment is resuming, then go to MAIN.
+          oscP5.send(new OscMessage("/xeno/euglenas/new"), remoteLocation);
+          _resumeMode = false;
+          transitionTo(State.MAIN);
+        }
+      }
     }
 
     // PRESENTATION loop : Display flash background to show result.
@@ -422,6 +439,28 @@ class GenerativeMode extends AbstractMode {
     log("   t = " + millis());
     if (stateTimer != null)
       log("   timer = " + stateTimer.passedTime());
+    _saveRecovery();
+  }
+
+  // Persist enough state to support crash recovery.
+  // Written on every state transition and on glyph receipt.
+  void _saveRecovery() {
+    try {
+      JSONObject r = new JSONObject();
+      r.setString("state", state.toString());
+      if (experiment != null && experiment.info != null) {
+        String dir = experiment.experimentDir();
+        String uid = dir.startsWith("snapshots/") ? dir.substring(10) : dir;
+        r.setString("experiment_uid", uid);
+        r.setInt("n_experiments", nExperiments);
+      } else if (experiment != null && experiment._resumedUid != null) {
+        r.setString("experiment_uid", experiment._resumedUid);
+        r.setInt("n_experiments", nExperiments);
+      }
+      saveJSONObject(r, savePath("recovery_state.json"));
+    } catch (Exception e) {
+      println("Could not save recovery state: " + e);
+    }
   }
 
   boolean enteredState() {
@@ -481,11 +520,50 @@ class GenerativeMode extends AbstractMode {
     newExperimentRequested = true;
   }
 
+  // Called after construction for "idle" startup_mode.
+  // Skips INIT entirely; waits in IDLE until /xeno/control/begin arrives.
+  void startIdle() {
+    state = State.IDLE;
+    newState = true;
+    // Initialize timers so they're non-null throughout draw().
+    stateTimer   = new Timer(100);
+    exposureTimer = new Timer(settings.exposureTimeMs());
+  }
+
+  // Called after construction for "resume" startup_mode.
+  // Starts in IDLE, reconnects to xeno_osc.py in the background, then jumps to MAIN.
+  void startResume(JSONObject recovery) {
+    _resumeMode = true;
+    neuronsReady = false;
+    state = State.IDLE;
+    newState = true;
+
+    String uid = recovery.getString("experiment_uid");
+    nExperiments = recovery.getInt("n_experiments", 0);
+
+    // Rebuild the experiment object from disk (counts existing snapshots).
+    experiment = new Experiment();
+    experiment.resumeFromDisk(uid);
+
+    // Reload the base image captured at experiment start.
+    baseImage = loadImage(savePath("snapshots/" + uid + "/base_image.png"));
+    if (baseImage == null || baseImage.width == 0)
+      println("Resume: warning — could not load base image from snapshots/" + uid + "/base_image.png");
+
+    newExperimentStarted = true;
+
+    // Timers.
+    stateTimer    = new Timer(1000); // handshake retry interval
+    stateTimer.start();
+    exposureTimer = new Timer(settings.exposureTimeMs());
+  }
+
   // Called when receiving /xeno/control/stop from xeno_server.py.
   // Immediately transitions to IDLE (black screen) regardless of current state.
   // Resume by sending /xeno/control/begin.
   void requestStop() {
     log("Stop received — going to IDLE.");
+    _resumeMode = false;
     setRingStyle(RING_DARK);
     transitionTo(State.IDLE);
   }
@@ -515,6 +593,7 @@ class GenerativeMode extends AbstractMode {
     snapshotRequested = false;
     nextGlyphReceived = true;
     experiment.updateServer("step");
+    _saveRecovery();
   }
 
   // Saves snapshot to disk and sends OSC message to announce

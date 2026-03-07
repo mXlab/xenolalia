@@ -34,8 +34,12 @@ class Settings {
   // Apparatus.
   boolean useApparatus;
 
-  // If true, skip calibration screen and go straight to generative mode on startup.
-  boolean autostart;
+  // Startup mode: "calibration" (default), "generative", "idle", "resume".
+  // "calibration"  — open camera calibration screen.
+  // "generative"   — start generative process immediately (former autostart: true).
+  // "idle"         — start in exhibition standby: black screen, wait for /xeno/control/begin.
+  // "resume"       — attempt to resume the last experiment; fall back to idle on failure.
+  String startupMode;
   
   // Neural net.
   String modelName;
@@ -82,8 +86,8 @@ class Settings {
   int nFeedbackSteps() { return nFeedbackSteps; }
   boolean useBaseImage() { return useBaseImage; }
 
-  boolean useApparatus() { return useApparatus; }
-  boolean autostart()    { return autostart; }
+  boolean useApparatus()  { return useApparatus; }
+  String startupMode()   { return startupMode; }
 
   String squircleMode() { return squircleMode; }
   boolean usesSquircle() { return !squircleMode.equals("none"); }
@@ -128,7 +132,9 @@ class Settings {
       settings.setBoolean("use_base_image", useBaseImage);
 
       settings.setBoolean("use_apparatus", useApparatus);
-      settings.setBoolean("autostart", autostart);
+      settings.setString("startup_mode", startupMode);
+      // Keep "autostart" for backward compatibility with older XenoPi versions.
+      settings.setBoolean("autostart", startupMode.equals("generative"));
 
       settings.setFloat("exposure_time", exposureTime);
 
@@ -177,7 +183,14 @@ class Settings {
       useBaseImage = settings.getBoolean("use_base_image");
 
       useApparatus = settings.getBoolean("use_apparatus");
-      autostart = settings.hasKey("autostart") && settings.getBoolean("autostart");
+      // startup_mode takes precedence; fall back to autostart boolean for backward compat.
+      if (settings.hasKey("startup_mode") && settings.getString("startup_mode") != null) {
+        startupMode = settings.getString("startup_mode");
+      } else if (settings.hasKey("autostart") && settings.getBoolean("autostart")) {
+        startupMode = "generative";
+      } else {
+        startupMode = "calibration";
+      }
 
       exposureTime = settings.getFloat("exposure_time");
       
@@ -222,6 +235,7 @@ class Settings {
     cameraId = 0;
     exposureTime = 60.0f;
     squircleMode = "none";
+    startupMode = "calibration";
   }
 
   // Writes points contained in an array of PVectors into a list of values.

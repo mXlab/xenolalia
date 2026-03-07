@@ -3,6 +3,9 @@ class Experiment {
   // Experiment info.
   ExperimentInfo info;
   
+  // Non-null when this experiment was restored from disk (resume mode).
+  String _resumedUid;
+
   // Number of snapshots taken thus far.
   int nSnapshots;
 
@@ -51,7 +54,26 @@ class Experiment {
     return (millis() - startTimeMs);
   }
 
+  // Restore this experiment from a previous run's snapshot directory.
+  // Counts existing raw snapshots to reconstruct nSnapshots.
+  void resumeFromDisk(String uid) {
+    _resumedUid = uid;
+    baseImageFilename = savePath("snapshots/" + uid + "/base_image.png");
+    File dir = new File(savePath("snapshots/" + uid));
+    nSnapshots = 0;
+    if (dir.exists()) {
+      File[] files = dir.listFiles();
+      if (files != null) {
+        for (File f : files) {
+          if (f.getName().endsWith("_raw.png")) nSnapshots++;
+        }
+      }
+    }
+    println("Resumed experiment '" + uid + "' with " + nSnapshots + " existing snapshots.");
+  }
+
   String experimentDir() {
+    if (_resumedUid != null) return "snapshots/" + _resumedUid;
     return "snapshots/"+(info != null ? info.getUid() : "default_exp");
   }
   

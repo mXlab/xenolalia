@@ -106,10 +106,15 @@ void setup() {
   // Load configuration file.
   settings = new Settings();
 
-  // Initialize mode.
-  if (settings.autostart())
+  // Initialize mode based on startup_mode setting.
+  String sm = settings.startupMode();
+  if (sm.equals("generative"))
     generativeMode();
-  else
+  else if (sm.equals("idle"))
+    idleMode();
+  else if (sm.equals("resume"))
+    resumeMode();
+  else // "calibration" or unrecognized value
     cameraCalibrationMode();
 
   // Setup OSC.
@@ -187,6 +192,45 @@ void generativeMode() {
     return;
   }
   mode = new GenerativeMode();
+}
+
+// Exhibition standby: black screen until /xeno/control/begin arrives.
+void idleMode() {
+  if (cam instanceof NullCam) {
+    mode = new NoCameraMode();
+    return;
+  }
+  mode = new GenerativeMode();
+  ((GenerativeMode)mode).startIdle();
+}
+
+// Attempt to resume the last experiment from recovery_state.json.
+// Falls back to idleMode() if recovery is absent or the state is not resumable.
+void resumeMode() {
+  if (cam instanceof NullCam) {
+    mode = new NoCameraMode();
+    return;
+  }
+  JSONObject recovery = null;
+  try {
+    recovery = loadJSONObject(savePath("recovery_state.json"));
+  } catch (Exception e) {
+    println("Resume: no recovery file found (" + e.getMessage() + ").");
+  }
+  if (recovery == null || !recovery.hasKey("experiment_uid")) {
+    println("Resume: no valid recovery state — starting in idle mode.");
+    idleMode();
+    return;
+  }
+  String savedState = recovery.getString("state", "");
+  if (!savedState.equals("MAIN") && !savedState.equals("WAIT_FOR_GLYPH")) {
+    println("Resume: state '" + savedState + "' is not resumable — starting in idle mode.");
+    idleMode();
+    return;
+  }
+  println("Resume: restoring experiment '" + recovery.getString("experiment_uid") + "' from " + savedState);
+  mode = new GenerativeMode();
+  ((GenerativeMode)mode).startResume(recovery);
 }
 
 void shapeMode() {
