@@ -222,31 +222,47 @@ def save_encoded_json(
 def save_code_signature(encoded, filepath, n_bins=40, precision=4):
     """Save a compact code signature of encoder activations to a JSON file.
 
-    Produces a model-agnostic summary with three vectors of n_bins values each
-    (min, max, avg over equal-sized bins of the flattened, normalized activation
-    vector) plus metadata. The format is intentionally open-ended: vector length
-    and structure may vary across signature types.
+    For convolutional encoders (3-D output H×W×C): one bin per channel,
+    summarising the H×W spatial values with per-channel min/max/avg.
+    For dense encoders (1-D output): splits the flattened vector into n_bins
+    equal-sized bins and computes per-bin min/max/avg.
+    The format is intentionally open-ended: vector length and structure may
+    vary across signature types.
     """
     if encoded is None:
         return
-    # Remove batch dim if present, flatten to 1D.
-    arr = encoded[0] if encoded.ndim == 4 else encoded
-    flat = arr.flatten().astype(np.float32)
-    # Normalize to [0, 1].
-    vmin, vmax = flat.min(), flat.max()
+    # Remove batch dim if present.
+    arr = (encoded[0] if encoded.ndim == 4 else encoded).astype(np.float32)
+    # Normalize globally to [0, 1].
+    vmin, vmax = arr.min(), arr.max()
     if vmax > vmin:
-        flat = (flat - vmin) / (vmax - vmin)
-    # Split into n_bins equal-sized bins and compute per-bin statistics.
-    bins = np.array_split(flat, n_bins)
-    data = {
-        "model": model_name,
-        "encoder_layer": encoder_layer,
-        "encoder_shape": list(arr.shape),
-        "n_values": int(flat.size),
-        "min": [round(float(b.min()), precision) for b in bins],
-        "max": [round(float(b.max()), precision) for b in bins],
-        "avg": [round(float(b.mean()), precision) for b in bins],
-    }
+        arr = (arr - vmin) / (vmax - vmin)
+    if arr.ndim == 3:
+        # Convolutional: shape (H, W, C) — one bin per channel.
+        H, W, C = arr.shape
+        spatial = arr.reshape(H * W, C)  # (H*W, C)
+        data = {
+            "model": model_name,
+            "encoder_layer": encoder_layer,
+            "encoder_shape": list(arr.shape),
+            "n_values": int(arr.size),
+            "min": [round(float(v), precision) for v in spatial.min(axis=0)],
+            "max": [round(float(v), precision) for v in spatial.max(axis=0)],
+            "avg": [round(float(v), precision) for v in spatial.mean(axis=0)],
+        }
+    else:
+        # Dense: split flat vector into n_bins equal-sized bins.
+        flat = arr.flatten()
+        bins = np.array_split(flat, n_bins)
+        data = {
+            "model": model_name,
+            "encoder_layer": encoder_layer,
+            "encoder_shape": list(arr.shape),
+            "n_values": int(flat.size),
+            "min": [round(float(b.min()), precision) for b in bins],
+            "max": [round(float(b.max()), precision) for b in bins],
+            "avg": [round(float(b.mean()), precision) for b in bins],
+        }
     with open(filepath, "w") as f:
         json.dump(data, f, indent=2)
 
