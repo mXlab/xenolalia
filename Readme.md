@@ -1,373 +1,398 @@
 # Xenolalia
 
-## Components
+Bio-digital art installation creating a feedback loop between living microorganisms (euglenas) and a convolutional autoencoder. The camera captures euglenas → the autoencoder generates new images → the images are projected onto the euglenas → repeat.
 
-Xenolalia consists mainly of 4 different components:
- 1. **Mesoscope** Device / machine / apparatus where the experiments happen
-    * xenopi (RPi) which runs the display and experiment control (XenoPi), the neural network generator (xeno_osc.py) and the orbiter (xeno_orbiter.py)
-    * Apparatus controller (ESP32) which controls the pumps and motors
- 2. **Macroscope** Large-scale projection showing the experiments in real time
-    * xenopc (PC) running projection (XenoProjection) and python server operating file transfers (xeno_server.py)
- 3. **Microscope** Microscope ("xenoscope") showing the live cells
- 4. **Sonoscope** (Optional) Sonification of the neural network
+For a full technical description of the system architecture, see [`docs/architecture.md`](docs/architecture.md).
 
-## Default IP Addresses & Ports
+---
 
-| IP              | Machine                     | Programs & OSC input ports                              |
-|-----------------|-----------------------------|---------------------------------------------------------|
-|192.168.0.**100**|xenopc                       |xeno_server.py (7000), XenoProjection (7001), xeno_sonoscope.pd (7002) |
-|192.168.0.**101**|xenopi (RPi)                 |xeno_osc.py (7000), XenoPi (7001), xeno_orbiter.py (7002)|
-|192.168.0.**102**|Apparatus (ESP32)            |XenolaliaApparatus (7000)                                |
-|192.168.0.**103**|Xenoscope (microscope) (RPi) |Xenoscope (n/a)                                          |
+## Table of Contents
+
+1. [Machines & Network](#machines--network)
+2. [Running Xenolalia](#running-xenolalia)
+3. [Configuration Reference](#configuration-reference)
+   - [XenoPi/settings.json](#xenopisettingsjson)
+   - [config/xenopc.yaml](#configxenopcyaml)
+   - [config/adapters/](#configadapters)
+4. [Development & Testing Tools](#development--testing-tools)
+5. [Glyph Alphabet & Font Generation](#glyph-alphabet--font-generation)
+6. [Installation](#installation)
+   - [XenoPC](#xenopc-installation)
+   - [XenoPi (Raspberry Pi)](#xenopi-installation)
+7. [OSC Message Reference](#osc-message-reference)
+8. [Troubleshooting](#troubleshooting)
+
+---
+
+## Machines & Network
+
+| IP | Machine | Programs (OSC receive port) |
+|---|---|---|
+| 192.168.0.**100** | **xenopc** | `xeno_server.py` (7000), `XenoProjection` (7001), `xeno-sonoscope.pd` (7002) |
+| 192.168.0.**101** | **xenopi** (RPi) | `xeno_osc.py` (7000), `XenoPi` (7001), `xeno_orbiter.py` (7002) |
+| 192.168.0.**102** | **Apparatus** (ESP32) | `XenolaliaApparatus` (7000) |
+| 192.168.0.**103** | **Xenoscope** (RPi, microscope) | — |
+
+Named OSC targets used in adapter configs (defined in `config/xenopc.yaml`):
+
+| Name | Machine | Port |
+|------|---------|------|
+| `server` | xenopc (self) | 7000 |
+| `macroscope` | XenoProjection | 7001 |
+| `sonoscope` | xeno-sonoscope.pd | 7002 |
+| `neurons` | xeno_osc.py (RPi) | 7000 |
+| `mesoscope` | XenoPi (RPi) | 7001 |
+| `orbiter` | xeno_orbiter.py (RPi) | 7002 |
+| `apparatus` | ESP32 | 7000 |
+
+---
 
 ## Running Xenolalia
 
-### Introduction
-
-Several programs are needed to run Xenolalia.
-
-On the xenopi (mesoscope):
- 1. Front-end: ```XenoPi``` Processing sketch. Manages the interaction between the camera and the screen.
- 2. Back-end: ```xeno_osc.py``` Python script. Manages the image filtering and the autoencoder image generation.
- 3. (Optional) Orbiter control: ```xeno_orbiter.py``` Python script. Manages control of the "orbiter" secondary OLED device.
- 4. (Recommended) Sleep prevent: ```bin/prevent_sleep.sh``` Shell script. Prevents the Pi monitor for going to sleep due to lack of mouse activity.
-
-Alternatively, a single script will automatically start all these programs: ```bin/xeno_main.sh```
-
-On the xenopc:
- 1. Macroscope: ```XenoProjection``` Processing sketch. Displays the different images of current and previous experiments.
- 2. Server: ```xeno_server.py``` Python script. Receives messages about current experiment from XenoPi, syncs image files, and calls XenoProjection.
-
 ### Definitions
 
- * **Experiment** : one specific generation, starting from a seed image and generating a sequence of images
- * **Session** : an event during which the piece was run (eg. a residency, an exhibition, etc.)
- * **Node** : a specific instance or module on which the experiments are being performed
+- **Experiment**: one generation cycle starting from a seed image, producing a sequence of projected images.
+- **Session**: an event during which the piece was run (e.g. a residency, an exhibition).
+- **Node**: a specific mesoscope module running experiments.
 
-### Settings
+### Programs
 
-The ```XenoPi/settings.json``` file contains parameters that can be set by the user to control the experiments. A sample file is located in ```XenoPi/settings.json.default```.
+**On the xenopi (mesoscope / Raspberry Pi):**
 
-Description of the core parameters:
+| Program | Command / Script | Notes |
+|---------|-----------------|-------|
+| `xeno_osc.py` | started by `xeno_pi_main.sh` | Neural network server — must start before XenoPi |
+| `XenoPi` | Processing sketch | Main controller — calibration + generative state machine |
+| `xeno_orbiter.py` | started by `xeno_pi_main.sh` | Optional OLED display on the mesoscope |
+| `prevent_sleep.sh` | started by `xeno_pi_main.sh` | Prevents monitor sleep |
 
-| Parameter        | Description | Example |
-|------------------|-------------|---------|
-| node_name        | Unique name to identify the module running the experiment | "nodepi-01" |
-| session_name     | Unique name to identify the session/event during which the experiment took place | "isea-2020" |
-| exposure_time    | Time during which each image is left on the petri dish before taking a new snapshot (seconds) | 300 |
-| seed_image       | Type of image used as a seed (choices: random, euglenas) | "random" |
-| n_feedback_steps | Number of self-loops the neural net does at each step | 4 |
+**On the xenopc (macroscope):**
+
+| Program | Command / Script | Notes |
+|---------|-----------------|-------|
+| `xeno_server.py` | started by `xeno_pc_main.sh` | Syncs snapshots, drives XenoProjection, runs adapter |
+| `XenoProjection` | Processing sketch | Large-scale projection display |
+| `xeno-sonoscope.pd` | started by `xeno_pc_main.sh` | Pd sonification patch (optional) |
+| Open Stage Control | started by `xeno_pc_main.sh` | Optional OSC control interface |
 
 ### Launching
 
-#### Step 1 : Start the program(s)
+The easiest way is to use the launcher scripts.
 
-The easiest way to start the program is to use the ```xeno_main.sh``` bash script.
-
-```
+**On the xenopi:**
+```bash
 cd ~/xenolalia
-./bin/xeno_main.sh
+./bin/xeno_pi_main.sh
 ```
 
-Alternatively you can start the programs separately.
- 1. Start the ```XenoPi``` program. It will start in calibration mode.
- 2. Start the ```xeno_osc.py``` script with the appropriate parameters. Example: ```python3 xeno_osc.py -c results/model_sparse_conv_enc20-40_dec40-20_k5_b128.hdf5 -n 5```
- 3. (Optional) Start the ```xeno_orbiter.py``` and the ```bin/prevent_sleep.sh``` programs.
+This starts `xeno_osc.py`, `xeno_orbiter.py`, `prevent_sleep.sh`, then launches `XenoPi` in a restart loop (auto-restarts on crash). Logs go to `logs/`.
 
-#### Step 2 : Calibration mode
+**On the xenopc:**
+```bash
+cd ~/xenolalia
+./bin/xeno_pc_main.sh
+```
 
-Upon startup ```XenoPi``` will being in **calibration mode**. Here is how to proceed:
- 1. Adjust the reference image.
-     1. Click on the first corner to place the first control point.
-     2. Press TAB to select the next control point; then click on the 2nd corner to place it.
-     3. You can use the arrow keys to make small adjustments.
-     4. Once you are satisfied, press ENTER: it will save the settings.json file.
-     5. Then press the SPACEBAR.
- 2. Adjust the input quad.
-     1. Using the mouse and the same keys as for the previous step, adjust the four corners of the input quad to match the corners of the image picked by the camera, directly on the screen.
-     2. You can select one of the four control points by pressing its number (1, 2, 3, 4).
-     3. Once you are satisfied, press ENTER: it will save the settings.json file.
+This starts `xeno_server.py`, `xeno-sonoscope.pd`, Open Stage Control, and `XenoProjection`. Logs go to `logs/`.
 
-#### Step 3 : Check the conditions
+**Starting programs individually (xenopi):**
+```bash
+source xeno-env/bin/activate
+python xeno_osc.py                          # reads settings.json for model
+python xeno_orbiter.py --fps 1             # optional, requires SSD1351 OLED hardware
+/bin/bash bin/prevent_sleep.sh &
+# then open XenoPi in Processing IDE
+```
 
-**IMPORTANT** At this point you need to make sure to put the experimental setup in the same set of conditions as they will be running. Adjust light sources, close lids and curtains, etc. whatever you want your setup to be.
+**Starting programs individually (xenopc):**
+```bash
+source xeno-env/bin/activate
+python xeno_server.py                       # reads config/xenopc.yaml
+# then open XenoProjection in Processing IDE
+```
 
-#### Step 4 : Begin generation
+### Startup Procedure
 
-Press the 'g' key to start the generative process.
+#### Step 1 — Calibration mode
 
-### Switch to next experiment
+On startup, `XenoPi` enters **calibration mode** (unless `startup_mode` is set to `"generative"` in `settings.json`).
 
-While the script is running you can manually start a new experiment by pressing the 'n' key.
+**A. Reference image calibration** — defines the display rectangle:
+1. Click the first corner to place the first control point.
+2. Press TAB to select the next control point; click to place it.
+3. Use arrow keys for fine adjustment.
+4. Press ENTER to save, then SPACEBAR to proceed to the next step.
 
-### Exiting
+**B. Input quad calibration** — defines the camera perspective transform:
+1. Adjust the four corners to match the field of view picked up by the camera.
+2. Select a control point by pressing its number (1–4).
+3. Use arrow keys for fine adjustment.
+4. Press ENTER to save `settings.json`.
 
-You can exit ```XenoPi``` with the ESC key. If you started the programs using ```xeno_main.sh``` you don't need to do anything else as the script will take care of killing the other programs.
+#### Step 2 — Set conditions
 
-### Key bindings
+Before starting generation, set up the experimental conditions (light sources, lids, curtains, etc.) exactly as they will be during the experiment.
+
+#### Step 3 — Start generative mode
+
+Press **g** to start. Or set `startup_mode = "generative"` in `settings.json` to skip calibration entirely on next launch.
+
+#### Step 4 — Managing experiments
+
+- Press **n** to manually start a new experiment at any time.
+- Press **ESC** to exit XenoPi. If started via `xeno_pi_main.sh`, the other programs are cleaned up automatically.
+
+### Key Bindings
 
 #### Calibration mode
 
-| Key | Description | 
+| Key | Description |
 |:---:|-------------|
-| SPACEBAR | Toggle mode from reference image to input quad |
-| ENTER | Save calibration settings |
-| ←↑→↓ | Moves selected control point by one pixel |
+| SPACEBAR | Toggle between reference image and input quad |
+| ENTER | Save calibration to `settings.json` |
+| ←↑→↓ | Move selected control point by one pixel |
 | TAB | Select next control point |
-| 1234 | Select specific control point |
-| m | Toggle the mouse crosshair |
-| p | Toggle the control point crosshair |
-| +- | Adjust the size of the control point lines |
+| 1 2 3 4 | Select specific control point |
+| m | Toggle mouse crosshair |
+| p | Toggle control point crosshair |
+| + − | Adjust control point line size |
 | g | Start generative mode |
 
 #### Generative mode
 
-| Key | Description | 
+| Key | Description |
 |:---:|-------------|
 | SPACEBAR | Manually take a snapshot |
-| f | Toggle flash screen (useful to look at what is happening on the petri dish) |
-| v | Toggle camera view (live camera feed appears in the corner) |
-| a | Toggle auto mode (\*) |
+| f | Toggle flash screen (white frame — useful to inspect the petri dish) |
+| v | Toggle camera view (live feed in corner) |
+| a | Toggle auto mode (*) |
 | n | Start new experiment |
 | t | Test overlay: load the most recent snapshot and briefly show the CV-detected shape |
 
-(\*) In auto mode (default) snapshots will be taken at a regular pace as specified by the "exposure_time" setting. In manual mode (ie. non-auto mode) the user has the responsibility to manually take snapshots using the SPACEBAR.
+(*) In auto mode (default), snapshots are taken at intervals defined by `exposure_time`. In manual mode, press SPACEBAR to take each snapshot.
 
-## XenoPC Configuration
+---
 
-### Installation
+## Configuration Reference
 
-OS: Ubuntu 24.04
+### XenoPi/settings.json
 
-#### Install Packages
+Single source of truth for all components. A default file is located at `XenoPi/settings.json.default`.
 
-```
-# Update/upgrade Debian packages
-sudo apt update
-sudo apt upgrade
+#### Identification
 
-# Install debian packages.
-sudo apt install -y git git-gui \
-                      python3-dev python3-setuptools python3-h5py \
-                      libblas-dev liblapack-dev libatlas-base-dev gfortran \
-                      xdotool \
-                      python-virtualenv \
-                      software-properties-common dirmngr apt-transport-https lsb-release ca-certificates \
-                      liblo-tools liblo7 \
-                      rsync sshpass
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `node_name` | string | `"nodepi-01"` | Unique name for this mesoscope module |
+| `session_name` | string | `"default"` | Name identifying the current session/event |
 
-```
+#### Camera
 
-#### Install Python libraries in Virtual Environment
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `camera_id` | int | `0` | Camera device index |
+| `camera_width` | int | `640` | Capture width in pixels (0 = use camera default) |
+| `camera_height` | int | `480` | Capture height in pixels (0 = use camera default) |
+| `camera_quad` | float[8] | identity | Perspective transform corners (normalized 0–1), in order: TL, BL, BR, TR (x,y pairs) |
+| `image_rect` | float[4] | `[0.25, 0.25, 0.75, 0.75]` | Display rectangle for projected image on screen (x_min, y_min, x_max, y_max, normalized) |
 
-From main directory:
+#### Neural network / model
 
-```
-python -m venv xeno-env
-source xeno-env/bin/activate
-```
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `model_name` | string | `"model"` | Autoencoder filename in `results/` directory, without `.hdf5` extension |
+| `use_convolutional` | bool | `true` | If true, CNN autoencoder; if false, dense autoencoder |
+| `n_feedback_steps` | int | `4` | Number of autoencoder self-loop iterations per step |
+| `encoder_layer` | int | `5` | Index of the layer to extract activations from (for sonoscope and analysis) |
+| `seed_image` | string | `"random"` | Seed type for the first step of each experiment: `"random"` or `"euglenas"` |
+| `use_base_image` | bool | `true` | If true, subtract a background reference image before processing |
 
-```
-pip install numpy
-pip install -r requirements_pc.txt
-pip install -U six wheel mock
-```
+#### Image post-processing / output
 
-## Xenopi Configuration
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `squircle_mode` | string | `"none"` | Remapping applied before the autoencoder: `"none"`, `"inside"` (disc → square), or `"outside"` (square → disc) |
+| `output_size` | int | `224` | Resolution of the generated output image in pixels (square) |
+| `output_threshold` | float | `0.5` | Binarization threshold applied to autoencoder output |
+| `output_stroke_width` | int | `20` | Morphological opening radius applied to output |
+| `output_boundary_px` | int | `22` | Contour width (in pixels) drawn for thick components |
+| `output_area_max` | float\|null | `null` | Maximum blob area; blobs larger than this are discarded (null = no limit) |
 
-Follow these instructions in order to install everything on a Raspberry Pi.
+#### Visibility thresholds
 
-### Specs
+Used by `xeno_osc.py` to classify each snapshot, and by `xeno_test_snapshots.py` for batch analysis.
 
- * Board: Raspberry Pi Model 3 B+ Version 1.3
- * OS: Raspbian Stretch
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `visibility_threshold_cv` | float | `0.1` | Pixel density below which the image is classified as invisible to CV (class 0) |
+| `visibility_threshold_human` | float | `0.3` | Pixel density above which the image is classified as human-visible (class 2); between thresholds = cv-only (class 1) |
 
-Note: I was unable to get the Processing video libraries to work appropriately on a Raspberry Pi 4 (2G) w/ Rasbian Buster. I was also never able to boot the Pi 4 on Raspbian Stretch so I had to downgrade to a Pi 3.
+#### Experiment timing & control
 
-### Installation
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `exposure_time` | float | `60.0` | Seconds between snapshots during MAIN state |
+| `experiment_duration_minutes` | float | `0` | Total experiment duration in minutes. Derives snapshot count as `round(duration × 60 / exposure_time)`. If 0, defaults to 12 snapshots. |
+| `presentation_duration_minutes` | float | `0` | Duration of PRESENTATION state in minutes. If 0, defaults to 5 minutes. |
+| `startup_mode` | string | `"calibration"` | `"calibration"` — start in calibration mode (default); `"generative"` — skip calibration and go straight to generative mode |
+| `auto_restart` | bool | `false` | If true, automatically start a new experiment after PRESENTATION ends. If false, system goes to IDLE and waits. |
+| `use_apparatus` | bool | `false` | If true, include the REFRESH and POST_REFRESH states to cycle liquid through the apparatus between experiments |
 
-IMPORTANT: Do *not* install MiniConda as the Python3 version it installs (3.4) is incompatible with Keras. Use the default Python 3 version instead.
+#### Network / OSC
 
-Troubleshooting: When running ```pip3 install``` if you get error "http.client.RemoteDisconnected: Remote end closed connection without response" just re-run the command until it works.
+Only change these if your network setup differs from defaults.
 
-```
-# Update/upgrade Debian packages
-sudo apt update
-sudo apt upgrade
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `osc_receive_port` | int | `7001` | Port on which XenoPi listens for incoming OSC |
+| `osc_remote_ip` | string | `"127.0.0.1"` | IP of xeno_osc.py (neural network server) |
+| `osc_send_port` | int | `7000` | Port of xeno_osc.py |
+| `osc_server_remote_ip` | string | `"192.168.0.100"` | IP of xeno_server.py (xenopc) |
+| `osc_server_send_port` | int | `7000` | Port of xeno_server.py |
+| `osc_apparatus_remote_ip` | string | `"192.168.0.102"` | IP of the ESP32 apparatus |
+| `osc_apparatus_send_port` | int | `7000` | Port of the ESP32 apparatus |
 
-# Install debian packages.
-sudo apt install -y git git-gui \
-                      python3-dev python3-setuptools python3-h5py \
-                      libblas-dev liblapack-dev libatlas-base-dev gfortran \
-                      xdotool \
-                      python-virtualenv \
-                      software-properties-common dirmngr apt-transport-https lsb-release ca-certificates \
-                      liblo-tools liblo7 \
-                      libjasper1 libqtgui4 libqt4-test \
-                      lftp
+---
 
-# Install python libraries.
-pip3 install numpy # This is important otherwise it will trigger a bug on next line
-pip3 install -r requirements.txt
-pip3 install -U six wheel mock
-wget https://github.com/lhelontra/tensorflow-on-arm/releases/download/v2.0.0/tensorflow-2.0.0-cp37-none-linux_armv7l.whl
-sudo pip3 uninstall tensorflow
-pip3 install tensorflow-2.0.0-cp37-none-linux_armv7l.whl
-# pip3 install keras tensorflow scipy numpy python-osc opencv-python scikit-image
-```
+### config/xenopc.yaml
 
-To install Processing:
-```
-wget https://github.com/processing/processing/releases/download/processing-0269-3.5.3/processing-3.5.3-linux-armv6hf.tgz
-tar czvf processing-3.5.3-linux-armv6hf.tgz
-cd processing-3.5.3/
-sudo ./install.sh
-```
+**Location**: `config/xenopc.yaml` — this file is **gitignored** (machine-specific). Copy from `config/xenopc.yaml.example` and fill in your values.
 
-#### Xenolalia installation script
+This file is read by `xeno_server.py` at startup. It defines the adapter to use, connection parameters, and named OSC targets for adapter configs.
 
-From the ```~/xenolalia``` directory the following script once with the login information for the FTP server:
+```yaml
+# Adapter name: maps to config/adapters/<adapter>.yaml
+adapter: default
 
-```
-sudo bash bin/xeno_pi_install.sh
-```
+# XenoPi connection (used for rsync).
+xenopi_ip: 192.168.0.101
+xenopi_send_port: 7001
+xenopi_username: pi
+xenopi_password: xenolalia
+xenopi_snapshots_dir: /home/pi/xenolalia/XenoPi/snapshots
 
-#### Configure auto-launch
+# Macroscope (XenoProjection) connection.
+macroscope_ip: 127.0.0.1
+macroscope_send_port: 7001
 
-Edit the autostart file:
-```
-nano ~/.config/lxsession/LXDE-pi/autostart
-```
+# Local server.
+receive_port: 7000
+local_snapshots_dir: /home/xeno/xenolalia/contents
 
-Paste the following script and save:
-```
-# Wait to make sure Wifi is running before startup
-sleep 10
-# Launch script
-/bin/bash /home/pi/xenolalia/bin/xeno_pi_main.sh > /home/pi/startuplog 2>&1
-```
-
-#### Processing libraries
-
-Add the following libraries:
- * Video
- * GL VIdeo
- * OpenCV
- * OscP5
-
-### LCD Screen
-
-Follow the official instructions: http://www.lcdwiki.com/MHS-3.5inch_RPi_Display
-IMPORTANT: run ```sudo ./MHS35-show``` and *not* ```LCD35-show```
-
-After rebooting your main screen will have a 480x320 resolution. To fix this edit the ```/boot/config.txt``` by replacing the ```hdmi_cvt``` directive with your choice resolution eg. ```hdmi_cvt 1920 1080 60 6 0 0 0```
-
-To restore the system in case of a mistake you can run the ```system_restore.sh``` script provided with the LCD-Show library.
-
-### Notes
-
- * Dual monitor: I could never get my second monitor to work on the Pi4, it kept displaying the rainbow colorwheel splash screen. Did not find a solution.
-
-
-## Xenodata
-
-Xenodata provides an online interface to the generated contents.
-
-The installation script will setup a hourly cron that will automatically upload all new generated contents.
-
-To sync the contents manually:
-```
-sudo /etc/cron.hourly/xeno_sync_snapshots
-```
-The web-app can be access here: http://xenodata.sofianaudry.com/
-
-
-## Glyph Alphabet & Font Generation
-
-Two scripts allow generating a full xenolalia glyph alphabet — one image per character — and packaging it as a TrueType font (`.ttf`). It does not use the euglenas, just the autoencoder.
-
-### Environment setup
-
-```bash
-python -m venv xeno-env
-source xeno-env/bin/activate
-pip install -r requirements_alphabet.txt
+# Named OSC targets — referenced by adapter handler configs.
+# 'xenopi' is always built-in.
+targets:
+  server:
+    host: 127.0.0.1
+    port: 7000
+  macroscope:
+    host: 127.0.0.1
+    port: 7001
+  sonoscope:
+    host: 127.0.0.1
+    port: 7002
+  neurons:
+    host: 192.168.0.101
+    port: 7000
+  mesoscope:
+    host: 192.168.0.101
+    port: 7001
+  orbiter:
+    host: 192.168.0.101
+    port: 7002
+  apparatus:
+    host: 192.168.0.102
+    port: 7000
 ```
 
-### Step 1 — Generate glyph images (`xeno_alphabet.py`)
+---
 
-For each character (a–z, A–Z, 0–9, punctuation) the script renders the character as a 28×28 seed image, blends it with noise, and feeds it through the autoencoder to produce a xenolalia glyph.
+### config/adapters/
 
-```bash
-python xeno_alphabet.py -m <model_name> -C XenoPi/settings.json -o alphabet/
+Adapter configs decouple venue-specific trigger logic from the core code. Each installation can use a different adapter — e.g. proximity sensor trigger, time-slot schedule, manual control only — without touching `xeno_server.py`.
+
+**Committed configs** (safe to use as-is or as a starting point):
+- `config/adapters/default.yaml` — manual control only; no automatic triggers
+- `config/adapters/proximity_example.yaml` — PIR/proximity sensor triggers a new experiment
+
+**Venue-specific configs** (e.g. `eisode2026.yaml`) are gitignored. Use the examples as templates.
+
+**Selecting an adapter**: set `adapter: <name>` in `config/xenopc.yaml`. The file `config/adapters/<name>.yaml` is loaded.
+
+#### Adapter config format
+
+```yaml
+adapter: "My Installation"   # Display name (informational only)
+receive_port: 8001           # Port the adapter listens on (separate from xeno_server's port)
+
+handlers:
+
+  /start:                    # OSC address that triggers this handler
+    type: start              # Handler type: start | stop | route
+
+  /presence:
+    type: start
+    require_inactive: true   # Only trigger if no experiment is currently running
+    cooldown_minutes: 90     # Minimum time between triggers (safety net)
+
+  /stop:
+    type: stop
+
+  /some/relay:
+    type: route
+    osc:
+      - target: apparatus    # Named target from xenopc.yaml targets:
+        address: /xeno/ring/grow
+        type: i
+        value: 1
+
+# Timed daily OSC messages (fired once per day at HH:MM local time).
+schedule:
+  - time: "22:30"
+    target: apparatus
+    address: /xeno/ring/dark
+    type: i
+    value: 1
+  - time: "09:00"
+    target: apparatus
+    address: /xeno/ring/grow
+    type: i
+    value: 1
 ```
 
-These are the settings that were used to generate the "official" font xenolalia.ttf:
+**Handler types:**
 
-```bash
-python xeno_alphabet.py -m model_sparse_conv_enc20-40_dec40-20_k5_b128 -c -n 5 -N 0.8 -s 28 --squircle-mode inside --threshold 0.2 -o alphabet --seed 23 --fit --fit-max 2
-```
+| Type | Description |
+|------|-------------|
+| `start` | Sends a start command to XenoPi (begins a new experiment) |
+| `stop` | Sends a stop command to XenoPi (ends the current experiment) |
+| `route` | Forwards an OSC message to one or more named targets |
 
+**Guard keys** (optional, on `start` handlers):
 
-Key options:
+| Key | Description |
+|-----|-------------|
+| `require_inactive` | Only trigger if no experiment is currently running |
+| `cooldown_minutes` | Minimum minutes between successive triggers |
+| `delay_minutes` | Delay before the start command is actually sent |
+| `require_on_time` | Only trigger during scheduled hours |
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `-m`, `--model-name` | *(required)* | Model filename without `.hdf5` extension |
-| `-M`, `--model-directory` | `results` | Directory containing `.hdf5` model files |
-| `-C`, `--configuration-file` | — | Load post-processing params from `settings.json` |
-| `-n`, `--n-steps` | `10` | Number of autoencoder feedback iterations per glyph |
-| `-N`, `--noise` | `0.3` | Noise blend weight (0 = pure character, 1 = pure random) |
-| `-o`, `--output-dir` | `alphabet` | Directory where glyph images are saved |
-| `--fit` | off | Auto-scale each glyph to fill the 28×28 canvas |
-| `--fit-max` | unlimited | Maximum expansion in `--fit` mode as a multiplier of the natural rendered size (e.g. `2.0`) |
-| `--uppercase` | off | Render letters as uppercase |
-| `--seed` | — | Integer random seed for reproducibility |
-| `--save-seeds` | off | Also save intermediate seed and raw autoencoder images |
-| `--output-size` | `224` | Side length of saved output images in pixels |
-| `--squircle-mode` | `none` | Squircle remapping: `none`, `inside`, or `outside` |
+---
 
-Example with common options:
+## Development & Testing Tools
 
-```bash
-python xeno_alphabet.py -m my_model -C XenoPi/settings.json \
-    --fit --fit-max 2.0 --seed 784 -o alphabet/
-```
-
-### Step 2 — Convert to TrueType font (`xeno_font.py`)
-
-Traces the binary glyph PNGs into vector contours and assembles a `.ttf` file.
-
-```bash
-python xeno_font.py alphabet/ xenolalia.ttf --family Xenolalia
-```
-
-Key options:
-
-| Option | Default | Description |
-|--------|---------|-------------|
-| `glyph_dir` | *(required)* | Directory of glyph PNGs (output of `xeno_alphabet.py`) |
-| `output_font` | *(required)* | Output `.ttf` file path |
-| `--family` | `Xenolalia` | Font family name embedded in the TTF |
-| `--style` | `Regular` | Font style name |
-| `--upm` | `1000` | Units per em |
-| `--advance` | UPM | Advance width for all glyphs |
-| `--simplify` | `1.0` | Contour simplification tolerance in pixels (0 to disable) |
-
-## Testing & Development Tools
-
-These scripts let you test individual features offline — without needing a camera, live euglenas, or a full experiment cycle. They are especially useful for calibrating visibility thresholds and verifying OSC plumbing before a session.
+These scripts allow testing individual features offline without a camera, live euglenas, or a full experiment cycle.
 
 ### `xeno_test_snapshots.py` — Batch Visibility Tester
 
-Scans a directory of raw snapshots, runs each through the full image processing pipeline, and prints a table of pixel density and visibility classification. Use this to calibrate `visibility_threshold_cv` and `visibility_threshold_human` in `settings.json` before deploying with live euglenas.
+Scans a directory of raw snapshots, runs each through the full image processing pipeline, and prints a table of pixel density and visibility class. Use this to calibrate `visibility_threshold_cv` and `visibility_threshold_human` in `settings.json`.
 
 **Visibility classes:**
 
 | Class | Label | Meaning |
 |:-----:|-------|---------|
 | 0 | `invisible` | No signal detected |
-| 1 | `cv-only` | Machine detects it, not perceptible to humans |
+| 1 | `cv-only` | Machine detects it; not perceptible to humans |
 | 2 | `human-vis` | Strong enough for humans to perceive |
 
 **Usage:**
@@ -381,19 +406,9 @@ python xeno_test_snapshots.py XenoPi/snapshots/00_test/ -C XenoPi/settings.json
 # Scan all snapshot subdirectories recursively
 python xeno_test_snapshots.py XenoPi/snapshots/ --recursive -C XenoPi/settings.json
 
-# Try different thresholds to find good values for your setup
+# Try different thresholds
 python xeno_test_snapshots.py XenoPi/snapshots/ --recursive \
     --threshold-cv 0.03 --threshold-human 0.15
-```
-
-**Example output:**
-
-```
-File                                                      Density  Class
----------------------------------------------------------------------------
-2019-08-01_23:52:42_058055_raw.png                         0.3367  human-vis
-2019-08-02_00:15:59_028862_raw.png                         0.0000  invisible
-2019-08-02_00:51:09_1381825_raw.png                        0.0459  cv-only
 ```
 
 **Options:**
@@ -401,13 +416,12 @@ File                                                      Density  Class
 | Option | Default | Description |
 |--------|---------|-------------|
 | `directory` | *(required)* | Directory to scan for `*_raw.png` files |
-| `-C` | `XenoPi/settings.json` | Config file (reads `camera_quad`, `squircle_mode`, thresholds) |
+| `-C` | `XenoPi/settings.json` | Config file |
 | `--recursive` | off | Also scan subdirectories |
-| `--threshold-cv` | from settings or `0.02` | Override the CV-visible density threshold |
-| `--threshold-human` | from settings or `0.10` | Override the human-visible density threshold |
+| `--threshold-cv` | from settings or `0.1` | Override CV-visible density threshold |
+| `--threshold-human` | from settings or `0.3` | Override human-visible density threshold |
 
-Once you have settled on good threshold values, add them to `settings.json`:
-
+Once you have settled on good values, write them to `settings.json`:
 ```json
 "visibility_threshold_cv": 0.03,
 "visibility_threshold_human": 0.15
@@ -415,11 +429,11 @@ Once you have settled on good threshold values, add them to `settings.json`:
 
 ---
 
-### `xeno_simulate.py` — OSC Simulation Script
+### `xeno_simulate.py` — OSC Simulation / Replay
 
-Replays a past experiment snapshot directory by sending OSC messages to XenoPi and XenoProjection exactly as `xeno_osc.py` would — without needing a camera, live euglenas, or a running model. Use this to test the shape overlay, visibility tracking, gallery gating, and pipeline scene in isolation.
+Replays a past experiment snapshot directory by sending OSC messages to XenoPi and XenoProjection exactly as `xeno_osc.py` would — without a camera, live euglenas, or a running model. Use to test the shape overlay, visibility tracking, and display pipeline in isolation.
 
-XenoPi and/or XenoProjection must be running before you start the script.
+XenoPi and/or XenoProjection must be running before starting the script.
 
 **Usage:**
 
@@ -427,23 +441,15 @@ XenoPi and/or XenoProjection must be running before you start the script.
 source xeno-env/bin/activate
 
 # Replay an experiment with a 2-second delay between steps (default)
-python xeno_simulate.py XenoPi/snapshots/2021-09-03_17:16:07_emery-2021_nodepi-02/ \
-    --xenopi-ip 127.0.0.1 --server-ip 127.0.0.1
+python xeno_simulate.py XenoPi/snapshots/2021-09-03_17:16:07_emery-2021_nodepi-02/
 
-# Fast replay with no delay (useful for quick connection checks)
-python xeno_simulate.py XenoPi/snapshots/2021-09-03_17:16:07_emery-2021_nodepi-02/ \
-    --delay 0 --xenopi-ip 127.0.0.1 --server-ip 127.0.0.1
+# Fast replay with no delay
+python xeno_simulate.py XenoPi/snapshots/2021-09-03_17:16:07_emery-2021_nodepi-02/ --delay 0
 
-# Force a specific visibility class for all steps (skip recompute from raw images)
-python xeno_simulate.py XenoPi/snapshots/2021-09-03_17:16:07_emery-2021_nodepi-02/ \
-    --vis-override 0   # invisible — should NOT update recent-glyphs gallery
-python xeno_simulate.py XenoPi/snapshots/2021-09-03_17:16:07_emery-2021_nodepi-02/ \
-    --vis-override 2   # human-visible — SHOULD update recent-glyphs gallery
-```
+# Force a specific visibility class for all steps
+python xeno_simulate.py XenoPi/snapshots/2021-09-03_17:16:07_emery-2021_nodepi-02/ --vis-override 2
 
-**Multi-machine setup** (XenoPi on RPi, XenoProjection on xenopc):
-
-```bash
+# Multi-machine setup (XenoPi on RPi, XenoProjection on xenopc)
 python xeno_simulate.py XenoPi/snapshots/2021-09-03_17:16:07_emery-2021_nodepi-02/ \
     --xenopi-ip 192.168.0.101 \
     --server-ip  192.168.0.100 \
@@ -454,26 +460,316 @@ python xeno_simulate.py XenoPi/snapshots/2021-09-03_17:16:07_emery-2021_nodepi-0
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `snapshot_dir` | *(required)* | Experiment directory to replay (must contain `*_raw_3ann.png` files) |
+| `snapshot_dir` | *(required)* | Experiment directory to replay |
 | `-C` | `XenoPi/settings.json` | Config file |
-| `--xenopi-ip` | `127.0.0.1` | IP of the machine running XenoPi |
+| `--xenopi-ip` | `127.0.0.1` | IP of machine running XenoPi |
 | `--xenopi-port` | `7001` | OSC receive port of XenoPi |
-| `--server-ip` | `192.168.0.100` | IP of the machine running XenoProjection |
-| `--server-port` | `7000` | OSC receive port of XenoProjection |
+| `--server-ip` | `192.168.0.100` | IP of machine running XenoProjection |
+| `--server-port` | `7000` | OSC receive port of xeno_server.py |
 | `--delay` | `2.0` | Seconds between steps |
 | `--vis-override` | *(recomputed)* | Force visibility class for all steps: `0`, `1`, or `2` |
 
-**OSC messages sent:**
+---
 
-| Timing | Address | Destination | Payload |
-|--------|---------|-------------|---------|
-| Start | `/xeno/server/new` | XenoProjection | `[uid]` |
-| Per step | `/xeno/neurons/step` | XenoPi | `[ann_image_path]` |
-| Per step | `/xeno/neurons/visibility` | XenoPi | `[vis_class]` |
-| Per step | `/xeno/server/step` | XenoProjection | `[uid]` |
-| End | `/xeno/server/end` | XenoProjection | `[uid, 2]` |
+### `analyze_encoder.py` — Encoder Activation Analysis
 
-Visibility is computed from the corresponding `_raw.png` using the same pipeline as `xeno_osc.py`. If the raw file is missing it defaults to `0`.
+Runs the autoencoder N times in feedback-loop mode (each from a different random seed), collects per-channel statistics (min, max, avg) from the encoder bottleneck layer, then analyses sparsity, amplitude, diversity, and inter/intra-run variation. Saves plots and a text report to the output directory.
+
+Useful for verifying that the vectors sent to the sonoscope Pd patch carry meaningful, diverse information.
+
+**Usage:**
+
+```bash
+source xeno-env/bin/activate
+
+python analyze_encoder.py                          # uses settings.json defaults
+python analyze_encoder.py -n 100 -s 8             # 100 runs, 8 feedback steps each
+python analyze_encoder.py --vector max -o out/    # analyse the 'max' stat vector
+```
+
+**Options:**
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `-C` | `XenoPi/settings.json` | Config file (model, encoder_layer, etc.) |
+| `-M` | `results` | Directory containing `.hdf5` model files |
+| `-n` | `50` | Number of independent feedback runs |
+| `-s` | from settings | Feedback steps per run |
+| `--vector` | `avg` | Stat vector to analyse: `min`, `max`, or `avg` |
+| `-o` | `analysis` | Output directory for plots and report |
+| `--sparsity-threshold` | `0.05` | Values below this are considered near-zero |
+
+---
+
+## Glyph Alphabet & Font Generation
+
+These scripts generate a full xenolalia glyph alphabet and package it as a TrueType font. They use the autoencoder only — no camera or euglenas required.
+
+### Environment setup
+
+```bash
+python -m venv xeno-env
+source xeno-env/bin/activate
+pip install -r requirements_alphabet.txt
+```
+
+### Step 1 — Generate glyph images (`xeno_alphabet.py`)
+
+For each character (a–z, A–Z, 0–9, punctuation) the script renders it as a 28×28 seed image, blends it with noise, and feeds it through the autoencoder.
+
+```bash
+python xeno_alphabet.py -m <model_name> -C XenoPi/settings.json -o alphabet/
+```
+
+Settings used to generate the official `xenolalia.ttf` font:
+
+```bash
+python xeno_alphabet.py -m model_sparse_conv_enc20-40_dec40-20_k5_b128 \
+    -c -n 5 -N 0.8 -s 28 --squircle-mode inside --threshold 0.2 \
+    -o alphabet --seed 23 --fit --fit-max 2
+```
+
+**Key options:**
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `-m`, `--model-name` | *(required)* | Model filename without `.hdf5` |
+| `-M`, `--model-directory` | `results` | Directory containing `.hdf5` model files |
+| `-C`, `--configuration-file` | — | Load post-processing params from `settings.json` |
+| `-n`, `--n-steps` | `10` | Autoencoder feedback iterations per glyph |
+| `-N`, `--noise` | `0.3` | Noise blend weight (0 = pure character, 1 = pure random) |
+| `-o`, `--output-dir` | `alphabet` | Output directory for glyph images |
+| `--fit` | off | Auto-scale each glyph to fill the 28×28 canvas |
+| `--fit-max` | unlimited | Maximum expansion factor in `--fit` mode |
+| `--uppercase` | off | Render letters as uppercase |
+| `--seed` | — | Integer random seed for reproducibility |
+| `--save-seeds` | off | Also save intermediate seed and raw autoencoder images |
+| `--output-size` | `224` | Side length of saved output images in pixels |
+| `--squircle-mode` | `none` | Squircle remapping: `none`, `inside`, or `outside` |
+
+### Step 2 — Convert to TrueType font (`xeno_font.py`)
+
+Traces binary glyph PNGs into vector contours and assembles a `.ttf` file.
+
+```bash
+python xeno_font.py alphabet/ xenolalia.ttf --family Xenolalia
+```
+
+**Key options:**
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `glyph_dir` | *(required)* | Directory of glyph PNGs |
+| `output_font` | *(required)* | Output `.ttf` file path |
+| `--family` | `Xenolalia` | Font family name embedded in the TTF |
+| `--style` | `Regular` | Font style name |
+| `--upm` | `1000` | Units per em |
+| `--advance` | UPM | Advance width for all glyphs |
+| `--simplify` | `1.0` | Contour simplification tolerance in pixels (0 to disable) |
+
+---
+
+## Installation
+
+### XenoPC Installation
+
+**OS:** Ubuntu 24.04
+
+#### Install system packages
+
+```bash
+sudo apt update && sudo apt upgrade
+
+sudo apt install -y git git-gui \
+    python3-dev python3-setuptools python3-h5py \
+    libblas-dev liblapack-dev libatlas-base-dev gfortran \
+    xdotool \
+    python3-venv \
+    software-properties-common dirmngr apt-transport-https lsb-release ca-certificates \
+    liblo-tools liblo7 \
+    rsync sshpass
+```
+
+#### Install Python libraries
+
+```bash
+python3 -m venv xeno-env
+source xeno-env/bin/activate
+pip install -r requirements_pc.txt
+```
+
+#### Configure
+
+Copy and edit the xenopc config:
+```bash
+cp config/xenopc.yaml.example config/xenopc.yaml
+nano config/xenopc.yaml        # fill in xenopi credentials and adapter name
+```
+
+Choose or create an adapter config in `config/adapters/`. The `default.yaml` (manual control) is ready to use with no changes.
+
+#### Configure auto-launch
+
+Create `~/.config/autostart/xenolalia.desktop` with:
+```ini
+[Desktop Entry]
+Type=Application
+Exec=/bin/bash /home/xeno/xenolalia/bin/xeno_pc_main.sh
+```
+
+Or use the provided `bin/xeno_pc_main.desktop` file.
+
+---
+
+### XenoPi Installation
+
+**Last tested:** Raspberry Pi 3 B+ v1.3, Raspbian Stretch. The GL Video Processing library was not compatible with RPi 4 / Raspbian Buster at the time of writing.
+
+#### Install system packages
+
+```bash
+sudo apt update && sudo apt upgrade
+
+sudo apt install -y git git-gui \
+    python3-dev python3-setuptools python3-h5py \
+    libblas-dev liblapack-dev libatlas-base-dev gfortran \
+    xdotool python3-venv \
+    software-properties-common dirmngr apt-transport-https lsb-release ca-certificates \
+    liblo-tools liblo7 \
+    lftp
+```
+
+#### Install Python libraries
+
+```bash
+python3 -m venv xeno-env
+source xeno-env/bin/activate
+pip install -r requirements_xenopi.txt
+```
+
+#### Install Processing
+
+```bash
+wget https://github.com/processing/processing/releases/download/processing-0269-3.5.3/processing-3.5.3-linux-armv6hf.tgz
+tar xzvf processing-3.5.3-linux-armv6hf.tgz
+cd processing-3.5.3/
+sudo ./install.sh
+```
+
+Add the following Processing libraries via Sketch → Import Library → Add Library:
+- Video
+- GL Video
+- OpenCV
+- OscP5
+
+#### Configure auto-launch
+
+Edit the autostart file:
+```bash
+nano ~/.config/lxsession/LXDE-pi/autostart
+```
+
+Add:
+```bash
+# Wait for Wifi before startup
+sleep 10
+/bin/bash /home/pi/xenolalia/bin/xeno_pi_main.sh > /home/pi/startuplog 2>&1
+```
+
+#### GPU memory (if Processing crashes with OpenGL errors)
+
+Add to `/boot/config.txt`:
+```
+gpu_mem=320
+```
+
+#### LCD screen (optional 3.5" TFT)
+
+Follow the official instructions at http://www.lcdwiki.com/MHS-3.5inch_RPi_Display — run `sudo ./MHS35-show` (not `LCD35-show`). After reboot, fix the resolution by editing `/boot/config.txt`:
+```
+hdmi_cvt 1920 1080 60 6 0 0 0
+```
+
+---
+
+## OSC Message Reference
+
+### XenoPi ↔ xeno_osc.py
+
+| Receiver | Sender | Address | Params | Purpose |
+|----------|--------|---------|--------|---------|
+| `xeno_osc.py` | XenoPi | `/xeno/euglenas/handshake` | — | Request readiness confirmation from neural network |
+| `xeno_osc.py` | XenoPi | `/xeno/euglenas/new` | — | Signal start of new experiment |
+| `xeno_osc.py` | XenoPi | `/xeno/euglenas/begin` | `ss` | First snapshot: `raw_image_path`, `base_image_path`; uses random seed |
+| `xeno_osc.py` | XenoPi | `/xeno/euglenas/step` | `ss` | Subsequent snapshot: `raw_image_path`, `base_image_path`; uses captured image as seed |
+| `xeno_osc.py` | XenoPi | `/xeno/euglenas/settings-updated` | — | Reload `settings.json` |
+| `xeno_osc.py` | XenoPi | `/xeno/euglenas/test-camera` | `s` | Request perspective-corrected preview: `raw_image_path` |
+| XenoPi | `xeno_osc.py` | `/xeno/neurons/handshake` | — | Confirm neural network is ready |
+| XenoPi | `xeno_osc.py` | `/xeno/neurons/begin` | — | Neural network server has started |
+| XenoPi | `xeno_osc.py` | `/xeno/neurons/end` | — | Neural network server is shutting down |
+| XenoPi | `xeno_osc.py` | `/xeno/neurons/new` | — | Neural network acknowledged new experiment |
+| XenoPi | `xeno_osc.py` | `/xeno/neurons/step` | `s` | `nn_image_path` — path to the autoencoder-generated image |
+| XenoPi | `xeno_osc.py` | `/xeno/neurons/visibility` | `i` | Visibility class: `0`=invisible, `1`=cv-only, `2`=human-visible |
+| XenoPi | `xeno_osc.py` | `/xeno/neurons/test-camera` | `s` | `transformed_image_path` — perspective-corrected preview |
+
+### XenoPi ↔ Apparatus (ESP32)
+
+| Receiver | Sender | Address | Params | Purpose |
+|----------|--------|---------|--------|---------|
+| Apparatus | XenoPi | `/xeno/refresh` | `i` | Trigger full liquid refresh cycle (always `1`) |
+| Apparatus | XenoPi | `/xeno/ring/dark` | — | LED ring off |
+| Apparatus | XenoPi | `/xeno/ring/idle` | — | LED ring idle animation |
+| Apparatus | XenoPi | `/xeno/ring/glow` | — | LED ring glow mode |
+| Apparatus | XenoPi | `/xeno/ring/grow` | — | LED ring grow animation |
+| Apparatus | any | `/xeno/color` | `iii` | Set NeoPixel ring color: R, G, B (0–255) |
+| Apparatus | any | `/xeno/test_hardware` | — | Test all hardware components |
+| Apparatus | any | `/xeno/mix` | — | Activate mixing pump |
+| Apparatus | any | `/xeno/drain` | `i` | Drain pump; integer controls duration |
+| Apparatus | any | `/xeno/fill` | `i` | Fill pump; integer controls duration |
+| XenoPi | Apparatus | `/xeno/apparatus/refreshed` | — | Liquid refresh cycle complete |
+| XenoPi | Apparatus | `/xeno/handshake` | — | Apparatus acknowledged a command |
+
+### XenoPi ↔ xeno_server.py (xenopc)
+
+| Receiver | Sender | Address | Params | Purpose |
+|----------|--------|---------|--------|---------|
+| `xeno_server.py` | XenoPi | `/xeno/exp/new` | `s` | New experiment: `uid` — triggers rsync |
+| `xeno_server.py` | XenoPi | `/xeno/exp/step` | `s` | New image added: `uid` — triggers rsync |
+| `xeno_server.py` | XenoPi | `/xeno/exp/end` | `si` | Experiment ended: `uid`, visibility class — triggers final rsync |
+| `xeno_server.py` | XenoPi | `/xeno/exp/state` | `s` | Current FSM state name (used internally to derive downstream messages) |
+| XenoPi | any | `/xeno/control/begin` | — | Start generative mode (external trigger) |
+
+### xeno_server.py → XenoProjection
+
+| Receiver | Sender | Address | Params | Purpose |
+|----------|--------|---------|--------|---------|
+| XenoProjection | `xeno_server.py` | `/xeno/server/new` | `s` | New experiment: `uid` |
+| XenoProjection | `xeno_server.py` | `/xeno/server/step` | `s` | New image added: `uid` |
+| XenoProjection | `xeno_server.py` | `/xeno/server/end` | `s` or `si` | Experiment ended: `uid`, optional visibility class |
+| XenoProjection | `xeno_server.py` | `/xeno/server/snapshot` | — | Snapshot visual effect (fired when FSM state = `FLASH`) |
+
+### xeno_osc.py → Orbiter / Sonoscope
+
+| Receiver | Sender | Address | Params | Purpose |
+|----------|--------|---------|--------|---------|
+| `xeno_orbiter.py` | `xeno_osc.py` | `/xeno/neurons/new` | — | Reset OLED display for new experiment |
+| `xeno_orbiter.py` | `xeno_osc.py` | `/xeno/neurons/step` | `s` | Display the image at `nn_image_path` on OLED |
+| `xeno_orbiter.py` | `xeno_osc.py` | `/xeno/neurons/end` | — | Stop OLED animation |
+| Pd sonoscope | `xeno_osc.py` | `/xeno/sonoscope/activations` | `fff…` | Flattened, normalized encoder activations (float array) — sent after each step |
+
+### XenoProjection → Pd sonoscope (code signature)
+
+| Receiver | Sender | Address | Params | Purpose |
+|----------|--------|---------|--------|---------|
+| Pd sonoscope | XenoProjection | `/xeno/sonoscope/activations/start` | `fff…` | Per-channel min/max/avg vectors at scene start |
+| Pd sonoscope | XenoProjection | `/xeno/sonoscope/activations/end` | `fff…` | Per-channel min/max/avg vectors at scene end |
+
+**Notes:**
+
+- `/xeno/handshake` is sent by the Apparatus as acknowledgment on every incoming command.
+- `/xeno/server/snapshot` is not sent by XenoPi directly — `xeno_server.py` fires it whenever it receives `/xeno/exp/state` = `FLASH`.
+- `xeno_server.py` broadcasts `/xeno/server/*` to both XenoProjection and XenoPi. XenoPi has no handlers for those addresses and ignores them silently.
+- `/xeno/neurons/begin` is broadcast by `xeno_osc.py` to both XenoPi and `xeno_orbiter.py`, but the orbiter only handles `new`, `step`, and `end`.
 
 ---
 
@@ -481,82 +777,47 @@ Visibility is computed from the corresponding `_raw.png` using the same pipeline
 
 ### Processing crashes with OpenGL errors
 
-Make sure you have enough GPU memory by adding the following line to ```/boot/config.txt```:
-
-```gpu_mem=320```
-
-### Pure data priority and sound problems
-
-It looks like there are problems when running Pd without admin rights:
-
+Add to `/boot/config.txt` on the RPi:
 ```
-priority 6 scheduling failed; running at normal priority
-priority 8 scheduling failed.
+gpu_mem=320
 ```
 
-and/or :
+### Pure Data priority / sound problems
 
+If Pd shows scheduling errors or ALSA errors ("Device or resource busy"), run it as superuser. To allow this without a password prompt:
+
+```bash
+sudo visudo
 ```
-ALSA output error (snd_pcm_open): Device or resource busy
+
+Add:
 ```
-
-The solution is to run as superuser (sudo). To allow this without having to type a password, type:
-
-```sudo visudo```
-
-Add the following lines to the file:
-
-```
-# Allow to run pd as superuser.
+# Allow running pd as superuser without password.
 xeno    ALL=NOPASSWD: /usr/bin/pd
 ```
 
-Then save (CTRL-X). You should now be able to run Pd as sudo without having to type a password.
+### xeno_server.py can't find xenopc.yaml
 
-## OSC Message Reference
+Make sure you have copied the example and are running from the `xenolalia` directory:
+```bash
+cp config/xenopc.yaml.example config/xenopc.yaml
+cd ~/xenolalia
+python xeno_server.py
+```
 
-| Receiver Program | Sender Program(s) | Address | Param Types | Purpose |
-|---|---|---|---|---|
-| `xeno_osc.py` | XenoPi.pde | `/xeno/euglenas/handshake` | — | Request readiness confirmation from neural network |
-| `xeno_osc.py` | XenoPi.pde | `/xeno/euglenas/new` | — | Signal start of new experiment |
-| `xeno_osc.py` | XenoPi.pde | `/xeno/euglenas/begin` | `ss` | First snapshot of an experiment: provide `raw_image_path` and `base_image_path`; neural network uses a random seed for generation |
-| `xeno_osc.py` | XenoPi.pde | `/xeno/euglenas/step` | `ss` | Subsequent snapshot: provide `raw_image_path` and `base_image_path`; neural network uses the captured image as seed |
-| `xeno_osc.py` | XenoPi.pde | `/xeno/euglenas/settings-updated` | — | Notify neural network to reload `settings.json` |
-| `xeno_osc.py` | XenoPi.pde | `/xeno/euglenas/test-camera` | `s` | Request a perspective-corrected preview; provides `raw_image_path` of the test capture |
-| XenoPi.pde | `xeno_osc.py` | `/xeno/neurons/handshake` | — | Confirm neural network is ready |
-| XenoPi.pde | `xeno_osc.py` | `/xeno/neurons/begin` | — | Neural network server has started |
-| XenoPi.pde | `xeno_osc.py` | `/xeno/neurons/end` | — | Neural network server is shutting down |
-| XenoPi.pde | `xeno_osc.py` | `/xeno/neurons/new` | — | Neural network acknowledged new experiment |
-| XenoPi.pde | `xeno_osc.py` | `/xeno/neurons/step` | `s` | Delivers `nn_image_path`, the path to the autoencoder-generated image for this step |
-| XenoPi.pde | `xeno_osc.py` | `/xeno/neurons/visibility` | `i` | Visibility class for this step: `0`=invisible, `1`=cv-only, `2`=human-visible |
-| XenoPi.pde | `xeno_osc.py` | `/xeno/neurons/test-camera` | `s` | Returns `transformed_image_path`, the perspective-corrected version of the test capture |
-| XenoPi.pde | XenolaliaApparatus | `/xeno/apparatus/refreshed` | — | Liquid refresh cycle completed |
-| XenoPi.pde | XenolaliaApparatus | `/xeno/handshake` | — | Apparatus acknowledged a command |
-| XenoPi.pde | any | `/xeno/control/begin` | — | Start generative mode |
-| `xeno_orbiter.py` | `xeno_osc.py` | `/xeno/neurons/new` | — | Reset OLED display for new experiment |
-| `xeno_orbiter.py` | `xeno_osc.py` | `/xeno/neurons/step` | `s` | Display the image at `nn_image_path` on the OLED screen |
-| `xeno_orbiter.py` | `xeno_osc.py` | `/xeno/neurons/end` | — | Stop OLED display animation |
-| `xeno_server.py` | XenoPi.pde | `/xeno/exp/new` | `s` | New experiment started; `uid` identifies the experiment; triggers rsync and data preparation |
-| `xeno_server.py` | XenoPi.pde | `/xeno/exp/step` | `s` | New image added to the experiment identified by `uid`; triggers rsync and data preparation |
-| `xeno_server.py` | XenoPi.pde | `/xeno/exp/end` | `si` | Experiment identified by `uid` has ended; second arg is visibility class (`0`/`1`/`2`); triggers final rsync and data preparation |
-| `xeno_server.py` | XenoPi.pde | `/xeno/exp/state` | `s` | Current FSM state name (e.g. `FLASH`, `SNAPSHOT`); used internally to derive downstream messages |
-| XenoProjection | `xeno_server.py` | `/xeno/server/new` | `s` | New experiment identified by `uid` has started |
-| XenoProjection | `xeno_server.py` | `/xeno/server/step` | `s` | New image added to experiment identified by `uid` |
-| XenoProjection | `xeno_server.py` | `/xeno/server/end` | `s` or `si` | Experiment identified by `uid` has ended; second arg (int) is visibility class when present |
-| XenoProjection | `xeno_server.py` | `/xeno/server/snapshot` | — | Trigger snapshot visual effect (fired when state = `FLASH`) |
-| XenolaliaApparatus | XenoPi.pde | `/xeno/refresh` | `i` | Trigger a full liquid refresh cycle (always sent with value `1`) |
-| XenolaliaApparatus | XenoPi.pde | `/xeno/glow` | `i` | Turn LED ring on (`1`) or off (`0`) |
-| XenolaliaApparatus | any | `/xeno/test_hardware` | — | Test all hardware components |
-| XenolaliaApparatus | any | `/xeno/mix` | — | Activate mixing pump |
-| XenolaliaApparatus | any | `/xeno/drain` | `i` | Drain tube; integer value controls duration or amount |
-| XenolaliaApparatus | any | `/xeno/fill` | `i` | Fill tube; integer value controls duration or amount |
-| XenolaliaApparatus | any | `/xeno/color` | `iii` | Set NeoPixel ring color; three integers for red, green, blue (0–255) |
+`xeno_pc_main.sh` handles the `cd` automatically.
 
-| Pd (sonoscope) | `xeno_osc.py` | `/xeno/sonoscope/activations` | `fff…` | Flattened, normalized encoder activations as a float array; sent after each step |
+### XenoPi doesn't connect to xeno_osc.py
 
-**Notes:**
+`xeno_osc.py` must be running before XenoPi completes its first handshake attempt. When using `xeno_pi_main.sh`, the script waits 20 seconds after starting `xeno_osc.py` before launching XenoPi. If starting manually, start `xeno_osc.py` first and wait until you see the "Serving on..." message before opening XenoPi.
 
-- `/xeno/handshake` is sent by XenolaliaApparatus as an acknowledgment on every incoming command.
-- `/xeno/server/snapshot` is not sent directly by XenoPi.pde: `xeno_server.py` fires it whenever it receives `/xeno/exp/state` with value `FLASH`.
-- `xeno_server.py` broadcasts `/xeno/server/*` messages to both XenoProjection and XenoPi.pde as a side effect of its internal broadcast logic. XenoPi.pde has no handlers for those addresses and silently ignores them.
-- `/xeno/neurons/begin` and `/xeno/neurons/end` are broadcast by `xeno_osc.py` to both XenoPi.pde and `xeno_orbiter.py`, but the orbiter only registers handlers for `new`, `step`, and `end` — `begin` arrives unhandled there.
+### Snapshots are not syncing to xenopc
+
+Check that:
+1. `xenopi_username`, `xenopi_password`, and `xenopi_snapshots_dir` in `config/xenopc.yaml` are correct.
+2. `rsync` and `sshpass` are installed on the xenopc (`sudo apt install rsync sshpass`).
+3. The xenopc can reach the RPi: `ping 192.168.0.101`.
+
+### Experiment ends in IDLE and doesn't restart
+
+This is the default behavior when `auto_restart` is `false` in `settings.json`. Either set `auto_restart: true`, or press **n** in XenoPi to start a new experiment manually.
