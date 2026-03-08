@@ -76,7 +76,8 @@ void setup() {
   oscP5.plug(this, "experimentEnd",               "/xeno/server/end");
   oscP5.plug(this, "experimentEndWithVisibility", "/xeno/server/end");
 
-  oscP5.plug(this, "snapshot",  "/xeno/server/snapshot");
+  oscP5.plug(this, "snapshot",     "/xeno/server/snapshot");
+  oscP5.plug(this, "lastSnapshot", "/xeno/server/last_snapshot");
 
   sonoscope = new NetAddress("127.0.0.1", OSC_SEND_PORT);
 
@@ -349,6 +350,10 @@ void experimentEnd(String uid) {
 
 void snapshot() {
   showOverlay("MESOSCOPE\nUN NOUVEAU GLYPHE ÉMERGE\nA NEW GLYPH EMERGES");
+}
+
+void lastSnapshot() {
+  showOverlay("MESOSCOPE\nUN DERNIER GLYPHE ÉMERGE\nTHE LAST GLYPH EMERGES");
 }
 
 void showOverlay(String message) {

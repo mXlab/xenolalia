@@ -83,6 +83,7 @@ class GenerativeMode extends AbstractMode {
 
   boolean newState;      // true when entering a new state
   boolean _resumeMode;   // true when started via startResume()
+  boolean isLastSnapshot; // true when the snapshot being processed is the experiment's last
 
 
   void setup() {
@@ -371,8 +372,10 @@ class GenerativeMode extends AbstractMode {
       // In auto-mode: collect snapshots at a regular pace.
       if (autoMode && exposureTimer.isFinished()) {
         
-         if (experiment.nSnapshots() < settings.nSnapshotsPerExperiment())
+         if (experiment.nSnapshots() < settings.nSnapshotsPerExperiment()) {
+           isLastSnapshot = (experiment.nSnapshots() == settings.nSnapshotsPerExperiment() - 1);
            requestSnapshot();
+         }
          else {
            setRingStyle(RING_DARK);
            transitionTo(State.PRESENTATION);
@@ -592,7 +595,8 @@ class GenerativeMode extends AbstractMode {
     }
     snapshotRequested = false;
     nextGlyphReceived = true;
-    experiment.updateServer("step");
+    experiment.updateServer(isLastSnapshot ? "last_step" : "step");
+    isLastSnapshot = false;
     _saveRecovery();
   }
 

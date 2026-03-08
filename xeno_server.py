@@ -159,6 +159,12 @@ def handle_step(addr, uid):
     fetch_experiment(uid)
     send_message("/xeno/server/step", uid)
 
+def handle_last_step(addr, uid):
+    print("** Received LAST_STEP {}".format(uid))
+    fetch_experiment(uid)
+    send_message("/xeno/server/step", uid)
+    send_message("/xeno/server/last_snapshot")
+
 def handle_end(addr, uid, visibility_class=0):
     print("** Received END {} (visibility={})".format(uid, visibility_class))
     fetch_experiment(uid)
@@ -202,6 +208,7 @@ dispatcher = dispatcher.Dispatcher()
 dispatcher.map("/xeno/exp/new", handle_new)
 # dispatcher.map("/xeno/exp/begin", handle_begin)
 dispatcher.map("/xeno/exp/step", handle_step)
+dispatcher.map("/xeno/exp/last_step", handle_last_step)
 dispatcher.map("/xeno/exp/end", handle_end)
 dispatcher.map("/xeno/exp/state", handle_state)
 # dispatcher.map("/xeno/exp/handshake", handle_handshake)
