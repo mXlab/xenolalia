@@ -1,4 +1,4 @@
-#N canvas 473 289 2574 1446 10;
+#N canvas 473 289 1854 977 10;
 #X obj 49 20 loadbang;
 #X obj 50 185 soundfiler;
 #N canvas 0 22 450 300 (subpatch) 0;
@@ -95,7 +95,7 @@
 #N canvas 0 22 450 300 (subpatch) 0;
 #X array buf_sig 20 float 4;
 #X coords 0 1 19 -1 200 100 1 0 0;
-#X restore 623 320 graph;
+#X restore 1226 411 graph;
 #X text 1050 350 [wavetable synth] 20-channel encoder signature -> 20-sample wavetable \, phasor~ 110 Hz \, envelope on start/end;
 #X obj 337 4 bng 18 250 50 0 empty empty empty 0 -9 0 10 #fcfcfc #000000 #000000;
 #X obj 1057 479 bng 18 250 50 0 empty empty empty 0 -9 0 10 #fcfcfc #000000 #000000;
