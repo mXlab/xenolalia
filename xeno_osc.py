@@ -204,12 +204,6 @@ def save_encoded_json(
     # activations: (H, W, C)
     H, W, C = activations.shape
 
-    if normalize:
-        # Normalize per channel using vectorized operations
-        mins = activations.min(axis=(0, 1), keepdims=True)
-        maxs = activations.max(axis=(0, 1), keepdims=True)
-        activations = (activations - mins) / (maxs - mins + 1e-8)
-
     # Reorder to (C, H, W) for channel-major export
     channels = np.transpose(activations, (2, 0, 1))
 
@@ -237,18 +231,29 @@ def save_code_signature(encoded, filepath, n_bins=40, precision=4):
     vmin, vmax = arr.min(), arr.max()
     if vmax > vmin:
         arr = (arr - vmin) / (vmax - vmin)
+    def _r(v): return round(float(v), precision)
     if arr.ndim == 3:
         # Convolutional: shape (H, W, C) — one bin per channel.
         H, W, C = arr.shape
         spatial = arr.reshape(H * W, C)  # (H*W, C)
+        def _peak(ch_map):
+            vmax = ch_map.max()
+            rows, cols = np.where(ch_map == vmax)
+            return [int(round(rows.mean())), int(round(cols.mean()))]
+        peak_rc = [_peak(arr[:, :, c]) for c in range(C)]
         data = {
             "model": model_name,
             "encoder_layer": encoder_layer,
             "encoder_shape": list(arr.shape),
             "n_values": int(arr.size),
-            "min": [round(float(v), precision) for v in spatial.min(axis=0)],
-            "max": [round(float(v), precision) for v in spatial.max(axis=0)],
-            "avg": [round(float(v), precision) for v in spatial.mean(axis=0)],
+            "min":  [_r(v) for v in spatial.min(axis=0)],
+            "max":  [_r(v) for v in spatial.max(axis=0)],
+            "avg":  [_r(v) for v in spatial.mean(axis=0)],
+            "std":  [_r(v) for v in spatial.std(axis=0)],
+            "q25":  [_r(v) for v in np.percentile(spatial, 25, axis=0)],
+            "q50":  [_r(v) for v in np.percentile(spatial, 50, axis=0)],
+            "q75":  [_r(v) for v in np.percentile(spatial, 75, axis=0)],
+            "peak": peak_rc,
         }
     else:
         # Dense: split flat vector into n_bins equal-sized bins.
@@ -259,9 +264,13 @@ def save_code_signature(encoded, filepath, n_bins=40, precision=4):
             "encoder_layer": encoder_layer,
             "encoder_shape": list(arr.shape),
             "n_values": int(flat.size),
-            "min": [round(float(b.min()), precision) for b in bins],
-            "max": [round(float(b.max()), precision) for b in bins],
-            "avg": [round(float(b.mean()), precision) for b in bins],
+            "min":  [_r(b.min())  for b in bins],
+            "max":  [_r(b.max())  for b in bins],
+            "avg":  [_r(b.mean()) for b in bins],
+            "std":  [_r(b.std())  for b in bins],
+            "q25":  [_r(np.percentile(b, 25)) for b in bins],
+            "q50":  [_r(np.percentile(b, 50)) for b in bins],
+            "q75":  [_r(np.percentile(b, 75)) for b in bins],
         }
     with open(filepath, "w") as f:
         json.dump(data, f, indent=2)
