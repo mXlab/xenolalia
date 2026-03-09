@@ -30,7 +30,10 @@ PImage createVignetteMask(color maskColor, float transparencyRadius) {
   mask.background(maskColor);
   mask.mask(alphaMask);
   mask.endDraw();
-  return mask.get();
+  PImage result = mask.get();
+  alphaMask.dispose();
+  mask.dispose();
+  return result;
 }
 
 // Two-zone mask: corners are TRANSPARENT so the mask color only appears
@@ -69,7 +72,10 @@ PImage createVignetteMask(color maskColor, float opaqueRadius, float transRadius
   mask.background(maskColor);
   mask.mask(alphaMask);
   mask.endDraw();
-  return mask.get();
+  PImage result = mask.get();
+  alphaMask.dispose();
+  mask.dispose();
+  return result;
 }
 
 // A vignette presents a single experiment using a specitic kind of view (defined by the subclass).
@@ -140,6 +146,13 @@ abstract class Vignette {
   }
 
   void build() {
+  }
+
+  void dispose() {
+    if (pg != null) {
+      pg.dispose();
+      pg = null;
+    }
   }
 
   void display(float x, float y, float side, PGraphics pgTarget) {

@@ -159,7 +159,9 @@ class ExperimentData {
     if (palette == ArtificialPalette.BLACK)
       pg.filter(INVERT);
     pg.endDraw();
-    return pg.get();
+    PImage result = pg.get();
+    pg.dispose();
+    return result;
   }
 
   PImage getArtificial(int i) { return getArtificial(i, ArtificialPalette.WHITE); }

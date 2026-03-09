@@ -131,6 +131,7 @@ class Scene {
   }
 
   void insertVignette(int i, Vignette v) {
+    Vignette falling = vignettes[vignettes.length-1];
     Vignette[] newVignettes = new Vignette[vignettes.length];
     for (int j=0; j<i; j++)
     newVignettes[j] = vignettes[j];
@@ -139,6 +140,7 @@ class Scene {
     newVignettes[j] = vignettes[j-1];
     vignettes = newVignettes;
     v.setScene(this);
+    if (falling != null) falling.dispose();
   }
 
   Vignette getVignette(int c, int r) {
@@ -239,6 +241,16 @@ class Scene {
   }
   float endProgress() {
     return constrain((timer.passedTime() - RUN_DURATION) / END_DURATION, 0.0, 1.0);
+  }
+
+  void dispose() {
+    for (Vignette v : vignettes) {
+      if (v != null) v.dispose();
+    }
+    if (pg != null) {
+      pg.dispose();
+      pg = null;
+    }
   }
 
   boolean isFinished() {

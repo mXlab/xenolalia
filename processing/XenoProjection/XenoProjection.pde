@@ -217,6 +217,7 @@ void draw() {
       if (s.needsRefresh()) {
         // Deal with special cases.
         if (s == sequentialScene) {
+          s.dispose();
           sequentialScene = nextSequentialScene;
           scenes.set(i, sequentialScene);
           s = sequentialScene;

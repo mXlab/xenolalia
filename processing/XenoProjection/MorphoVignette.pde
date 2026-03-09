@@ -49,7 +49,9 @@ class MorphoVignette extends Vignette {
       pg.image(img, 0, 0, VIGNETTE_SIDE, VIGNETTE_SIDE);
     }
     pg.endDraw();
-    return pg.get();
+    PImage result = pg.get();
+    pg.dispose();
+    return result;
   }
 
   int lastImageIndex = -1;
