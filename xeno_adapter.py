@@ -19,11 +19,14 @@ Built-in handler types
 ----------------------
 start    Trigger an experiment, with optional guards:
            delay_minutes (default 0): wait before starting
+           allow_retrigger (default true): if a delayed start is pending, cancel and rearm;
+             set false to ignore subsequent triggers while one is already pending
            require_on_time (default false): only start if within reservation window
              late_threshold_minutes (default 30): minutes of grace after reservation start
            require_inactive (default true): only start if no experiment is running
              cooldown_minutes (default 0): heuristic fallback if XenoPi state unknown
-standby  Record reservation timing, notify XenoPi, then fire osc: side effects.
+           max_per_session (default unlimited): max experiments allowed since last /standby
+standby  Record reservation timing, reset session counter, notify XenoPi, fire osc: side effects.
 stop     Cancel any pending start, send stop to XenoPi, then fire osc: side effects.
 route    Forward incoming args to configured OSC targets (no built-in logic).
 
@@ -155,7 +158,8 @@ class OscAdapter:
         self._reservation_start_time = None  # epoch seconds when reservation begins
         self._pending_start_timer    = None  # threading.Timer for deferred start
         self._experiment_active      = False  # updated by on_experiment_state()
-        self._last_experiment_start  = None  # epoch seconds, heuristic fallback
+        self._last_experiment_start  = None  # epoch seconds, heuristic fallback for cooldown
+        self._session_experiment_count = 0   # reset on /standby; enforces max_per_session
 
         # Optional monitor client for OSC forwarding to Open Stage Control.
         self._monitor = monitor_client
@@ -289,6 +293,7 @@ class OscAdapter:
     def _trigger_start(self):
         log.info("Adapter: → /xeno/control/begin")
         self._last_experiment_start = time.time()
+        self._session_experiment_count += 1
         self._xenopi_client.send_message("/xeno/control/begin", [])
         self._monitor_send("/xeno/adapter/pending", 0)
 
@@ -332,8 +337,10 @@ class OscAdapter:
     def _handle_standby(self, params, *osc_args):
         """
         Record reservation timing, fire osc: side effects, notify XenoPi.
+        Resets the session experiment counter for max_per_session enforcement.
         """
         self._cancel_pending_start()
+        self._session_experiment_count = 0
         minutes_ahead = int(osc_args[0]) if osc_args else 0
         self._reservation_start_time = time.time() + minutes_ahead * 60.0
         log.info(
@@ -350,14 +357,18 @@ class OscAdapter:
         """
         Unified start trigger with optional guards.
 
-        Guards (all default to off):
+        Guards (all default to off unless noted):
           require_on_time    — reject if visitors arrived too late into the reservation
             late_threshold_minutes  (default 30)
           require_inactive   — reject if an experiment is already running (default true)
-            cooldown_minutes        (default 0, heuristic fallback)
+            cooldown_minutes        (default 0, heuristic fallback if XenoPi state unknown)
+          max_per_session    — reject once this many experiments have run since last /standby
+                               (default unlimited)
 
         Scheduling:
           delay_minutes      — wait N minutes before firing (default 0 = immediate)
+          allow_retrigger    — if a delayed start is already pending, cancel and rearm it
+                               (default true; set false to ignore subsequent triggers)
         """
         # Guard: on-time check.
         if params.get("require_on_time", False):
@@ -386,6 +397,22 @@ class OscAdapter:
                         f"Adapter: cooldown not elapsed ({elapsed:.0f}/{cooldown:.0f} min) — ignoring."
                     )
                     return
+
+        # Guard: session experiment limit.
+        max_per_session = params.get("max_per_session", None)
+        if max_per_session is not None and self._session_experiment_count >= int(max_per_session):
+            log.info(
+                f"Adapter: session experiment limit reached "
+                f"({self._session_experiment_count}/{max_per_session}) — ignoring."
+            )
+            return
+
+        # Guard: retrigger — if a delayed start is already pending, honour allow_retrigger.
+        if self._pending_start_timer is not None and self._pending_start_timer.is_alive():
+            if not params.get("allow_retrigger", True):
+                log.info("Adapter: start already pending and allow_retrigger=false — ignoring.")
+                return
+            # allow_retrigger=true (default): fall through, cancel and rearm below.
 
         # Fire osc side effects immediately (before any delay timer).
         self._fire_osc_items(params.get('osc', []), osc_args)

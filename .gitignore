@@ -125,3 +125,4 @@ config/xenopc.yaml
 config/adapters/*.yaml
 !config/adapters/default.yaml
 !config/adapters/*_example.yaml
+!config/adapters/eisode2026.yaml
