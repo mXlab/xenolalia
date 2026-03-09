@@ -19,6 +19,7 @@ import os
 import sys
 
 import numpy as np
+from PIL import Image
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -47,6 +48,17 @@ parser.add_argument("--vector", type=str, default="avg",
                     help="Which per-channel stat vector to analyse")
 parser.add_argument("-o", "--output-dir", type=str, default="analysis",
                     help="Directory to save plots and text report")
+parser.add_argument("--save-glyphs", type=str, default=None, metavar="DIR",
+                    help="If set, save each glyph image + _code.json + _code_signature.json to this directory")
+parser.add_argument("--feature-maps", action="store_true", default=False,
+                    help="Save a grid image showing the mean 7×7 activation map per encoder channel")
+parser.add_argument("--activation-maps", action="store_true", default=False,
+                    help="Save a grid image showing the activation-maximisation result per channel "
+                         "(gradient ascent from random noise — requires TensorFlow)")
+parser.add_argument("--gradient-steps", type=int, default=300,
+                    help="Gradient-ascent steps for --activation-maps")
+parser.add_argument("--gradient-lr", type=float, default=0.05,
+                    help="Learning rate for --activation-maps gradient ascent")
 parser.add_argument("--sparsity-threshold", type=float, default=0.05,
                     help="Values below this are considered near-zero (sparsity)")
 args = parser.parse_args()
@@ -96,6 +108,77 @@ os.makedirs(args.output_dir, exist_ok=True)
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
+def array_to_image(frame):
+    """Convert model output array (1, H, W, 1) or (1, N) to grayscale PIL image."""
+    if frame.ndim == 4:
+        img = frame[0, :, :, 0]
+    else:
+        img = frame[0].reshape(image_side, image_side)
+    img = (np.clip(img, 0, 1) * 255).astype(np.uint8)
+    return Image.fromarray(img, mode='L')
+
+
+def _save_encoded_json(encoded, filepath, precision=4):
+    """Save raw encoder activations as channel-major JSON (matches xeno_osc format, no normalization)."""
+    arr = encoded.copy()
+    if arr.ndim == 4:
+        arr = arr[0]                        # (H, W, C)
+        channels = np.round(np.transpose(arr, (2, 0, 1)), precision).tolist()
+    else:
+        channels = np.round(arr.flatten().astype(np.float32), precision).tolist()
+    with open(filepath, "w") as f:
+        json.dump(channels, f, indent=2)
+
+
+def _save_code_signature(encoded, filepath, n_bins=40, precision=4):
+    """Save compact signature JSON (matches xeno_osc format)."""
+    arr = (encoded[0] if encoded.ndim == 4 else encoded).astype(np.float32)
+    vmin, vmax = arr.min(), arr.max()
+    if vmax > vmin:
+        arr = (arr - vmin) / (vmax - vmin)
+    def _r(v): return round(float(v), precision)
+    if arr.ndim == 3:
+        H, W, C = arr.shape
+        spatial = arr.reshape(H * W, C)
+        def _peak(ch_map):
+            vmax = ch_map.max()
+            rows, cols = np.where(ch_map == vmax)
+            return [int(round(rows.mean())), int(round(cols.mean()))]
+        peak_rc = [_peak(arr[:, :, c]) for c in range(C)]
+        data = {
+            "model": model_name,
+            "encoder_layer": encoder_layer,
+            "encoder_shape": list(arr.shape),
+            "n_values": int(arr.size),
+            "min":  [_r(v) for v in spatial.min(axis=0)],
+            "max":  [_r(v) for v in spatial.max(axis=0)],
+            "avg":  [_r(v) for v in spatial.mean(axis=0)],
+            "std":  [_r(v) for v in spatial.std(axis=0)],
+            "q25":  [_r(v) for v in np.percentile(spatial, 25, axis=0)],
+            "q50":  [_r(v) for v in np.percentile(spatial, 50, axis=0)],
+            "q75":  [_r(v) for v in np.percentile(spatial, 75, axis=0)],
+            "peak": peak_rc,
+        }
+    else:
+        flat = arr.flatten()
+        bins = np.array_split(flat, n_bins)
+        data = {
+            "model": model_name,
+            "encoder_layer": encoder_layer,
+            "encoder_shape": list(arr.shape),
+            "n_values": int(flat.size),
+            "min":  [_r(b.min())  for b in bins],
+            "max":  [_r(b.max())  for b in bins],
+            "avg":  [_r(b.mean()) for b in bins],
+            "std":  [_r(b.std())  for b in bins],
+            "q25":  [_r(np.percentile(b, 25)) for b in bins],
+            "q50":  [_r(np.percentile(b, 50)) for b in bins],
+            "q75":  [_r(np.percentile(b, 75)) for b in bins],
+        }
+    with open(filepath, "w") as f:
+        json.dump(data, f, indent=2)
+
+
 def compute_signature(encoded):
     """Return (min_vec, max_vec, avg_vec) per channel, globally normalized to [0,1]."""
     arr = encoded[0] if encoded.ndim == 4 else encoded
@@ -112,21 +195,155 @@ def compute_signature(encoded):
         return np.array([flat.min()]), np.array([flat.max()]), np.array([flat.mean()])
 
 
-def run_experiment(n):
-    """Run one feedback loop from a random seed; return list of (min, max, avg) per step."""
+def run_experiment(n, collect_frames=False):
+    """Run one feedback loop from a random seed; return list of (min, max, avg) per step.
+    If collect_frames is True, also return (frames, encodeds) lists for saving glyphs."""
     frame = np.random.random(input_shape).astype(np.float32)
     sigs = []
     for _ in range(n):
         encoded, frame = model.predict(frame, verbose=0)
         sigs.append(compute_signature(encoded))
+    if collect_frames:
+        return sigs, np.array(frame), np.array(encoded)
     return sigs
 
 # ── Collect data ───────────────────────────────────────────────────────────────
 
+save_glyphs   = args.save_glyphs is not None
+feature_maps  = args.feature_maps
+collect_frames = save_glyphs or feature_maps
+if save_glyphs:
+    os.makedirs(args.save_glyphs, exist_ok=True)
+
 print("\nRunning experiments...")
-all_runs = []
+all_runs     = []
+all_frames   = [] if collect_frames else None
+all_encodeds = [] if collect_frames else None
 for i in tqdm(range(args.n_experiments)):
-    all_runs.append(run_experiment(n_steps))
+    if collect_frames:
+        sigs, frame, encoded = run_experiment(n_steps, collect_frames=True)
+        all_frames.append(frame)
+        all_encodeds.append(encoded)
+    else:
+        sigs = run_experiment(n_steps)
+    all_runs.append(sigs)
+
+# ── Save glyphs ────────────────────────────────────────────────────────────────
+
+if save_glyphs:
+    print("\nSaving glyphs to {} ...".format(args.save_glyphs))
+    for idx in range(len(all_frames)):
+        name = "glyph_{:04d}".format(idx)
+        array_to_image(all_frames[idx]).save(
+            os.path.join(args.save_glyphs, name + ".png"))
+        _save_encoded_json(all_encodeds[idx],
+            os.path.join(args.save_glyphs, name + "_code.json"))
+        _save_code_signature(all_encodeds[idx],
+            os.path.join(args.save_glyphs, name + "_code_signature.json"))
+    print("Saved {} glyphs.".format(len(all_frames)))
+
+# ── Feature maps ───────────────────────────────────────────────────────────────
+
+if feature_maps:
+    print("\nComputing feature maps ...")
+    R_fm = len(all_encodeds)
+    C_fm = encoder_shape[-1]
+    enc_H, enc_W = encoder_shape[0], encoder_shape[1]
+
+    # Accumulate mean 7×7 activation map per channel (globally normalised per run).
+    chan_maps = np.zeros((C_fm, enc_H, enc_W), dtype=np.float32)
+    chan_avg  = np.zeros(C_fm, dtype=np.float32)   # mean avg activation per channel
+    for enc in all_encodeds:
+        arr = (enc[0] if enc.ndim == 4 else enc).astype(np.float32)
+        vmin, vmax = arr.min(), arr.max()
+        if vmax > vmin:
+            arr = (arr - vmin) / (vmax - vmin)
+        if arr.ndim == 3:
+            for c in range(C_fm):
+                chan_maps[c] += arr[:, :, c]
+                chan_avg[c]  += arr[:, :, c].mean()
+    chan_maps /= R_fm
+    chan_avg  /= R_fm
+
+    # Upscale each 7×7 map to image_side×image_side using bilinear interpolation.
+    scale = image_side / enc_H
+    fm_images = np.array([
+        np.array(Image.fromarray((m * 255).astype(np.uint8)).resize(
+            (image_side, image_side), Image.BILINEAR), dtype=np.float32) / 255.0
+        for m in chan_maps
+    ])
+
+    # Grid layout: try to be roughly square.
+    n_cols = int(np.ceil(np.sqrt(C_fm)))
+    n_rows = int(np.ceil(C_fm / n_cols))
+    fig, axes = plt.subplots(n_rows, n_cols,
+                             figsize=(n_cols * 1.8, n_rows * 2.0))
+    fig.suptitle(
+        "Feature detector maps — {}  layer {}  ({} runs)".format(
+            model_name, encoder_layer, R_fm),
+        fontsize=9)
+    for c in range(n_rows * n_cols):
+        ax = axes.flat[c]
+        if c < C_fm:
+            ax.imshow(fm_images[c], cmap="hot", vmin=0, vmax=1)
+            ax.set_title("ch {}  avg={:.2f}".format(c, chan_avg[c]), fontsize=7)
+        ax.axis("off")
+    plt.tight_layout()
+    fm_path = os.path.join(args.output_dir, "feature_maps.png")
+    fig.savefig(fm_path, dpi=150, bbox_inches="tight")
+    print("Feature maps saved to {}".format(fm_path))
+
+# ── Activation maximisation maps ───────────────────────────────────────────────
+
+if args.activation_maps:
+    print("\nComputing activation maximisation maps ({} steps, lr={}) ...".format(
+        args.gradient_steps, args.gradient_lr))
+    try:
+        import tensorflow as tf
+    except ImportError:
+        print("TensorFlow not available — skipping --activation-maps.")
+    else:
+        C_am = encoder_shape[-1]
+        n_steps_grad = args.gradient_steps
+        lr_grad      = args.gradient_lr
+
+        act_imgs = []
+        for c in tqdm(range(C_am), desc="channels"):
+            x = tf.Variable(np.random.random(input_shape).astype(np.float32))
+            for _ in range(n_steps_grad):
+                with tf.GradientTape() as tape:
+                    enc, _ = model(x, training=False)
+                    if len(enc.shape) == 4:
+                        loss = tf.reduce_mean(enc[0, :, :, c])
+                    else:
+                        loss = enc[0, c]
+                grads = tape.gradient(loss, x)
+                x.assign_add(grads * lr_grad)
+                x.assign(tf.clip_by_value(x, 0.0, 1.0))
+
+            result = x.numpy()
+            img = (result[0, :, :, 0] if result.ndim == 4
+                   else result[0].reshape(image_side, image_side))
+            act_imgs.append(img)
+
+        n_cols = int(np.ceil(np.sqrt(C_am)))
+        n_rows = int(np.ceil(C_am / n_cols))
+        fig, axes = plt.subplots(n_rows, n_cols,
+                                 figsize=(n_cols * 1.8, n_rows * 2.0))
+        fig.suptitle(
+            "Activation maximisation — {}  layer {}  ({} steps, lr={})".format(
+                model_name, encoder_layer, n_steps_grad, lr_grad),
+            fontsize=9)
+        for c in range(n_rows * n_cols):
+            ax = axes.flat[c]
+            if c < C_am:
+                ax.imshow(act_imgs[c], cmap="gray", vmin=0, vmax=1)
+                ax.set_title("ch {}".format(c), fontsize=7)
+            ax.axis("off")
+        plt.tight_layout()
+        am_path = os.path.join(args.output_dir, "activation_maps.png")
+        fig.savefig(am_path, dpi=150, bbox_inches="tight")
+        print("Activation maximisation maps saved to {}".format(am_path))
 
 vec_idx = {"min": 0, "max": 1, "avg": 2}[args.vector]
 # all_vecs: (R, T, C)
@@ -348,7 +565,7 @@ ax.set_ylabel("Channel")
 
 # 6. PCA explained variance
 ax = fig.add_subplot(gs[1, 2])
-pc_idx = np.arange(1, C + 1)
+pc_idx = np.arange(1, len(pca.explained_variance_ratio_) + 1)
 ax.bar(pc_idx, pca.explained_variance_ratio_ * 100, color="mediumpurple", alpha=0.8)
 ax.plot(pc_idx, cumvar * 100, "k--", marker="o", markersize=3)
 ax.axhline(90, color="red",    linestyle=":", linewidth=0.9, label="90%")
@@ -399,6 +616,6 @@ print("Raw vectors saved to {}".format(np_path))
 # Pd's [text] object can read this directly with a "read filename" message
 # and retrieve row N as a list with a "get N" message.
 txt_path = os.path.join(args.output_dir, "all_vecs.txt")
-np.savetxt(txt_path, all_vecs.reshape(-1, C), fmt="%.6f")
+np.savetxt(txt_path, all_vecs.reshape(-1, C), fmt="%.6f", newline=";\n")
 print("Text vectors saved to {}  ({} rows × {} cols)  — for Pd [text]".format(
     txt_path, R * T, C))
