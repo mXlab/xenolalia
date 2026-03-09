@@ -27,6 +27,12 @@ start    Trigger an experiment, with optional guards:
              cooldown_minutes (default 0): heuristic fallback if XenoPi state unknown
            max_per_session (default unlimited): max experiments allowed since last /standby
 standby  Record reservation timing, reset session counter, notify XenoPi, fire osc: side effects.
+
+Top-level config keys
+---------------------
+auto_refresh:
+  interval_minutes: N   — send /xeno/refresh to apparatus every N minutes when no
+                          experiment is active. Timer resets on experiment start.
 stop     Cancel any pending start, send stop to XenoPi, then fire osc: side effects.
 route    Forward incoming args to configured OSC targets (no built-in logic).
 
@@ -160,6 +166,7 @@ class OscAdapter:
         self._experiment_active      = False  # updated by on_experiment_state()
         self._last_experiment_start  = None  # epoch seconds, heuristic fallback for cooldown
         self._session_experiment_count = 0   # reset on /standby; enforces max_per_session
+        self._last_refresh_time      = time.time()  # epoch seconds; reset on experiment start or auto-refresh
 
         # Optional monitor client for OSC forwarding to Open Stage Control.
         self._monitor = monitor_client
@@ -201,7 +208,13 @@ class OscAdapter:
         t.start()
         log.info(f"Adapter server listening on port {port} (adapter: {self._config.get('adapter', '?')})")
 
-        if self._schedule:
+        self._auto_refresh_interval = None
+        ar = self._config.get("auto_refresh", {})
+        if ar.get("interval_minutes"):
+            self._auto_refresh_interval = float(ar["interval_minutes"])
+            log.info(f"Adapter auto-refresh: every {self._auto_refresh_interval:.0f} min when inactive.")
+
+        if self._schedule or self._auto_refresh_interval:
             s = threading.Thread(target=self._run_schedule, daemon=True)
             s.start()
             log.info(f"Adapter scheduler started ({len(self._schedule)} item(s)).")
@@ -265,7 +278,8 @@ class OscAdapter:
     # -----------------------------------------------------------------------
 
     def _run_schedule(self):
-        """Background thread: fire scheduled OSC items at their configured times."""
+        """Background thread: fire scheduled OSC items at their configured times,
+        and trigger auto-refresh of the apparatus when idle too long."""
         last_fired_minute = None
         while not self._stop_event.is_set():
             now = time.localtime()
@@ -277,6 +291,18 @@ class OscAdapter:
                     if item.get("time") == current_hhmm:
                         log.info(f"Schedule {current_hhmm}: firing")
                         self._fire_osc_items([item], ())
+
+                if self._auto_refresh_interval and not self._experiment_active:
+                    elapsed = (time.time() - self._last_refresh_time) / 60.0
+                    if elapsed >= self._auto_refresh_interval:
+                        log.info(f"Auto-refresh: {elapsed:.0f} min since last refresh — sending /xeno/refresh.")
+                        apparatus = self._targets.get("apparatus")
+                        if apparatus:
+                            apparatus.send_message("/xeno/refresh", [])
+                            self._last_refresh_time = time.time()
+                        else:
+                            log.warning("Auto-refresh: 'apparatus' target not found.")
+
                 last_fired_minute = current_minute
 
             self._stop_event.wait(60 - now.tm_sec)
@@ -293,6 +319,7 @@ class OscAdapter:
     def _trigger_start(self):
         log.info("Adapter: → /xeno/control/begin")
         self._last_experiment_start = time.time()
+        self._last_refresh_time     = time.time()  # experiment start triggers a refresh
         self._session_experiment_count += 1
         self._xenopi_client.send_message("/xeno/control/begin", [])
         self._monitor_send("/xeno/adapter/pending", 0)

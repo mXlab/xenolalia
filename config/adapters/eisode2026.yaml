@@ -58,6 +58,10 @@ handlers:
         type: f
         value: "{0}"
 
+# Auto-refresh: keep the petri dish moist when no experiment is running.
+auto_refresh:
+  interval_minutes: 90
+
 # Daily schedule: grow light on for euglenas overnight, off before opening.
 schedule:
   - time: "22:00"
