@@ -21,6 +21,7 @@ handlers:
   # Manual start — operator-triggered, immediate and unconditional.
   /start:
     type: start
+    require_inactive: false
 
   # Manual stop.
   /stop:

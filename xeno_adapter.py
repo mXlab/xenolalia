@@ -21,7 +21,7 @@ start    Trigger an experiment, with optional guards:
            delay_minutes (default 0): wait before starting
            require_on_time (default false): only start if within reservation window
              late_threshold_minutes (default 30): minutes of grace after reservation start
-           require_inactive (default false): only start if no experiment is running
+           require_inactive (default true): only start if no experiment is running
              cooldown_minutes (default 0): heuristic fallback if XenoPi state unknown
 standby  Record reservation timing, notify XenoPi, then fire osc: side effects.
 stop     Cancel any pending start, send stop to XenoPi, then fire osc: side effects.
@@ -339,7 +339,7 @@ class OscAdapter:
         Guards (all default to off):
           require_on_time    — reject if visitors arrived too late into the reservation
             late_threshold_minutes  (default 30)
-          require_inactive   — reject if an experiment is already running
+          require_inactive   — reject if an experiment is already running (default true)
             cooldown_minutes        (default 0, heuristic fallback)
 
         Scheduling:
@@ -359,8 +359,8 @@ class OscAdapter:
             else:
                 log.info(f"Adapter: on time ({elapsed:.1f}/{threshold} min elapsed).")
 
-        # Guard: inactive check.
-        if params.get("require_inactive", False):
+        # Guard: inactive check (default true — don't restart a running experiment).
+        if params.get("require_inactive", True):
             if self._experiment_active:
                 log.info("Adapter: experiment already active — ignoring.")
                 return

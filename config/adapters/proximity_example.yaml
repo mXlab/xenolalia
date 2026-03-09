@@ -18,7 +18,6 @@ handlers:
   # cooldown_minutes is a safety net: the adapter also uses real-time XenoPi state.
   /presence:
     type: start
-    require_inactive: true
     cooldown_minutes: 90
 
   # Operator stop (e.g. closing time).
@@ -28,3 +27,4 @@ handlers:
   # Manual start override — bypasses the require_inactive guard.
   /start:
     type: start
+    require_inactive: false
