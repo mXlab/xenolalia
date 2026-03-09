@@ -81,6 +81,11 @@ parser.add_argument("-r", "--receive-port", default="7000",
 parser.add_argument("-A", "--adapter-config", default=None,
                     help="Path to adapter config. Overrides config file if given.")
 
+parser.add_argument("-im2", "--monitor-ip", default="127.0.0.1",
+                    help="IP address of the OSC monitor (Open Stage Control).")
+parser.add_argument("-sm2", "--monitor-port", default=7003,
+                    type=int, help="Port for OSC monitor forwarding (Open Stage Control).")
+
 # Apply config file values as defaults (CLI args still take precedence).
 parser.set_defaults(**_cfg)
 
@@ -146,6 +151,7 @@ def handle_new(addr, uid):
     print("** Received NEW {}".format(uid))
     fetch_experiment(uid)
     send_message("/xeno/server/new", uid)
+    monitor_client.send_message("/xeno/exp/new", uid)
 
 # # Handler for first image step.
 # def handle_begin(addr, uid):
@@ -158,22 +164,26 @@ def handle_step(addr, uid):
     print("** Received STEP {}".format(uid))
     fetch_experiment(uid)
     send_message("/xeno/server/step", uid)
+    monitor_client.send_message("/xeno/exp/step", uid)
 
 def handle_last_step(addr, uid):
     print("** Received LAST_STEP {}".format(uid))
     fetch_experiment(uid)
     send_message("/xeno/server/step", uid)
     send_message("/xeno/server/last_snapshot")
+    monitor_client.send_message("/xeno/exp/last_step", uid)
 
 def handle_end(addr, uid, visibility_class=0):
     print("** Received END {} (visibility={})".format(uid, visibility_class))
     fetch_experiment(uid)
     send_message("/xeno/server/end", uid)
+    monitor_client.send_message("/xeno/exp/end", [uid, visibility_class])
 
 def handle_state(addr, state):
     print("** Received STATE {}".format(state))
     if adapter:
         adapter.on_experiment_state(state)
+    monitor_client.send_message("/xeno/exp/state", state)
     if state == "FLASH":
         send_message("/xeno/server/snapshot")
     elif state == "REFRESH":
@@ -213,15 +223,17 @@ dispatcher.map("/xeno/exp/end", handle_end)
 dispatcher.map("/xeno/exp/state", handle_state)
 # dispatcher.map("/xeno/exp/handshake", handle_handshake)
 
-# Launch OSC server & client.
+# Launch OSC server & clients.
 server = osc_server.BlockingOSCUDPServer(("0.0.0.0", args.receive_port), dispatcher)
-xenopi_client = udp_client.SimpleUDPClient(args.xenopi_ip, args.xenopi_send_port)
+xenopi_client    = udp_client.SimpleUDPClient(args.xenopi_ip, args.xenopi_send_port)
 macroscope_client = udp_client.SimpleUDPClient(args.macroscope_ip, args.macroscope_send_port)
+monitor_client   = udp_client.SimpleUDPClient(args.monitor_ip, args.monitor_port)
 
 # Load OSC adapter if an adapter config is given.
 if args.adapter_config:
     adapter = xeno_adapter.OscAdapter(args.adapter_config, xenopi_client,
-                                      extra_targets=_targets_cfg)
+                                      extra_targets=_targets_cfg,
+                                      monitor_client=monitor_client)
     adapter.start_server()  # listens on receive_port from the adapter YAML
 
 # Allows program to end cleanly on a CTRL-C command.
@@ -237,6 +249,7 @@ signal.signal(signal.SIGINT, interrupt)
 
 # Indicates that server is ready.
 print("Serving on {}. Program ready.".format(server.server_address))
+print("OSC monitor forwarding to {}:{}.".format(args.monitor_ip, args.monitor_port))
 # send_message("/xeno/neurons/begin")
 
 server.serve_forever()

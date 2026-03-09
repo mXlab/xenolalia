@@ -122,7 +122,7 @@ class OscAdapter:
         in the adapter config.
     """
 
-    def __init__(self, config_path, xenopi_client, extra_targets=None):
+    def __init__(self, config_path, xenopi_client, extra_targets=None, monitor_client=None):
         with open(config_path, "r") as f:
             self._config = yaml.safe_load(f)
 
@@ -156,6 +156,9 @@ class OscAdapter:
         self._pending_start_timer    = None  # threading.Timer for deferred start
         self._experiment_active      = False  # updated by on_experiment_state()
         self._last_experiment_start  = None  # epoch seconds, heuristic fallback
+
+        # Optional monitor client for OSC forwarding to Open Stage Control.
+        self._monitor = monitor_client
 
         # OSC server and scheduler thread (created by start_server()).
         self._server     = None
@@ -208,6 +211,7 @@ class OscAdapter:
         self._experiment_active = state in _EXPERIMENT_ACTIVE_STATES
         if self._experiment_active != was_active:
             log.info(f"Adapter: experiment {'started' if self._experiment_active else 'ended'} (state={state})")
+            self._monitor_send("/xeno/adapter/active", 1 if self._experiment_active else 0)
 
     def shutdown(self):
         """Stop the adapter server, scheduler, and cancel any pending timers."""
@@ -277,15 +281,22 @@ class OscAdapter:
     # Internals
     # -----------------------------------------------------------------------
 
+    def _monitor_send(self, address, value):
+        """Forward a state message to the monitor client if one is configured."""
+        if self._monitor:
+            self._monitor.send_message(address, value)
+
     def _trigger_start(self):
         log.info("Adapter: → /xeno/control/begin")
         self._last_experiment_start = time.time()
         self._xenopi_client.send_message("/xeno/control/begin", [])
+        self._monitor_send("/xeno/adapter/pending", 0)
 
     def _cancel_pending_start(self):
         if self._pending_start_timer is not None and self._pending_start_timer.is_alive():
             self._pending_start_timer.cancel()
             log.info("Adapter: cancelled pending experiment start.")
+            self._monitor_send("/xeno/adapter/pending", 0)
         self._pending_start_timer = None
 
     def _minutes_since_reservation_start(self):
@@ -331,6 +342,9 @@ class OscAdapter:
         )
         self._fire_osc_items(params.get('osc', []), osc_args)
         self._xenopi_client.send_message("/xeno/control/standby", minutes_ahead)
+        self._monitor_send("/xeno/adapter/standby", minutes_ahead)
+        self._monitor_send("/xeno/adapter/pending", 0)
+        self._monitor_send("/xeno/adapter/active", 0)
 
     def _handle_start(self, params, *osc_args):
         """
@@ -384,6 +398,7 @@ class OscAdapter:
             self._pending_start_timer = threading.Timer(delay * 60.0, self._trigger_start)
             self._pending_start_timer.daemon = True
             self._pending_start_timer.start()
+            self._monitor_send("/xeno/adapter/pending", 1)
         else:
             log.info("Adapter: starting immediately.")
             self._trigger_start()
