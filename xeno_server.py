@@ -146,8 +146,15 @@ def update_experiment_images(uid):
     experiment_to_gif(experiment_path, "{}/{}_bio_%d.png".format(experiment_path, uid), "bio_all", fit_in_circle=True)
 
 
+# Tracks whether an experiment is currently active, to avoid forwarding
+# FLASH-based snapshot messages that occur before the experiment starts
+# (e.g. the base-image capture in the NEW → REFRESH → FLASH → SNAPSHOT sequence).
+experiment_active = False
+
 # Handler for new experiment..
 def handle_new(addr, uid):
+    global experiment_active
+    experiment_active = True
     print("** Received NEW {}".format(uid))
     fetch_experiment(uid)
     send_message("/xeno/server/new", uid)
@@ -170,10 +177,12 @@ def handle_last_step(addr, uid):
     print("** Received LAST_STEP {}".format(uid))
     fetch_experiment(uid)
     send_message("/xeno/server/step", uid)
-    send_message("/xeno/server/last_snapshot")
+    send_message("/xeno/server/glyph/last")
     monitor_client.send_message("/xeno/exp/last_step", uid)
 
 def handle_end(addr, uid, visibility_class=0):
+    global experiment_active
+    experiment_active = False
     print("** Received END {} (visibility={})".format(uid, visibility_class))
     fetch_experiment(uid)
     send_message("/xeno/server/end", uid)
@@ -185,7 +194,11 @@ def handle_state(addr, state):
         adapter.on_experiment_state(state)
     monitor_client.send_message("/xeno/exp/state", state)
     if state == "FLASH":
-        send_message("/xeno/server/snapshot")
+        # Only forward snapshot when an experiment is active — the base-image
+        # capture (NEW → REFRESH → FLASH → SNAPSHOT) also goes through FLASH
+        # but should not trigger the "new glyph" overlay in XenoProjection.
+        if experiment_active:
+            send_message("/xeno/server/glyph/next")
     elif state == "REFRESH":
         send_message("/xeno/server/begin")
 
