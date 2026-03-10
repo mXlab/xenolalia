@@ -746,8 +746,8 @@ hdmi_cvt 1920 1080 60 6 0 0 0
 | XenoProjection | `xeno_server.py` | `/xeno/server/new` | `s` | New experiment: `uid` |
 | XenoProjection | `xeno_server.py` | `/xeno/server/step` | `s` | New image added: `uid` |
 | XenoProjection | `xeno_server.py` | `/xeno/server/end` | `s` or `si` | Experiment ended: `uid`, optional visibility class |
-| XenoProjection | `xeno_server.py` | `/xeno/server/glyph/next` | — | Next glyph visual effect (fired when FSM state = `FLASH`) |
-| XenoProjection | `xeno_server.py` | `/xeno/server/glyph/last` | — | Last glyph visual effect (fired on last step of experiment) |
+| XenoProjection | `xeno_server.py` | `/xeno/server/glyph` | — | Next glyph visual effect (fired when FSM state = `FLASH`) |
+| XenoProjection | `xeno_server.py` | `/xeno/server/last_glyph` | — | Last glyph visual effect (fired on last step of experiment) |
 
 ### xeno_osc.py → Orbiter / Sonoscope
 
@@ -768,8 +768,8 @@ hdmi_cvt 1920 1080 60 6 0 0 0
 **Notes:**
 
 - `/xeno/handshake` is sent by the Apparatus as acknowledgment on every incoming command.
-- `/xeno/server/glyph/next` is not sent by XenoPi directly — `xeno_server.py` fires it whenever it receives `/xeno/exp/state` = `FLASH` and an experiment is active.
-- `/xeno/server/glyph/last` is fired by `xeno_server.py` on the last step of an experiment.
+- `/xeno/server/glyph` is not sent by XenoPi directly — `xeno_server.py` fires it whenever it receives `/xeno/exp/state` = `FLASH` and an experiment is active.
+- `/xeno/server/last_glyph` is fired by `xeno_server.py` on the last step of an experiment.
 - `xeno_server.py` broadcasts `/xeno/server/*` to both XenoProjection and XenoPi. XenoPi has no handlers for those addresses and ignores them silently.
 - `/xeno/neurons/begin` is broadcast by `xeno_osc.py` to both XenoPi and `xeno_orbiter.py`, but the orbiter only handles `new`, `step`, and `end`.
 

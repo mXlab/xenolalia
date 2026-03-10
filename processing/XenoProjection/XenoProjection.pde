@@ -76,8 +76,8 @@ void setup() {
   oscP5.plug(this, "experimentEnd",               "/xeno/server/end");
   oscP5.plug(this, "experimentEndWithVisibility", "/xeno/server/end");
 
-  oscP5.plug(this, "snapshot",     "/xeno/server/glyph/next");
-  oscP5.plug(this, "lastSnapshot", "/xeno/server/glyph/last");
+  oscP5.plug(this, "snapshot",     "/xeno/server/glyph");
+  oscP5.plug(this, "lastSnapshot", "/xeno/server/last_glyph");
 
   sonoscope = new NetAddress("127.0.0.1", OSC_SEND_PORT);
 

@@ -177,7 +177,7 @@ def handle_last_step(addr, uid):
     print("** Received LAST_STEP {}".format(uid))
     fetch_experiment(uid)
     send_message("/xeno/server/step", uid)
-    send_message("/xeno/server/glyph/last")
+    send_message("/xeno/server/last_glyph")
     monitor_client.send_message("/xeno/exp/last_step", uid)
 
 def handle_end(addr, uid, visibility_class=0):
@@ -198,7 +198,7 @@ def handle_state(addr, state):
         # capture (NEW → REFRESH → FLASH → SNAPSHOT) also goes through FLASH
         # but should not trigger the "new glyph" overlay in XenoProjection.
         if experiment_active:
-            send_message("/xeno/server/glyph/next")
+            send_message("/xeno/server/glyph")
     elif state == "REFRESH":
         send_message("/xeno/server/begin")
 
