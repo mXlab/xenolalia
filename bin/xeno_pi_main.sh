@@ -5,6 +5,19 @@ xeno_dir="$bin_dir/.."
 xeno_logs_dir="$xeno_dir/logs"
 cd $xeno_dir
 
+# Ensure logs directory exists.
+mkdir -p $xeno_logs_dir
+
+# Rotate a log file: move current to .last, start fresh.
+rotate_log() {
+    local log="$1"
+    [ -f "$log" ] && mv "$log" "${log%.log}.last.log"
+}
+
+rotate_log $xeno_logs_dir/xeno_osc.log
+rotate_log $xeno_logs_dir/xeno_orbiter.log
+rotate_log $xeno_logs_dir/xeno_pi.log
+
 # Prevent sleep.
 /bin/bash $bin_dir/prevent_sleep.sh &
 prevent_sleep_pid=$!
@@ -28,9 +41,6 @@ echo $cleanup
 echo ""
 
 trap "$cleanup; exit" SIGINT
-
-# Initialize log file.
-> $xeno_logs_dir/xeno_pi.log
 
 # Wait for xeno_osc.py to start before first launch.
 echo "Waiting for xeno_osc.py to start..."

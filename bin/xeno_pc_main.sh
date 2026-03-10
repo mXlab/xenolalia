@@ -8,6 +8,16 @@ xeno_logs_dir="$xeno_dir/logs"
 # Ensure logs directory exists.
 mkdir -p $xeno_logs_dir
 
+# Rotate a log file: move current to .last, start fresh.
+rotate_log() {
+    local log="$1"
+    [ -f "$log" ] && mv "$log" "${log%.log}.last.log"
+}
+
+rotate_log $xeno_logs_dir/xeno_server.log
+rotate_log $xeno_logs_dir/xeno_sonoscope.log
+rotate_log $xeno_logs_dir/xeno_projection.log
+
 # Prevent sleep.
 /bin/bash $bin_dir/prevent_sleep.sh &
 prevent_sleep_pid=$!
