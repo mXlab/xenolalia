@@ -56,6 +56,7 @@ namespace xenolalia{
     }
 
     void cycle(){
+        RingStyle savedStyle = ringStyle;
 
         osc::send("/debug" , "Emptying petridish");
         empty_petridish();
@@ -83,6 +84,9 @@ namespace xenolalia{
         fill_petridish(0.67);
 //        fill_petridish(1.0);
         delay(500);
+
+        // Restore the ring style that was active before the refresh cycle.
+        setRingStyle(savedStyle);
    }
 
     void fill_petridish(float level){
