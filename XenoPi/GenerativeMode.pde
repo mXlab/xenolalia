@@ -82,7 +82,8 @@ class GenerativeMode extends AbstractMode {
   boolean nextGlyphReceived;
 
   boolean newState;      // true when entering a new state
-  boolean _resumeMode;   // true when started via startResume()
+  boolean _resumeMode;       // true when started via startResume() or startResumeBaseImage()
+  boolean _baseImageResume;  // true when resuming base image capture (no experiment uid yet)
   boolean isLastSnapshot; // true when the snapshot being processed is the experiment's last
 
 
@@ -398,6 +399,7 @@ class GenerativeMode extends AbstractMode {
     //        In resume mode: reconnect to xeno_osc.py in background, then jump to MAIN.
     //        Otherwise: wait for /xeno/control/begin.
     else if (state == State.IDLE) {
+      if (enteredState()) {} // notify xeno_server of IDLE state
       background(0);
       if (_resumeMode) {
         if (!neuronsReady) {
@@ -407,10 +409,11 @@ class GenerativeMode extends AbstractMode {
             stateTimer.start();
           }
         } else {
-          // Neurons ready: notify neural net that the experiment is resuming, then go to MAIN.
-          oscP5.send(new OscMessage("/xeno/euglenas/new"), remoteLocation);
-          _resumeMode = false;
-          transitionTo(State.MAIN);
+          // Neurons ready: go to resume target.
+          // xeno_osc.py is stateless w.r.t. experiment identity — no notification needed.
+          _resumeMode      = false;
+          _baseImageResume = false;
+          transitionTo(_resumeTarget);
         }
       }
     }
@@ -538,9 +541,30 @@ class GenerativeMode extends AbstractMode {
     exposureTimer = new Timer(settings.exposureTimeMs());
   }
 
+  // Called when resuming after a crash during base image capture (no experiment uid yet).
+  // Reconnects to xeno_osc.py, then re-enters FLASH to redo the base image snapshot.
+  void startResumeBaseImage() {
+    _resumeMode      = true;
+    _baseImageResume = true;
+    _resumeTarget    = State.FLASH;
+    neuronsReady     = false;
+    state            = State.IDLE;
+    newState         = true;
+
+    experiment           = new Experiment();
+    nExperiments         = 0;
+    newExperimentStarted = false;
+
+    stateTimer    = new Timer(1000);
+    stateTimer.start();
+    exposureTimer = new Timer(settings.exposureTimeMs());
+  }
+
   // Called after construction for "resume" startup_mode.
-  // Starts in IDLE, reconnects to xeno_osc.py in the background, then jumps to MAIN.
-  void startResume(JSONObject recovery) {
+  // Starts in IDLE, reconnects to xeno_osc.py in the background, then jumps to resumeTarget.
+  State _resumeTarget = State.MAIN;
+  void startResume(JSONObject recovery, State resumeTarget) {
+    _resumeTarget = resumeTarget;
     _resumeMode = true;
     neuronsReady = false;
     state = State.IDLE;

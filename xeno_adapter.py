@@ -368,6 +368,7 @@ class OscAdapter:
         """
         self._cancel_pending_start()
         self._session_experiment_count = 0
+        self._experiment_active = False  # new session — clear any stale active flag
         minutes_ahead = int(osc_args[0]) if osc_args else 0
         self._reservation_start_time = time.time() + minutes_ahead * 60.0
         log.info(

@@ -217,20 +217,43 @@ void resumeMode() {
   } catch (Exception e) {
     println("Resume: no recovery file found (" + e.getMessage() + ").");
   }
-  if (recovery == null || !recovery.hasKey("experiment_uid")) {
-    println("Resume: no valid recovery state — starting in idle mode.");
+  if (recovery == null) {
+    println("Resume: no recovery file found — starting in idle mode.");
     idleMode();
     return;
   }
   String savedState = recovery.getString("state", "");
-  if (!savedState.equals("MAIN") && !savedState.equals("WAIT_FOR_GLYPH")) {
+  boolean hasUid = recovery.hasKey("experiment_uid");
+
+  if (!hasUid) {
+    // No experiment started yet (crashed during base image capture).
+    if (savedState.equals("FLASH") || savedState.equals("SNAPSHOT")) {
+      println("Resume: crashed during base image capture — restarting from FLASH.");
+      mode = new GenerativeMode();
+      ((GenerativeMode)mode).startResumeBaseImage();
+    } else {
+      println("Resume: no valid recovery state — starting in idle mode.");
+      idleMode();
+    }
+    return;
+  }
+
+  // Experiment uid present — resume mid-experiment.
+  // MAIN and WAIT_FOR_GLYPH resume directly to MAIN.
+  // FLASH and SNAPSHOT re-enter at FLASH so the missed snapshot is retaken.
+  State resumeTarget;
+  if (savedState.equals("MAIN") || savedState.equals("WAIT_FOR_GLYPH"))
+    resumeTarget = State.MAIN;
+  else if (savedState.equals("FLASH") || savedState.equals("SNAPSHOT"))
+    resumeTarget = State.FLASH;
+  else {
     println("Resume: state '" + savedState + "' is not resumable — starting in idle mode.");
     idleMode();
     return;
   }
-  println("Resume: restoring experiment '" + recovery.getString("experiment_uid") + "' from " + savedState);
+  println("Resume: restoring experiment '" + recovery.getString("experiment_uid") + "' from " + savedState + " → entering " + resumeTarget);
   mode = new GenerativeMode();
-  ((GenerativeMode)mode).startResume(recovery);
+  ((GenerativeMode)mode).startResume(recovery, resumeTarget);
 }
 
 void shapeMode() {
