@@ -1,5 +1,6 @@
 import numpy as np
 
+import logging
 import os
 import os.path
 import sys
@@ -9,6 +10,13 @@ import math
 import argparse
 import traceback
 import json
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    datefmt='%H:%M:%S',
+)
+log = logging.getLogger(__name__)
 
 from pythonosc import dispatcher
 from pythonosc import osc_server
@@ -56,10 +64,10 @@ def load_settings():
            use_convolutional, model_name, encoder_layer, \
            output_size, output_stroke_width, output_boundary_px, output_threshold, output_area_max, \
            squircle_mode, visibility_threshold_cv, visibility_threshold_human
-    print("Loading settings")
+    log.info("Loading settings")
     with open(args.configuration_file, "r") as f:
         data = json.load(f)
-        print(data)
+        log.debug(str(data))
 
         input_quad = tuple( data['camera_quad'] )
         n_feedback_steps = data['n_feedback_steps']
@@ -145,7 +153,7 @@ def generate(n_steps, starting_frame, prev_frame):
         # Iterate.
         for t in range(n_steps):
 
-            print("t={t} ======".format(t=t))
+            log.debug("t={t} ======".format(t=t))
 
             # special case for first frame (init)
             if t == 0:
@@ -160,16 +168,16 @@ def generate(n_steps, starting_frame, prev_frame):
 
         # See if frame validates.
         if validate(frame):
-            print("Validated")
+            log.info("Validated")
             break
         # Needs more time, just keep projecting.
         elif starting_frame is not None:
-            print("Not validated : trying merge")
+            log.info("Not validated : trying merge")
             encoded, frame = generate_merge(n_steps, starting_frame, prev_frame)
             if validate(frame):
-                print("Validated")
+                log.info("Validated")
             else:
-                print("Not validated : resend")
+                log.info("Not validated : resend")
                 frame = prev_frame
             break
 
@@ -420,7 +428,7 @@ def interrupt(signup, frame):
 signal.signal(signal.SIGINT, interrupt)
 
 # Indicates that server is ready.
-print("Serving on {}. Program ready. You can now start XenoPi generative mode.".format(server.server_address))
+log.info("Serving on {}. Program ready. You can now start XenoPi generative mode.".format(server.server_address))
 send_message("/xeno/neurons/begin")
 
 server.serve_forever()
