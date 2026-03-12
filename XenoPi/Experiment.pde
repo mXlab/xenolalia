@@ -115,8 +115,10 @@ class Experiment {
   }
 
   void updateServer(String addr) {
+    String uid = (info != null) ? info.getUid() : _resumedUid;
+    if (uid == null) return;
     OscMessage msg = new OscMessage("/xeno/exp/" + addr);
-    msg.add(info.getUid());
+    msg.add(uid);
     if (addr.equals("end"))
       msg.add(visibilityClass);
     oscP5.send(msg, remoteLocationServer);
