@@ -292,7 +292,8 @@ class OscAdapter:
                         log.info(f"Schedule {current_hhmm}: firing")
                         self._fire_osc_items([item], ())
 
-                if self._auto_refresh_interval and not self._experiment_active:
+                pending = self._pending_start_timer is not None and self._pending_start_timer.is_alive()
+                if self._auto_refresh_interval and not self._experiment_active and not pending:
                     elapsed = (time.time() - self._last_refresh_time) / 60.0
                     if elapsed >= self._auto_refresh_interval:
                         log.info(f"Auto-refresh: {elapsed:.0f} min since last refresh — sending /xeno/refresh.")
