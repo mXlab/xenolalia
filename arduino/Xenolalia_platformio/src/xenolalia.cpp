@@ -10,22 +10,26 @@
 #include "osc.hpp"
 
 namespace xenolalia{
-    
+
+    constexpr float fill_level{0.67};
 
     Pump in_pump(pins::pump1); // drain pump
     Pump out_pump(pins::pump2); // fill pump
     Liquid_level_sensor liquid_sensor(pins::liquid_sensor);
-    const int threshold{500};
+    constexpr int threshold{500};
 
     RingStyle ringStyle{RingStyle::DARK};
 
-    pq::SineOsc glowLfo(10.0f);
+    pq::SineOsc glowLfo(20.0f);
+    pq::SineOsc glowLfoShift(10.0f);
     RgbColor glowColorA(255, 0, 255);
     RgbColor glowColorB(255, 255, 255);
+    constexpr int nGlowCycles{3};
 
-    pq::SineOsc idleLfo(30.0f);
-    RgbColor idleColorA(0, 0, 24);
+    pq::SineOsc idleLfo(25.0f);
+    RgbColor idleColorA(0, 0, 16);
     RgbColor idleColorB(0, 0, 0);
+    constexpr int nIdleCycles{3};
 
     void init(){
         in_pump.init();
@@ -46,10 +50,13 @@ namespace xenolalia{
       // Animated ring styles: update color each loop.
       switch (ringStyle) {
         case RingStyle::GLOW:
-          pixel_ring::apply_wave(glowLfo, glowColorA, glowColorB, 3); // 2 cycles
+          pixel_ring::apply_wave(glowLfoShift, 
+                                 RgbColor::LinearBlend(glowColorA, glowColorB, glowLfo.mapTo(0,  0.7)), 
+                                 RgbColor::LinearBlend(glowColorA, glowColorB, glowLfo.mapTo(0.1,  1)), 
+                                 nGlowCycles);
           break;
         case RingStyle::IDLE:
-          pixel_ring::apply_wave(idleLfo, idleColorA, idleColorB, 5); // 4 cycles
+          pixel_ring::apply_wave(idleLfo, idleColorA, idleColorB, nIdleCycles);
           break;
         default: break;  // DARK, GROW, and CUSTOM are set once, not animated
       }
@@ -81,8 +88,7 @@ namespace xenolalia{
         delay(500);
 
         // Second: fill partially.
-        fill_petridish(0.67);
-//        fill_petridish(1.0);
+        fill_petridish(fill_level);
         delay(500);
 
         // Restore the ring style that was active before the refresh cycle.
