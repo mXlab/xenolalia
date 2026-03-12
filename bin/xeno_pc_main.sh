@@ -8,10 +8,16 @@ xeno_logs_dir="$xeno_dir/logs"
 # Ensure logs directory exists.
 mkdir -p $xeno_logs_dir
 
-# Rotate a log file: move current to .last, start fresh.
+# Number of old log files to keep.
+LOG_KEEP=5
+
+# Rotate a log file, keeping the last LOG_KEEP copies as <log>.1, <log>.2, ...
 rotate_log() {
     local log="$1"
-    [ -f "$log" ] && mv "$log" "${log%.log}.last.log"
+    for i in $(seq $((LOG_KEEP-1)) -1 1); do
+        [ -f "${log}.$i" ] && mv "${log}.$i" "${log}.$((i+1))"
+    done
+    [ -f "$log" ] && mv "$log" "${log}.1"
 }
 
 rotate_log $xeno_logs_dir/xeno_server.log
