@@ -50,7 +50,7 @@ sleep 20
 # On subsequent restarts xeno_osc.py is already running, so use a shorter delay.
 while true; do
   echo "[$(date)] Launching XenoPi" >> $xeno_logs_dir/xeno_pi.log
-  /usr/local/bin/processing-java --sketch=$xeno_dir/XenoPi --run 2>&1 | awk '{ print strftime("[%Y/%m/%d %H:%M:%S]"), $0; fflush() }' >> $xeno_logs_dir/xeno_pi.log
+  /usr/local/bin/processing-java --sketch=$xeno_dir/XenoPi --run 2>&1 | while IFS= read -r line; do echo "[$(date '+%Y/%m/%d %H:%M:%S')] $line"; done >> $xeno_logs_dir/xeno_pi.log
   EXIT_CODE=${PIPESTATUS[0]}
   echo "[$(date)] XenoPi exited with code $EXIT_CODE. Restarting in 5s..." >> $xeno_logs_dir/xeno_pi.log
   sleep 5
