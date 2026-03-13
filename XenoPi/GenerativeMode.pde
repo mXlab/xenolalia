@@ -214,10 +214,6 @@ class GenerativeMode extends AbstractMode {
       // Set color to flash.
       background(FLASH_COLOR);
 
-      // Keep on emptying camera buffer.
-      if (cam.available())
-        cam.read();
-
       // Stop glow early to prevent it from affecting snapshots.
       if (stateTimer.countdownTime() <= GLOW_STOP_BEFORE_SNAPSHOT_TIME) {
         setRingStyle(RING_DARK);
@@ -263,15 +259,6 @@ class GenerativeMode extends AbstractMode {
             stateTimer.start();
           }
         }
-      }
-
-      // Camera watchdog: if no frame received for too long (or camera flagged an error),
-      // exit and let the run_sketch.sh restart loop relaunch cleanly.
-      // In-place GLCapture reinitialize corrupts Processing's shared GL context,
-      // so a full restart is the only safe recovery path.
-      if (snapshot == null && (cameraWatchdogTimer.isFinished() || (cam instanceof GLCaptureCam && ((GLCaptureCam)cam).isError))) {
-        println("Camera watchdog triggered: restarting sketch.");
-        exit();
       }
 
       // Process snapshot.
@@ -440,6 +427,24 @@ class GenerativeMode extends AbstractMode {
         }
       }
 
+    }
+
+    // Global camera drain: consume any pending frame every draw cycle to prevent
+    // GStreamer V4L2 buffer overflow in states that don't otherwise read the camera.
+    // In SNAPSHOT/FLASH, the state block already called cam.read(); available() returns false here — no-op.
+    if (cam.available()) cam.read();
+
+    // Global camera watchdog: restart the sketch on pipeline error (any state),
+    // or on timeout waiting for a snapshot frame (SNAPSHOT only — the only state where
+    // progress depends on receiving a frame; soft stalls elsewhere don't block the system).
+    // In-place GLCapture reinitialize corrupts Processing's shared GL context,
+    // so a full restart via run_sketch.sh is the only safe recovery path.
+    boolean cameraError = cam instanceof GLCaptureCam && ((GLCaptureCam)cam).isError;
+    boolean snapshotTimeout = state == State.SNAPSHOT && snapshot == null
+                              && cameraWatchdogTimer != null && cameraWatchdogTimer.isFinished();
+    if (cameraError || snapshotTimeout) {
+      println("Camera watchdog triggered in state " + state + ": restarting sketch.");
+      exit();
     }
   }
 
