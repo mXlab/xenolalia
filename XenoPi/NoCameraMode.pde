@@ -16,7 +16,7 @@ class NoCameraMode extends AbstractMode {
     fill(150);
     textSize(16);
     text("Camera not initialized (GLVideo unavailable).", width / 2, height / 2 + 10);
-    text("Press 'k' for calibration  |  's' for symbol mode", width / 2, height / 2 + 40);
+    text("Press 'k' for calibration  |  'x' for symbol mode", width / 2, height / 2 + 40);
   }
 
   void keyPressed() {}
