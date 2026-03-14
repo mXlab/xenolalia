@@ -350,7 +350,7 @@ class OscAdapter:
             return None
 
         def handler(addr, *args):
-            log.debug(f"Adapter received {addr} {args}")
+            log.info(f"Adapter: received {addr} {args}")
             try:
                 fn(params, *args)
             except Exception as e:
