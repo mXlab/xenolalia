@@ -63,7 +63,6 @@ class ShapeMode extends AbstractMode {
   int saturationPct;
   boolean helpEnabled;
   boolean flashEnabled;
-  boolean symbolEnabled;
 
   void setup() {
     shapeType      = SHAPE_X;
@@ -74,7 +73,6 @@ class ShapeMode extends AbstractMode {
     saturationPct  = 100;
     helpEnabled    = true;
     flashEnabled   = false;
-    symbolEnabled  = true;
   }
 
   color currentColor() {
@@ -105,7 +103,7 @@ class ShapeMode extends AbstractMode {
     float cy       = topLeft.y + h / 2;
     float diameter = min(w, h);
 
-    if (!flashEnabled && symbolEnabled) {
+    if (!flashEnabled) {
       pushMatrix();
       translate(cx, cy);
       scale(w / diameter, h / diameter);
@@ -218,8 +216,7 @@ class ShapeMode extends AbstractMode {
     textSize(14);
     textAlign(LEFT, TOP);
     String hueStr = (hueOffset == 0 ? "0" : (hueOffset > 0 ? "+" : "") + hueOffset) + "\u00b0";
-    text("Symbol: " + (symbolEnabled ? "ON" : "off") + " (x)" +
-         "  Shape: " + shapeNames[shapeType] + " (s)" +
+    text("Shape: " + shapeNames[shapeType] + " (s)" +
          "  Color: " + colorNames[symbolColor] + " (c)" +
          "  Thickness: " + widthNames[strokeWidth] + " (t)" +
          "  Lightness: " + lightnessNames[lightnessLevel] + " (l)" +
@@ -240,7 +237,6 @@ class ShapeMode extends AbstractMode {
       case ']': hueOffset    = constrain(hueOffset + HUE_STEP, -HUE_MAX, HUE_MAX); break;
       case ',': saturationPct = constrain(saturationPct - SAT_STEP, 0, 100);        break;
       case '.': saturationPct = constrain(saturationPct + SAT_STEP, 0, 100);        break;
-      case 'x': case 'X': symbolEnabled = !symbolEnabled;    break;
       case 'f': flashEnabled = !flashEnabled;                 break;
       case 'h': helpEnabled  = !helpEnabled;                  break;
     }
