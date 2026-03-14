@@ -66,6 +66,9 @@ boolean shiftPressed = false;
 // Persistent ShapeMode instance so its state survives mode switches.
 ShapeMode _shapeMode = null;
 
+// Mode to restore when exiting ShapeMode with 'x'.
+AbstractMode _previousMode = null;
+
 void setup() {
   //2592x1944
   size(1184, 624, P2D);
@@ -272,10 +275,17 @@ void keyPressed() {
     generativeMode();
   else if (key == 'k')
     cameraCalibrationMode();
-  else if (key == 's' && !(mode instanceof ShapeMode))
-    shapeMode();
-  else if (key == 'f' && mode instanceof ShapeMode)
-    generativeMode(); // exit shape mode back to generative when toggling flash off
+  else if (key == 'x') {
+    if (mode instanceof ShapeMode) {
+      // Exit ShapeMode: restore the mode we came from.
+      mode = (_previousMode != null) ? _previousMode : mode;
+      _previousMode = null;
+    } else {
+      // Enter ShapeMode: remember where we came from.
+      _previousMode = mode;
+      shapeMode();
+    }
+  }
   //
   else if (key == CODED && keyCode == SHIFT)
     shiftPressed = true;
