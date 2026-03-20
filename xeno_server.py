@@ -86,6 +86,10 @@ parser.add_argument("-im2", "--monitor-ip", default="127.0.0.1",
 parser.add_argument("-sm2", "--monitor-port", default=7003,
                     type=int, help="Port for OSC monitor forwarding (Open Stage Control).")
 
+_debug_default = bool(_cfg.pop("debug", False))
+parser.add_argument("--debug", default=_debug_default, action="store_true",
+                    help="Forward apparatus /debug messages to console and XenoProjection.")
+
 # Apply config file values as defaults (CLI args still take precedence).
 parser.set_defaults(**_cfg)
 
@@ -262,6 +266,7 @@ signal.signal(signal.SIGINT, interrupt)
 
 # Indicates that server is ready.
 print("Serving on {}. Program ready.".format(server.server_address))
+macroscope_client.send_message("/xeno/server/debug", 1 if args.debug else 0)
 print("OSC monitor forwarding to {}:{}.".format(args.monitor_ip, args.monitor_port))
 # send_message("/xeno/neurons/begin")
 

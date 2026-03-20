@@ -79,6 +79,9 @@ void setup() {
   oscP5.plug(this, "snapshot",     "/xeno/server/glyph");
   oscP5.plug(this, "lastSnapshot", "/xeno/server/last_glyph");
 
+  oscP5.plug(this, "setDebugMode",  "/xeno/server/debug");
+  oscP5.plug(this, "apparatusDebug", "/debug");
+
   sonoscope = new NetAddress("127.0.0.1", OSC_SEND_PORT);
 
   // Create vignette rectangles.
@@ -404,10 +407,21 @@ void keyPressed() {
   }
 }
 
+void setDebugMode(int enabled) {
+  debugMode = (enabled != 0);
+  for (Scene s : scenes) s.setDebug(debugMode);
+  println("Debug mode: " + debugMode + " (from server)");
+}
+
+void apparatusDebug(String message) {
+  if (debugMode)
+    println("[apparatus] " + message);
+}
+
 ////////////////////////////////////////////////////
 // This function is automatically called when an OSC message is received
 void oscEvent(OscMessage message) {
-  // Print the address pattern of the message
+  if (message.isPlugged()) return;
   println("Received OSC message: " + message.addrPattern());
 }
 

@@ -139,6 +139,7 @@ void setup() {
   
   oscP5.plug(this, "refreshed", "/xeno/apparatus/refreshed");
   oscP5.plug(this, "apparatusHandshake", "/xeno/handshake");
+  oscP5.plug(this, "apparatusDebug", "/debug");
 
   oscP5.plug(this, "begin", "/xeno/control/begin");
   oscP5.plug(this, "stop",  "/xeno/control/stop");
@@ -172,6 +173,11 @@ boolean apparatusMessageReceived = false;
 void apparatusHandshake() {
   apparatusMessageReceived = true;
   log("Received apparatusHandshake().");
+}
+
+void apparatusDebug(String message) {
+  if (settings.debugMode())
+    println("[apparatus] " + message);
 }
 
 void begin() {

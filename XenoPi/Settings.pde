@@ -47,6 +47,9 @@ class Settings {
   // Default 0 falls back to 5 minutes.
   float presentationDurationMinutes;
 
+  // Debug mode: print apparatus /debug messages to console.
+  boolean debugMode;
+
   // Startup mode: "calibration" (default), "generative", "idle", "resume".
   // "calibration"  — open camera calibration screen.
   // "generative"   — start generative process immediately (former autostart: true).
@@ -102,6 +105,7 @@ class Settings {
   boolean useApparatus()  { return useApparatus; }
   boolean autoRestart()  { return autoRestart; }
   String startupMode()   { return startupMode; }
+  boolean debugMode()    { return debugMode; }
 
   float experimentDurationMinutes() { return experimentDurationMinutes; }
 
@@ -164,6 +168,7 @@ class Settings {
 
       settings.setBoolean("use_apparatus", useApparatus);
       settings.setBoolean("auto_restart", autoRestart);
+      settings.setBoolean("debug", debugMode);
       settings.setString("startup_mode", startupMode);
       // Keep "autostart" for backward compatibility with older XenoPi versions.
       settings.setBoolean("autostart", startupMode.equals("generative"));
@@ -218,6 +223,7 @@ class Settings {
 
       useApparatus = settings.getBoolean("use_apparatus");
       autoRestart  = settings.hasKey("auto_restart") && settings.getBoolean("auto_restart");
+      debugMode    = settings.hasKey("debug") && settings.getBoolean("debug");
       // startup_mode takes precedence; fall back to autostart boolean for backward compat.
       if (settings.hasKey("startup_mode") && settings.getString("startup_mode") != null) {
         startupMode = settings.getString("startup_mode");
@@ -275,6 +281,7 @@ class Settings {
     presentationDurationMinutes = 0;
     squircleMode = "none";
     autoRestart = false;
+    debugMode   = false;
     startupMode = "calibration";
   }
 
