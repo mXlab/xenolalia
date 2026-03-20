@@ -73,4 +73,9 @@ namespace osc{
     void send( const char* adress, const int val );
 
     void send( const char* adress );
+
+    /** @brief Discard all pending UDP packets. Call after a long blocking operation
+     *         to prevent stale commands from being processed afterward.
+     */
+    void flush();
 }//namespace osc

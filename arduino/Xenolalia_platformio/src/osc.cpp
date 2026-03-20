@@ -44,9 +44,10 @@ bool is_float_or_int(OSCMessage &msg){
 void start_cycle(OSCMessage &msg){
 
   osc::send("/xeno/handshake");
-  
+
   osc::send("/debug", "Started refresh cycle");
   xenolalia::cycle();
+  osc::flush();  // discard any /xeno/refresh messages that piled up while busy
   osc::send("/xeno/apparatus/refreshed");
 }
 
@@ -155,13 +156,22 @@ namespace osc
 }
 
   void init_udp(){
-    
-    Serial.println("Starting UDP");    
+
+    Serial.println("Starting UDP");
     udp.begin(incoming_port);
-    Serial.print("IP address: "); 
+    Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
     connected = true;
 }
+
+  // Flush all pending UDP packets — call after any long blocking operation
+  // (e.g. xenolalia::cycle()) to discard messages that piled up while busy.
+  void flush() {
+    int size;
+    while ((size = udp.parsePacket()) > 0) {
+      while (size--) udp.read();
+    }
+  }
 
   void send( const char* adress, const bool val ){
     OSCMessage mess(adress);
