@@ -67,6 +67,15 @@ void setup() {
   // Initialise per-stage vignette display styles.
   initVignetteStyles();
 
+  // Load settings.
+  try {
+    JSONObject settings = loadJSONObject(sketchPath("settings.json"));
+    if (settings.hasKey("debug"))
+      debugMode = settings.getBoolean("debug");
+  } catch (Exception e) {
+    println("XenoProjection: could not load settings.json — using defaults.");
+  }
+
   // Setup OSC.
   oscP5 = new OscP5(this, OSC_RECEIVE_PORT);
 

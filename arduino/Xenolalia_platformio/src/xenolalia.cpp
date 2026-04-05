@@ -11,7 +11,8 @@
 
 namespace xenolalia{
 
-    constexpr float fill_level{0.67};
+//    constexpr float fill_level{0.67}; // without pump insert
+    constexpr float fill_level{0.50}; // with pump insert
 
     Pump in_pump(pins::pump1); // drain pump
     Pump out_pump(pins::pump2); // fill pump
@@ -81,7 +82,7 @@ namespace xenolalia{
         
         // First: fill full.
         fill_petridish();
-        delay(5000); // wait for the "wash" effect
+        delay(10000); // wait for the "wash" effect
 
         // Empty again.
         empty_petridish();
@@ -208,9 +209,13 @@ namespace xenolalia{
     {
       int liquidLevel{0};
 
-      pixel_ring::set_color(pixel_ring::black);
+//      pixel_ring::set_color(pixel_ring::black);
       liquidLevel = liquid_sensor.get_level(nReadings);
-      
+
+      char buff[64];
+      sprintf(buff, "dishlevel : %d | liquid Treshold : %d " ,liquidLevel , threshold);
+      osc::send("/debug", buff);
+
       if(liquidLevel >= threshold)
       { 
         pixel_ring::set_color(pixel_ring::red);
