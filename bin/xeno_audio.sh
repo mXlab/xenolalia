@@ -39,5 +39,13 @@ for i in $(seq 1 15); do
     { echo "pd connected to HDMI"; break; }
 done
 
+# Watchdog: re-establish pw-link if the connection drops (e.g. HDMI device cycles).
+# pw-link is idempotent: silent no-op if the link already exists.
+while kill -0 "$PD_PID" 2>/dev/null; do
+    sleep 5
+    pw-link pure_data:output_1 "${SINK}:playback_FL" 2>/dev/null
+    pw-link pure_data:output_2 "${SINK}:playback_FR" 2>/dev/null
+done &
+
 # wait on pd process
 wait "$PD_PID"

@@ -70,15 +70,15 @@ PImage lerpImage(PImage src, PImage dst, float t) {
   int w = src.width;
   int h = src.height;
 
-  PImage srcCopy = src.copy();
-  PImage dstCopy = dst.copy();
-  if (dstCopy.width != w || dstCopy.height != h)
-    dstCopy.resize(w, h);
+  src.loadPixels();
+  dst.loadPixels();
 
-  srcCopy.loadPixels();
-  dstCopy.loadPixels();
-  for (int i = 0; i < srcCopy.pixels.length; i++)
-    srcCopy.pixels[i] = lerpColor(srcCopy.pixels[i], dstCopy.pixels[i], t);
-  srcCopy.updatePixels();
-  return srcCopy;
+  PImage result = createImage(w, h, ARGB);
+  if (dst.width != w || dst.height != h)
+    dst.resize(w, h);
+  result.loadPixels();
+  for (int i = 0; i < result.pixels.length; i++)
+    result.pixels[i] = lerpColor(src.pixels[i], dst.pixels[i], t);
+  result.updatePixels();
+  return result;
 }

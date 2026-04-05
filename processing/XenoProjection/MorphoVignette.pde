@@ -1,6 +1,7 @@
 class MorphoVignette extends Vignette {
 
   PImage[] images;
+  PImage   _lerpCache = null;  // reused every frame to avoid per-frame allocation
   int lastImageOffset;
   boolean useInterpolation;
 
@@ -54,6 +55,12 @@ class MorphoVignette extends Vignette {
     return result;
   }
 
+  void dispose() {
+    super.dispose();
+    images = null;
+    _lerpCache = null;
+  }
+
   int lastImageIndex = -1;
   
   void doDisplay() {
@@ -85,7 +92,20 @@ class MorphoVignette extends Vignette {
         lastImageIndex = nextImageIndex;
       }
 
-      PImage img = useInterpolation ? lerpImage(prevImage, nextImage, t) : images[round(imageIndex)];
+      PImage img;
+      if (useInterpolation) {
+        if (_lerpCache == null)
+          _lerpCache = createImage(prevImage.width, prevImage.height, ARGB);
+        prevImage.loadPixels();
+        nextImage.loadPixels();
+        _lerpCache.loadPixels();
+        for (int i = 0; i < _lerpCache.pixels.length; i++)
+          _lerpCache.pixels[i] = lerpColor(prevImage.pixels[i], nextImage.pixels[i], t);
+        _lerpCache.updatePixels();
+        img = _lerpCache;
+      } else {
+        img = images[round(imageIndex)];
+      }
       // Style selection:
       // - Interpolated type=ALL: images were pre-normalized in build() to the
       //   same visual scale, so use FILL ("bio") for all — no per-frame resize.
