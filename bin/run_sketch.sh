@@ -2,7 +2,10 @@
 # Run a Processing sketch from the command line, restarting on crash.
 # Usage: bin/run_sketch.sh path/to/Sketch/Sketch.pde
 
-PROCESSING_JAVA="/opt/processing-4.3/processing-java"
+PROCESSING_JAVA="${PROCESSING_JAVA:-/opt/processing/processing-java}"
+if [ ! -x "$PROCESSING_JAVA" ]; then
+    PROCESSING_JAVA="/opt/processing-4.3/processing-java"
+fi
 RESTART_DELAY=5  # seconds to wait between restarts
 
 if [ -z "$1" ]; then

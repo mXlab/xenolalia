@@ -24,6 +24,16 @@ rotate_log $xeno_logs_dir/xeno_server.log
 rotate_log $xeno_logs_dir/xeno_sonoscope.log
 rotate_log $xeno_logs_dir/xeno_projection.log
 
+# Cleanup: use pkill for restartable components so instances relaunched via
+# launch_*.sh are also caught on shutdown (their PIDs differ from startup).
+cleanup() {
+    echo "Shutting down..."
+    kill $prevent_sleep_pid $xeno_server_pid $open_stage_control_pid 2>/dev/null
+    pkill -f 'xeno-sonoscope.pd' 2>/dev/null
+    pkill -f 'XenoProjection' 2>/dev/null
+}
+trap 'cleanup; exit' SIGINT SIGTERM
+
 # Prevent sleep.
 /bin/bash $bin_dir/prevent_sleep.sh &
 prevent_sleep_pid=$!
@@ -35,28 +45,21 @@ xeno_server_pid=$!
 echo "Launching xeno_server (PID=$xeno_server_pid)"
 
 # Launch Open Stage Control.
-echo "Launching Open Stage Control..."
 /usr/bin/open-stage-control &
 open_stage_control_pid=$!
 echo "Launching Open Stage Control (PID=$open_stage_control_pid)"
 
-# Launch Pd sonoscope.
-bash $bin_dir/xeno_audio.sh $xeno_dir/pd/xeno-sonoscope.pd > $xeno_logs_dir/xeno_sonoscope.log 2>&1 &
-xeno_sonoscope_pid=$!
-echo "Launching xeno-sonoscope (PID=$xeno_sonoscope_pid)"
-
-cleanup="sudo kill $prevent_sleep_pid $xeno_server_pid $open_stage_control_pid $xeno_sonoscope_pid"
+# Launch Pd sonoscope and XenoProjection via their launch scripts.
+# These handle kill-if-running + start, so they can also be called to restart.
+bash $bin_dir/launch_pd.sh
+bash $bin_dir/launch_projection.sh
 
 echo ""
-echo "If the script does not terminate nicely you can kill all subprocesses by running:"
-echo $cleanup
+echo "All components launched. To restart individual components:"
+echo "  $bin_dir/launch_pd.sh"
+echo "  $bin_dir/launch_projection.sh"
 echo ""
 
-trap "$cleanup; exit" SIGINT
-
-# Launch processing sketch.
-echo "Launching XenoPi"
-/opt/processing/processing-java --sketch=$xeno_dir/processing/XenoProjection --run > $xeno_logs_dir/xeno_projection.log 2>&1
-
-# Cleanup on exit.
-eval $cleanup
+# Keep alive until interrupted or xeno_server exits.
+wait $xeno_server_pid
+cleanup
