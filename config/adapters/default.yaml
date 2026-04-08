@@ -34,17 +34,17 @@ handlers:
   #     pd_volume_address: /volume
 
 # Timed events. Each item fires once per day at the given HH:MM.
-# OSC items: target + address + type + value (targets resolved from xenopc.yaml).
-# Shell items: type: shell + command (runs on the XenoPC as the xeno user).
+# Each item supports the same osc: and shell: lists as handlers.
 # schedule:
 #   - time: "22:30"
-#     target: apparatus
-#     address: /xeno/ring/grow
-#     type: i
-#     value: 1
-#   - time: "03:00"
-#     type: shell
-#     command: "sudo systemctl reboot"
+#     osc:
+#       - target: apparatus
+#         address: /xeno/ring/grow
+#         type: i
+#         value: 1
+#   - time: "04:50"
+#     shell:
+#       - command: "sudo reboot"
 
 # OSC-triggered restart / reboot.
 # handlers:

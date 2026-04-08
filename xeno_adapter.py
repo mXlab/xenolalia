@@ -68,19 +68,24 @@ to reference incoming OSC arguments. Arithmetic operators are supported
 
 Schedule
 --------
-Fires OSC messages at specific times of day:
+Fires OSC and/or shell commands at specific times of day.
+Each item has a time: key plus the same osc: and shell: lists as handlers:
 
   schedule:
     - time: "22:30"
-      target: apparatus
-      address: /xeno/ring/grow
-      type: i
-      value: 1
-    - time: "09:00"
-      target: pd
-      address: /volume
-      type: f
-      value: 0.5
+      osc:
+        - target: apparatus
+          address: /xeno/ring/grow
+          type: i
+          value: 1
+    - time: "04:50"
+      osc:
+        - target: sonoscope
+          address: /volume
+          type: f
+          value: 0.0
+      shell:
+        - command: "sudo reboot"
 
 Targets are resolved first from the targets: section of xenopc.yaml (the
 venue-level config loaded by xeno_server.py), then from any targets: section
@@ -304,15 +309,8 @@ class OscAdapter:
                 for item in self._schedule:
                     if item.get("time") == current_hhmm:
                         log.info(f"Schedule {current_hhmm}: firing")
-                        if item.get("type") == "shell":
-                            self._fire_osc_items(item.get('osc', []), ())
-                            command = item.get("command", "")
-                            if command:
-                                self._run_shell(command)
-                            else:
-                                log.warning(f"Schedule {current_hhmm}: shell item has no command.")
-                        else:
-                            self._fire_osc_items([item], ())
+                        self._fire_osc_items(item.get('osc', []), ())
+                        self._fire_shell_items(item.get('shell', []))
 
                 pending = self._pending_start_timer is not None and self._pending_start_timer.is_alive()
                 if self._auto_refresh_interval and not self._experiment_active and not pending:
