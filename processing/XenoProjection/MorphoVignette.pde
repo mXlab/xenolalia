@@ -4,6 +4,7 @@ class MorphoVignette extends Vignette {
   PImage   _lerpCache = null;  // reused every frame to avoid per-frame allocation
   int lastImageOffset;
   boolean useInterpolation;
+  boolean _built = false;  // true after build(); reset by requestRebuild() or dispose()
 
   MorphoVignette(ExperimentData exp) {
     super(exp);
@@ -20,6 +21,8 @@ class MorphoVignette extends Vignette {
   }
 
   void build() {
+    if (_built) return;
+    _lerpCache = null;  // force realloc: new experiment may have different image dimensions
     int nImages = max(exp.nImages(type) - lastImageOffset, 0);
     images = new PImage[nImages];
     for (int i=0; i<images.length; i++) {
@@ -34,6 +37,11 @@ class MorphoVignette extends Vignette {
       }
       images[i] = img;
     }
+    _built = true;
+  }
+
+  void requestRebuild() {
+    _built = false;
   }
 
   // Composite img into a VIGNETTE_SIDE canvas using the given style's scale/bg.
@@ -59,6 +67,7 @@ class MorphoVignette extends Vignette {
     super.dispose();
     images = null;
     _lerpCache = null;
+    _built = false;
   }
 
   int lastImageIndex = -1;
@@ -95,14 +104,9 @@ class MorphoVignette extends Vignette {
       PImage img;
       if (useInterpolation) {
         if (_lerpCache == null)
-          _lerpCache = createImage(prevImage.width, prevImage.height, ARGB);
-        prevImage.loadPixels();
-        nextImage.loadPixels();
-        _lerpCache.loadPixels();
-        for (int i = 0; i < _lerpCache.pixels.length; i++)
-          _lerpCache.pixels[i] = lerpColor(prevImage.pixels[i], nextImage.pixels[i], t);
-        _lerpCache.updatePixels();
-        img = _lerpCache;
+          img = _lerpCache = lerpImage(prevImage, nextImage, t);
+        else
+          img = lerpImage(prevImage, nextImage, t, _lerpCache);
       } else {
         img = images[round(imageIndex)];
       }

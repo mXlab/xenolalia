@@ -61,24 +61,30 @@
 //  return (PImage)result;
 //}
 
-PImage lerpImage(PImage src, PImage dst, float t) {
+// Lerp src→dst into a pre-allocated result image (no allocation, safe to call every frame).
+// dst and result are resized to match src if dimensions differ.
+PImage lerpImage(PImage src, PImage dst, float t, PImage result) {
   if (src == null) return dst;
   if (dst == null) return src;
-  if (src == dst)
-    return src;
-
-  int w = src.width;
-  int h = src.height;
-
+  if (src == dst)  return src;
+  if (dst.width != src.width || dst.height != src.height)
+    dst.resize(src.width, src.height);
+  if (result.width != src.width || result.height != src.height)
+    result.resize(src.width, src.height);
   src.loadPixels();
   dst.loadPixels();
-
-  PImage result = createImage(w, h, ARGB);
-  if (dst.width != w || dst.height != h)
-    dst.resize(w, h);
   result.loadPixels();
   for (int i = 0; i < result.pixels.length; i++)
     result.pixels[i] = lerpColor(src.pixels[i], dst.pixels[i], t);
   result.updatePixels();
   return result;
+}
+
+// Lerp src→dst into a newly allocated image (convenience overload; allocates each call).
+PImage lerpImage(PImage src, PImage dst, float t) {
+  if (src == null) return dst;
+  if (dst == null) return src;
+  if (src == dst)  return src;
+  PImage result = createImage(src.width, src.height, ARGB);
+  return lerpImage(src, dst, t, result);
 }
