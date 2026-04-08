@@ -256,6 +256,15 @@ class OscAdapter:
             value = eval(expr, {"__builtins__": {}}, {})
         return {'f': float, 's': str}.get(type_, int)(value)
 
+    def _fire_shell_items(self, items):
+        """Run a list of shell commands from a shell: list in a handler config."""
+        for item in items:
+            command = item.get('command', '')
+            if command:
+                self._run_shell(command)
+            else:
+                log.warning("Adapter: shell item missing command.")
+
     def _fire_osc_items(self, items, osc_args):
         """Send a list of OSC items, resolving {n} templates and math expressions."""
         for item in items:
@@ -391,6 +400,7 @@ class OscAdapter:
             f"(at {time.strftime('%H:%M:%S', time.localtime(self._reservation_start_time))})."
         )
         self._fire_osc_items(params.get('osc', []), osc_args)
+        self._fire_shell_items(params.get('shell', []))
         self._xenopi_client.send_message("/xeno/control/standby", minutes_ahead)
         self._monitor_send("/xeno/adapter/standby", minutes_ahead)
         self._monitor_send("/xeno/adapter/pending", 0)
@@ -457,8 +467,9 @@ class OscAdapter:
                 return
             # allow_retrigger=true (default): fall through, cancel and rearm below.
 
-        # Fire osc side effects immediately (before any delay timer).
+        # Fire osc and shell side effects immediately (before any delay timer).
         self._fire_osc_items(params.get('osc', []), osc_args)
+        self._fire_shell_items(params.get('shell', []))
 
         # Schedule or fire.
         delay = float(params.get("delay_minutes", 0.0))
@@ -479,10 +490,12 @@ class OscAdapter:
         log.info("Adapter: stop → /xeno/control/stop")
         self._xenopi_client.send_message("/xeno/control/stop", [])
         self._fire_osc_items(params.get('osc', []), osc_args)
+        self._fire_shell_items(params.get('shell', []))
 
     def _handle_route(self, params, *osc_args):
         """Forward incoming args to configured OSC targets."""
         self._fire_osc_items(params.get('osc', []), osc_args)
+        self._fire_shell_items(params.get('shell', []))
 
     def _handle_shell(self, params, *osc_args):
         """Fire osc: side effects then run a shell command.
