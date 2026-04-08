@@ -21,3 +21,14 @@ unset _VARS _proc _pid _key _val
 # Fallback defaults if session process was not found.
 export DISPLAY="${DISPLAY:-:0}"
 export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+
+# Resolve XAUTHORITY if missing or pointing to a non-existent file.
+# On GNOME/Wayland, XWayland uses a temporary auth file under XDG_RUNTIME_DIR.
+if [ -z "$XAUTHORITY" ] || [ ! -f "$XAUTHORITY" ]; then
+    _auth=$(ls "$XDG_RUNTIME_DIR"/.mutter-Xwaylandauth.* 2>/dev/null | head -1)
+    [ -n "$_auth" ] && export XAUTHORITY="$_auth"
+fi
+if [ -z "$XAUTHORITY" ] || [ ! -f "$XAUTHORITY" ]; then
+    [ -f "$HOME/.Xauthority" ] && export XAUTHORITY="$HOME/.Xauthority"
+fi
+unset _auth
