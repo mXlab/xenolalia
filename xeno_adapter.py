@@ -27,14 +27,18 @@ start    Trigger an experiment, with optional guards:
              cooldown_minutes (default 0): heuristic fallback if XenoPi state unknown
            max_per_session (default unlimited): max experiments allowed since last /standby
 standby  Record reservation timing, reset session counter, notify XenoPi, fire osc: side effects.
+stop     Cancel any pending start, send stop to XenoPi, then fire osc: side effects.
+route    Forward incoming args to configured OSC targets (no built-in logic).
+shell    Run a shell command, optionally after a delay and with osc: side effects:
+           command        Shell command to run (required).
+           delay_seconds  Wait before running (default 0).
+           osc:           Side-effect OSC messages fired before the command.
 
 Top-level config keys
 ---------------------
 auto_refresh:
   interval_minutes: N   — send /xeno/refresh to apparatus every N minutes when no
                           experiment is active. Timer resets on experiment start.
-stop     Cancel any pending start, send stop to XenoPi, then fire osc: side effects.
-route    Forward incoming args to configured OSC targets (no built-in logic).
 
 All handler types support an osc: list of side-effect messages:
 
@@ -94,6 +98,7 @@ Standard named targets (defined in xenopc.yaml):
 """
 
 import logging
+import subprocess
 import threading
 import time
 
@@ -290,7 +295,15 @@ class OscAdapter:
                 for item in self._schedule:
                     if item.get("time") == current_hhmm:
                         log.info(f"Schedule {current_hhmm}: firing")
-                        self._fire_osc_items([item], ())
+                        if item.get("type") == "shell":
+                            self._fire_osc_items(item.get('osc', []), ())
+                            command = item.get("command", "")
+                            if command:
+                                self._run_shell(command)
+                            else:
+                                log.warning(f"Schedule {current_hhmm}: shell item has no command.")
+                        else:
+                            self._fire_osc_items([item], ())
 
                 pending = self._pending_start_timer is not None and self._pending_start_timer.is_alive()
                 if self._auto_refresh_interval and not self._experiment_active and not pending:
@@ -343,6 +356,7 @@ class OscAdapter:
             "standby": self._handle_standby,
             "stop":    self._handle_stop,
             "route":   self._handle_route,
+            "shell":   self._handle_shell,
         }
         fn = _handler_map.get(handler_type)
         if fn is None:
@@ -469,3 +483,39 @@ class OscAdapter:
     def _handle_route(self, params, *osc_args):
         """Forward incoming args to configured OSC targets."""
         self._fire_osc_items(params.get('osc', []), osc_args)
+
+    def _handle_shell(self, params, *osc_args):
+        """Fire osc: side effects then run a shell command.
+
+        Optional keys:
+          command        Shell command to run (required).
+          delay_seconds  Wait this many seconds before running (default 0).
+          osc:           Side-effect OSC messages fired before the command.
+        """
+        self._fire_osc_items(params.get('osc', []), osc_args)
+        command = params.get('command', '')
+        if not command:
+            log.warning("Adapter: shell handler has no command configured.")
+            return
+        delay = float(params.get('delay_seconds', 0.0))
+        if delay > 0:
+            def _delayed():
+                time.sleep(delay)
+                self._run_shell(command)
+            threading.Thread(target=_delayed, daemon=True).start()
+        else:
+            self._run_shell(command)
+
+    def _run_shell(self, command):
+        """Run a shell command in a background thread, logging outcome."""
+        def _exec():
+            log.info(f"Adapter: shell: {command!r}")
+            try:
+                result = subprocess.run(command, shell=True, capture_output=True, text=True)
+                if result.returncode != 0:
+                    log.warning(f"Adapter: shell exited {result.returncode}: {result.stderr.strip()}")
+                else:
+                    log.info("Adapter: shell ok")
+            except Exception as e:
+                log.exception(f"Adapter: shell failed: {e}")
+        threading.Thread(target=_exec, daemon=True).start()

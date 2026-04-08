@@ -33,17 +33,28 @@ handlers:
   #   params:
   #     pd_volume_address: /volume
 
-# Timed OSC messages. Each item fires once per day at the given HH:MM.
-# Targets are resolved from the targets: section above; 'xenopi' is always available.
-# Supported types: i (int), f (float), s (string).
+# Timed events. Each item fires once per day at the given HH:MM.
+# OSC items: target + address + type + value (targets resolved from xenopc.yaml).
+# Shell items: type: shell + command (runs on the XenoPC as the xeno user).
 # schedule:
 #   - time: "22:30"
 #     target: apparatus
 #     address: /xeno/ring/grow
 #     type: i
 #     value: 1
-#   - time: "09:00"
-#     target: apparatus
-#     address: /xeno/ring/dark
-#     type: i
-#     value: 1
+#   - time: "03:00"
+#     type: shell
+#     command: "sudo systemctl reboot"
+
+# OSC-triggered restart / reboot.
+# handlers:
+#   /restart/pd:
+#     type: shell
+#     command: "/home/xeno/xenolalia/bin/launch_pd.sh"
+#   /restart/projection:
+#     type: shell
+#     command: "/home/xeno/xenolalia/bin/launch_projection.sh"
+#   /reboot:
+#     type: shell
+#     delay_seconds: 5     # brief pause so OSC reply can be sent first
+#     command: "sudo reboot"
