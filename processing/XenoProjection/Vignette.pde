@@ -148,6 +148,9 @@ abstract class Vignette {
   void build() {
   }
 
+  void requestRebuild() {
+  }
+
   void dispose() {
     if (pg != null) {
       pg.dispose();

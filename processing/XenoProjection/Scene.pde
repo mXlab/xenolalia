@@ -25,7 +25,7 @@ class Scene {
 
   Timer timer;
 
-  boolean needsRefresh;
+  boolean needsSceneRefresh;
   boolean sequential = false;  // if true, reveal vignettes one by one over RUN_DURATION
   boolean enabled    = true;   // if false, scene is skipped immediately
 
@@ -161,7 +161,7 @@ class Scene {
 
   void reset() {
     timer.start();
-    needsRefresh = false;
+    needsSceneRefresh = false;
   }
   
   void start() {
@@ -175,12 +175,18 @@ class Scene {
     oscSendMessage("/end");
   }
 
-  boolean needsRefresh() {
-    return this.needsRefresh;
+  boolean needsSceneRefresh() {
+    return this.needsSceneRefresh;
   }
 
-  void requestRefresh() {
-    this.needsRefresh = true;
+  void requestSceneRefresh() {
+    this.needsSceneRefresh = true;
+  }
+
+  void requestSceneRebuild() {
+    this.needsSceneRefresh = true;
+    for (Vignette v : vignettes)
+      if (v != null) v.requestRebuild();
   }
 
   void display() {

@@ -226,7 +226,7 @@ void draw() {
     for (int i=0; i<scenes.size(); i++) {
 
       Scene s = scenes.get(i);
-      if (s.needsRefresh()) {
+      if (s.needsSceneRefresh()) {
         // Deal with special cases.
         if (s == sequentialScene) {
           s.dispose();
@@ -280,10 +280,10 @@ void draw() {
   }
 }
 
-void refreshScenes(ArrayList<Scene> scenesToRefresh) {
+void requestSceneRefresh(ArrayList<Scene> scenesToRefresh) {
   for (Scene s : scenesToRefresh)
-    s.requestRefresh();
-} 
+    s.requestSceneRefresh();
+}
 
 boolean newExperimentStarted = false;
 void experimentNew(String uid) {
@@ -311,7 +311,7 @@ void experimentStep(String uid) {
 
   // Refresh current experiment.
   currentExperiment.refresh();
-  refreshScenes(currentExperimentScenes);
+  requestSceneRefresh(currentExperimentScenes);
 
   // Only show the pipeline scene when pre-AE images exist (not on the first
   // randomly-seeded step, which only produces 3ann + 4prj).
@@ -339,8 +339,8 @@ void experimentEnd(String uid) {
   try {
     previousExperiment.reload(uid);
 
-    refreshScenes(previousExperimentScenes);
-    sequentialScene.requestRefresh();
+    for (Scene s : previousExperimentScenes) s.requestSceneRebuild();
+    sequentialScene.requestSceneRefresh();
 
     nextSequentialScene = createSequentialScene(previousExperiment);
     for (int i=0; i<previousExperiment.nImages()-1; i++) {
@@ -352,7 +352,7 @@ void experimentEnd(String uid) {
 
     // Only add to recent glyphs if the glyph was human-visible.
     if (lastExperimentVisibilityClass >= 2) {
-      recentGlyphsScene.requestRefresh();
+      recentGlyphsScene.requestSceneRefresh();
     }
     // Reset for next experiment.
     lastExperimentVisibilityClass = 0;
