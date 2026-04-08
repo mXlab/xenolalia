@@ -14,5 +14,5 @@ if pkill -f 'xeno-sonoscope.pd' 2>/dev/null; then
     sleep 2
 fi
 
-bash "$bin_dir/xeno_audio.sh" "$xeno_dir/pd/xeno-sonoscope.pd" >> "$xeno_dir/logs/xeno_sonoscope.log" 2>&1 &
+bash "$bin_dir/xeno_audio.sh" --nogui "$xeno_dir/pd/xeno-sonoscope.pd" >> "$xeno_dir/logs/xeno_sonoscope.log" 2>&1 &
 echo "[$(date)] Pd sonoscope launched (PID=$!)"

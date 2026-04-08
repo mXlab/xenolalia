@@ -1,12 +1,12 @@
 #!/bin/bash
 # Launch Pd on XenoPC via pw-jack with HDMI output
 # Usage: xeno_audio.sh [--gui|--nogui] [patch.pd]
-#   --nogui  Run Pd without the GUI window (default)
-#   --gui    Run Pd with the GUI window (for debugging)
+#   --gui    Run Pd with the GUI window (default)
+#   --nogui  Run Pd without the GUI window (for installation/headless use)
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-GUI=false
+GUI=true
 PATCH=""
 for arg in "$@"; do
     case "$arg" in
