@@ -17,15 +17,3 @@ fi
 
 bash "$bin_dir/run_sketch.sh" "$xeno_dir/processing/XenoProjection/XenoProjection.pde" >> "$xeno_dir/logs/xeno_projection.log" 2>&1 &
 echo "[$(date)] XenoProjection launched (PID=$!)"
-
-# Raise XenoProjection above all other windows once it appears (e.g. above PureData).
-(
-    for i in $(seq 1 30); do
-        sleep 2
-        if wmctrl -l 2>/dev/null | grep -q 'XenoProjection'; then
-            wmctrl -r XenoProjection -b add,above
-            echo "[$(date)] XenoProjection raised to top."
-            break
-        fi
-    done
-) &

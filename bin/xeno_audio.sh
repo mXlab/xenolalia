@@ -28,7 +28,7 @@ if [ ! -S "$PW_SOCKET" ]; then
 fi
 
 # Start pd via pw-jack
-pw-jack pd -noprefs -jack -noadc -r 48000 -outchannels 2 -audiobuf 200 -send '; pd dsp 1' "$PATCH" &
+pw-jack pd -nogui -noprefs -jack -noadc -r 48000 -outchannels 2 -audiobuf 200 -send '; pd dsp 1' "$PATCH" &
 PD_PID=$!
 
 # Retry pw-link until HDMI sink is available (up to 15s)
