@@ -50,7 +50,7 @@ handlers:
 # handlers:
 #   /restart/pd:
 #     type: shell
-#     command: "/home/xeno/xenolalia/bin/launch_pd.sh"
+#     command: "/home/xeno/xenolalia/bin/launch_sonoscope.sh"
 #   /restart/projection:
 #     type: shell
 #     command: "/home/xeno/xenolalia/bin/launch_projection.sh"

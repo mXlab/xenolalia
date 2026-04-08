@@ -51,12 +51,12 @@ echo "Launching Open Stage Control (PID=$open_stage_control_pid)"
 
 # Launch Pd sonoscope and XenoProjection via their launch scripts.
 # These handle kill-if-running + start, so they can also be called to restart.
-bash $bin_dir/launch_pd.sh
+bash $bin_dir/launch_sonoscope.sh
 bash $bin_dir/launch_projection.sh
 
 echo ""
 echo "All components launched. To restart individual components:"
-echo "  $bin_dir/launch_pd.sh"
+echo "  $bin_dir/launch_sonoscope.sh"
 echo "  $bin_dir/launch_projection.sh"
 echo ""
 
