@@ -1,10 +1,22 @@
 #!/bin/bash
 # Launch Pd on XenoPC via pw-jack with HDMI output
-# Usage: ./xenoaudio [patch.pd]
+# Usage: xeno_audio.sh [--gui|--nogui] [patch.pd]
+#   --nogui  Run Pd without the GUI window (default)
+#   --gui    Run Pd with the GUI window (for debugging)
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-PATCH="${1:-$SCRIPT_DIR/test_stereo.pd}"
+GUI=false
+PATCH=""
+for arg in "$@"; do
+    case "$arg" in
+        --gui)   GUI=true ;;
+        --nogui) GUI=false ;;
+        *)       PATCH="$arg" ;;
+    esac
+done
+PATCH="${PATCH:-$SCRIPT_DIR/test_stereo.pd}"
+
 SINK="alsa_output.pci-0000_00_1f.3.hdmi-stereo"
 
 cleanup() {
@@ -28,7 +40,8 @@ if [ ! -S "$PW_SOCKET" ]; then
 fi
 
 # Start pd via pw-jack
-pw-jack pd -nogui -noprefs -jack -noadc -r 48000 -outchannels 2 -audiobuf 200 -send '; pd dsp 1' "$PATCH" &
+GUI_FLAG=$( [ "$GUI" = false ] && echo "-nogui" || echo "" )
+pw-jack pd $GUI_FLAG -noprefs -jack -noadc -r 48000 -outchannels 2 -audiobuf 200 -send '; pd dsp 1' "$PATCH" &
 PD_PID=$!
 
 # Retry pw-link until HDMI sink is available (up to 15s)
