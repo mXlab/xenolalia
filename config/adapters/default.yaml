@@ -53,7 +53,7 @@ handlers:
 #     command: "/home/xeno/xenolalia/bin/launch_sonoscope.sh"
 #   /restart/projection:
 #     type: shell
-#     command: "/home/xeno/xenolalia/bin/launch_projection.sh"
+#     command: "/home/xeno/xenolalia/bin/launch_macroscope.sh"
 #   /reboot:
 #     type: shell
 #     delay_seconds: 5     # brief pause so OSC reply can be sent first
