@@ -33,16 +33,15 @@ handlers:
   #   params:
   #     pd_volume_address: /volume
 
-# Timed events. Each item fires once per day at the given HH:MM.
-# Each item supports the same osc: and shell: lists as handlers.
+# Timed events. Keys are "HH:MM"; values use the same osc: and shell: lists as handlers.
 # schedule:
-#   - time: "22:30"
+#   "22:30":
 #     osc:
 #       - target: apparatus
 #         address: /xeno/ring/grow
 #         type: i
 #         value: 1
-#   - time: "04:50"
+#   "04:50":
 #     shell:
 #       - command: "sudo reboot"
 

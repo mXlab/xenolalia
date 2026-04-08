@@ -69,16 +69,16 @@ to reference incoming OSC arguments. Arithmetic operators are supported
 Schedule
 --------
 Fires OSC and/or shell commands at specific times of day.
-Each item has a time: key plus the same osc: and shell: lists as handlers:
+Keys are "HH:MM" strings; values use the same osc: and shell: lists as handlers:
 
   schedule:
-    - time: "22:30"
+    "22:30":
       osc:
         - target: apparatus
           address: /xeno/ring/grow
           type: i
           value: 1
-    - time: "04:50"
+    "04:50":
       osc:
         - target: sonoscope
           address: /volume
@@ -167,8 +167,8 @@ class OscAdapter:
             self._targets[name] = client
             log.info(f"  Target '{name}': {cfg.get('host')}:{cfg.get('port')} (from xenopc.yaml)")
 
-        # Schedule: list of timed OSC items.
-        self._schedule = self._config.get("schedule", [])
+        # Schedule: dict of timed items keyed by "HH:MM".
+        self._schedule = self._config.get("schedule", {})
 
         # Internal state.
         self._reservation_start_time = None  # epoch seconds when reservation begins
@@ -227,7 +227,7 @@ class OscAdapter:
         if self._schedule or self._auto_refresh_interval:
             s = threading.Thread(target=self._run_schedule, daemon=True)
             s.start()
-            log.info(f"Adapter scheduler started ({len(self._schedule)} item(s)).")
+            log.info(f"Adapter scheduler started ({len(self._schedule)} time slot(s)).")
 
     def on_experiment_state(self, state):
         """
@@ -306,11 +306,11 @@ class OscAdapter:
             current_hhmm   = f"{now.tm_hour:02d}:{now.tm_min:02d}"
 
             if current_minute != last_fired_minute:
-                for item in self._schedule:
-                    if item.get("time") == current_hhmm:
-                        log.info(f"Schedule {current_hhmm}: firing")
-                        self._fire_osc_items(item.get('osc', []), ())
-                        self._fire_shell_items(item.get('shell', []))
+                item = self._schedule.get(current_hhmm)
+                if item:
+                    log.info(f"Schedule {current_hhmm}: firing")
+                    self._fire_osc_items(item.get('osc', []), ())
+                    self._fire_shell_items(item.get('shell', []))
 
                 pending = self._pending_start_timer is not None and self._pending_start_timer.is_alive()
                 if self._auto_refresh_interval and not self._experiment_active and not pending:
